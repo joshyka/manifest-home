@@ -1,0 +1,15 @@
+# Your data — contains savings amounts, loan details, viewings
+data/tracker.xlsx
+
+# Streamlit config and secrets
+.streamlit/
+
+# Python virtual environment
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store
