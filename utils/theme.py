@@ -232,30 +232,6 @@ html, body, [data-testid="stAppViewContainer"] {{
     border-bottom: 1px solid {BORDER};
 }}
 
-/* ── Viewing cards ──────────────────────────────────────────────────────── */
-.viewing-card {{
-    border: 1.5px solid {BORDER};
-    border-radius: 12px;
-    padding: 16px 18px;
-    margin-bottom: 12px;
-    background: {CARD_BG};
-    transition: box-shadow 0.15s;
-}}
-.viewing-card:hover {{
-    box-shadow: 0 4px 14px rgba(46,125,94,0.1);
-    border-color: {PRIMARY};
-}}
-.viewing-card .vc-address {{
-    font-weight: 700;
-    font-size: 0.98rem;
-    color: {TEXT_MAIN};
-}}
-.viewing-card .vc-meta {{
-    font-size: 0.8rem;
-    color: {TEXT_MUTED};
-    margin-top: 3px;
-}}
-
 /* ── Upcoming reminder cards ────────────────────────────────────────────── */
 .upcoming-card {{
     border: 1.5px solid {PRIMARY};
@@ -274,51 +250,6 @@ html, body, [data-testid="stAppViewContainer"] {{
     color: {TEXT_MUTED};
     margin-top: 4px;
 }}
-
-/* ── Badge chips ────────────────────────────────────────────────────────── */
-.badge {{
-    display: inline-block;
-    padding: 3px 10px;
-    border-radius: 20px;
-    font-size: 0.74rem;
-    font-weight: 700;
-    letter-spacing: 0.03em;
-}}
-.badge-green {{ background:{PRIMARY_LIGHT}; color:{PRIMARY}; }}
-.badge-orange {{ background:{ACCENT_LIGHT}; color:{ACCENT}; }}
-.badge-red {{ background:#FDECEA; color:{DANGER}; }}
-.badge-blue {{ background:#EFF6FF; color:#1A6FB5; }}
-.badge-gray {{ background:#F3F4F6; color:{TEXT_MUTED}; }}
-
-/* ── Checklist items ────────────────────────────────────────────────────── */
-.chk-phase {{
-    font-size: 0.8rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
-    color: {PRIMARY};
-    margin: 18px 0 8px;
-    padding-bottom: 4px;
-    border-bottom: 2px solid {PRIMARY_LIGHT};
-}}
-.chk-item {{
-    padding: 9px 12px;
-    border-radius: 8px;
-    margin-bottom: 4px;
-    font-size: 0.88rem;
-    border: 1px solid {BORDER};
-    background: {CARD_BG};
-}}
-.chk-item.done {{
-    background: {PRIMARY_LIGHT};
-    border-color: {PRIMARY};
-    text-decoration: line-through;
-    color: {TEXT_MUTED};
-}}
-
-/* ── Area rating stars ──────────────────────────────────────────────────── */
-.star-filled {{ color: #F59E0B; font-size: 1.1rem; }}
-.star-empty  {{ color: #D1D5DB; font-size: 1.1rem; }}
 
 /* ── Streamlit overrides ────────────────────────────────────────────────── */
 [data-testid="stMetric"] {{
@@ -432,5 +363,3 @@ def page_header(title: str, subtitle: str = ""):
 def alert(text: str, kind: str = "info"):
     return f'<div class="alert alert-{kind}">{text}</div>'
 
-def badge(text: str, kind: str = "green"):
-    return f'<span class="badge badge-{kind}">{text}</span>'

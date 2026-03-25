@@ -17,8 +17,6 @@ require_pin()
 
 st.markdown(page_header("Viewings", "Log every apartment you visit and track bidding history"), unsafe_allow_html=True)
 
-AREAS = ["Arsta", "Alvsjö", "Stuvsta", "Solna", "Other"]
-
 tab1, tab2 = st.tabs(["Listings", "Upcoming"])
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -289,7 +287,7 @@ with tab2:
             with rc2:
                 uv_date = st.date_input("Date", value=datetime.date.today())
             with rc3:
-                uv_time = st.time_input("Time", value=datetime.time(10, 0))
+                uv_time = st.time_input("Time", value=(datetime.datetime.now() + datetime.timedelta(hours=1)).replace(minute=0, second=0, microsecond=0).time())
 
             submitted_uv = st.form_submit_button("Save", width="content")
             if submitted_uv:
@@ -319,9 +317,9 @@ with tab2:
         except Exception:
             pass
 
-        now    = pd.Timestamp.now()
-        future = upcoming[upcoming["_dt"] >= now] if "_dt" in upcoming.columns else upcoming
-        past   = upcoming[upcoming["_dt"] < now]  if "_dt" in upcoming.columns else pd.DataFrame()
+        today_start = pd.Timestamp(datetime.date.today())
+        future = upcoming[upcoming["_dt"] >= today_start] if "_dt" in upcoming.columns else upcoming
+        past   = upcoming[upcoming["_dt"] < today_start]  if "_dt" in upcoming.columns else pd.DataFrame()
 
         if not future.empty:
             for _, row in future.iterrows():
