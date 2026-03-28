@@ -153,10 +153,12 @@ function TaskCard({
 }
 
 // ── Main page ─────────────────────────────────────────────────────────────────
+const CUSTOM_COLORS = ['#3DAA6E', '#E08C2C', '#D4A853', '#6366F1', '#EC4899', '#0EA5E9']
+
 export default function Checklist() {
   const [tasks, setTasks] = useState<Task[]>(load)
   const [newLabel, setNewLabel] = useState('')
-  const [newCat, setNewCat]   = useState(CATEGORIES[0].id)
+  const [newCat, setNewCat]   = useState('')
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks))
@@ -182,16 +184,21 @@ export default function Checklist() {
   function addTask() {
     const label = newLabel.trim()
     if (!label) return
-    const cat = CATEGORIES.find(c => c.id === newCat) || CATEGORIES[0]
+    const catName = newCat.trim() || 'General'
+    const existing = tasks.find(t => t.category === catName)
+    const color = existing
+      ? existing.categoryColor
+      : CUSTOM_COLORS[new Set(tasks.map(t => t.categoryColor)).size % CUSTOM_COLORS.length]
     setTasks(prev => [...prev, {
       id: Math.random().toString(36).slice(2, 10),
       label,
       status: 'todo',
-      category: cat.label,
-      categoryColor: cat.color,
+      category: catName,
+      categoryColor: color,
       custom: true,
     }])
     setNewLabel('')
+    setNewCat('')
   }
 
   const done  = tasks.filter(t => t.status === 'done').length
@@ -265,18 +272,16 @@ export default function Checklist() {
       {/* Add custom task */}
       <div className="card space-y-3">
         <div className="section-label">Add a custom task</div>
-        <div className="flex gap-2">
-          <select
-            className="input w-40 shrink-0"
+        <div className="flex gap-2 flex-wrap">
+          <input
+            className="input w-36 shrink-0"
+            placeholder="Category…"
             value={newCat}
             onChange={e => setNewCat(e.target.value)}
-          >
-            {CATEGORIES.map(c => (
-              <option key={c.id} value={c.id}>{c.label}</option>
-            ))}
-          </select>
+            onKeyDown={e => e.key === 'Enter' && addTask()}
+          />
           <input
-            className="input flex-1"
+            className="input flex-1 min-w-0"
             placeholder="Task description…"
             value={newLabel}
             onChange={e => setNewLabel(e.target.value)}
