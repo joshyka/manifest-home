@@ -62,7 +62,7 @@ def require_auth(authorization: Optional[str] = Header(None)) -> dict:
         raise
     except Exception as e:
         print(f"[auth error] {type(e).__name__}: {e}", flush=True)
-        raise HTTPException(status_code=401, detail=f"Auth error: {type(e).__name__}: {e}")
+        raise HTTPException(status_code=401, detail="Invalid token")
 
 
 # ── Dashboard ─────────────────────────────────────────────────────────────────
