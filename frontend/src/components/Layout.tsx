@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { LayoutDashboard, PiggyBank, Calendar, Map, Calculator, GitCompare, CheckSquare, Gavel, LogOut, Menu, X, Plus } from 'lucide-react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { dashboard } from '../lib/api'
 import { supabase } from '../lib/supabase'
 import clsx from 'clsx'
@@ -98,6 +98,7 @@ function SidebarContents({ pct, current, target, p1, p2, onNav }: {
 export default function Layout({ children }: Props) {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const navigate = useNavigate()
+  const qc = useQueryClient()
   const { data } = useQuery({ queryKey: ['dashboard'], queryFn: dashboard.get })
 
   const p1 = data?.settings?.p1_name || ''
@@ -168,7 +169,7 @@ export default function Layout({ children }: Props) {
               Welcome back{p1 ? <>, <span className="font-semibold text-gray-600">{p1}{p2 ? ` & ${p2}` : ''}</span></> : ''} 👋
             </p>
             <button
-              onClick={() => supabase.auth.signOut()}
+              onClick={() => { qc.clear(); supabase.auth.signOut() }}
               className="text-gray-300 hover:text-red-400 transition-colors"
               title="Sign out"
             >
