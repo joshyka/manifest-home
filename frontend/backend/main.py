@@ -15,7 +15,6 @@ from typing import Optional
 import datetime
 import re
 import requests as http_requests
-from jose import jwt as jose_jwt, JWTError
 
 from utils.data import (
     load_settings, save_settings,
@@ -41,26 +40,28 @@ app.add_middleware(
 )
 
 # ── Auth ──────────────────────────────────────────────────────────────────────
-_JWT_SECRET = os.environ.get("SUPABASE_JWT_SECRET", "")
 _ALLOWED_EMAILS = [e.strip() for e in os.environ.get("ALLOWED_EMAILS", "").split(",") if e.strip()]
 
 
 def require_auth(authorization: Optional[str] = Header(None)) -> dict:
-    """Validate Supabase JWT and return payload. In dev (no JWT secret), returns a fixed dev user."""
-    if not _JWT_SECRET:
-        return {"sub": "dev-user"}
+    """Validate token via Supabase auth.get_user() and return user payload."""
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Missing token")
     token = authorization.split(" ", 1)[1]
     try:
-        payload = jose_jwt.decode(token, _JWT_SECRET, algorithms=["HS256"], audience="authenticated")
-    except JWTError:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    if _ALLOWED_EMAILS:
-        email = payload.get("email", "")
-        if email not in _ALLOWED_EMAILS:
+        from utils.supabase_client import get_client
+        supa = get_client()
+        response = supa.auth.get_user(token)
+        user = response.user
+        if not user:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        if _ALLOWED_EMAILS and user.email not in _ALLOWED_EMAILS:
             raise HTTPException(status_code=403, detail="Email not authorised")
-    return payload
+        return {"sub": user.id, "email": user.email}
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid token")
 
 
 # ── Dashboard ─────────────────────────────────────────────────────────────────
