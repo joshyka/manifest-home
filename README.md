@@ -1,6 +1,6 @@
 # KeyJourney
 
-A private home-buying tracker for the Swedish market. Track savings, log viewings, compare listings, run mortgage calculations, and manage your buying checklist — all in one place.
+A home-buying tracker tool to track savings, log viewings, compare listings, run mortgage calculations, and manage your buying checklist — all in one place.
 
 ---
 
