@@ -1,9 +1,8 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { settings as settingsApi } from '../lib/api'
+import { useBlob } from '../lib/useBlob'
 import { TrendingUp, AlertTriangle, CheckCircle, Info, Save, Trash2 } from 'lucide-react'
-
-const SNAP_KEY = 'kj_calc_snapshots'
 
 interface Snapshot {
   id: string
@@ -18,10 +17,6 @@ interface Snapshot {
   stressTestMonthly: number
   loanAmount: number
   affordability: string
-}
-
-function loadSnapshots(): Snapshot[] {
-  try { return JSON.parse(localStorage.getItem(SNAP_KEY) || '[]') } catch { return [] }
 }
 
 // ── Swedish mortgage calculation logic ────────────────────────────────────────
@@ -162,7 +157,7 @@ export default function Calculator() {
   const [drift,       setDrift]       = useState(3000)
   const [income,      setIncome]      = useState(0)
   const [useOwn,      setUseOwn]      = useState(false)
-  const [snapshots,   setSnapshots]   = useState<Snapshot[]>(loadSnapshots)
+  const [snapshots, saveSnapshots] = useBlob<Snapshot[]>('calc_snapshots', [])
 
   function saveSnapshot() {
     if (!result) return
@@ -175,15 +170,11 @@ export default function Calculator() {
       loanAmount: result.loanAmount,
       affordability: result.affordability,
     }
-    const updated = [snap, ...snapshots].slice(0, 10)
-    setSnapshots(updated)
-    localStorage.setItem(SNAP_KEY, JSON.stringify(updated))
+    saveSnapshots([snap, ...snapshots].slice(0, 10))
   }
 
   function deleteSnapshot(id: string) {
-    const updated = snapshots.filter(s => s.id !== id)
-    setSnapshots(updated)
-    localStorage.setItem(SNAP_KEY, JSON.stringify(updated))
+    saveSnapshots(snapshots.filter(s => s.id !== id))
   }
 
   // Optionally pre-fill from saved savings settings

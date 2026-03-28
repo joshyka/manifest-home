@@ -20,6 +20,8 @@ from utils.data import (
     load_settings, save_settings,
     load_viewings, save_viewing, get_viewing, patch_viewing,
     load_upcoming, save_upcoming, delete_upcoming,
+    get_blob, set_blob,
+    load_target_areas, save_target_area, patch_target_area, delete_target_area,
     clear_all_data,
 )
 from utils.savings import get_projection, get_target, get_loan_status
@@ -425,6 +427,82 @@ def fetch_listing(body: FetchListingBody, payload: dict = Depends(require_auth))
         "description": description[:200] if description else "",
         "partial":     not fetch_ok,
     }
+
+
+# ── User blobs ────────────────────────────────────────────────────────────────
+_ALLOWED_BLOB_KEYS = {'checklist', 'comparison_items', 'saved_comparisons', 'calc_snapshots'}
+
+
+class BlobBody(BaseModel):
+    data: Optional[list] = None
+
+
+@app.get("/api/blob/{key}")
+def get_blob_endpoint(key: str, payload: dict = Depends(require_auth)):
+    if key not in _ALLOWED_BLOB_KEYS:
+        raise HTTPException(status_code=400, detail="Unknown blob key")
+    user_id = payload.get("sub", "dev-user")
+    return get_blob(key, user_id)
+
+
+@app.put("/api/blob/{key}")
+def set_blob_endpoint(key: str, body: BlobBody, payload: dict = Depends(require_auth)):
+    if key not in _ALLOWED_BLOB_KEYS:
+        raise HTTPException(status_code=400, detail="Unknown blob key")
+    user_id = payload.get("sub", "dev-user")
+    set_blob(key, body.data, user_id)
+    return {"ok": True}
+
+
+# ── Target areas ──────────────────────────────────────────────────────────────
+@app.get("/api/target-areas")
+def get_target_areas(payload: dict = Depends(require_auth)):
+    user_id = payload.get("sub", "dev-user")
+    return load_target_areas(user_id)
+
+
+class TargetAreaBody(BaseModel):
+    name: str
+    priority: str = "Medium"
+    notes: str = ""
+
+
+@app.post("/api/target-areas")
+def add_target_area(body: TargetAreaBody, payload: dict = Depends(require_auth)):
+    import uuid
+    user_id = payload.get("sub", "dev-user")
+    area_id = str(uuid.uuid4())[:8]
+    save_target_area({
+        "id": area_id,
+        "name": body.name,
+        "priority": body.priority,
+        "notes": body.notes,
+    }, user_id)
+    return {"ok": True, "id": area_id}
+
+
+class TargetAreaUpdateBody(BaseModel):
+    name: str
+    priority: str = "Medium"
+    notes: str = ""
+
+
+@app.put("/api/target-areas/{area_id}")
+def update_target_area(area_id: str, body: TargetAreaUpdateBody, payload: dict = Depends(require_auth)):
+    user_id = payload.get("sub", "dev-user")
+    patch_target_area(area_id, {
+        "name": body.name,
+        "priority": body.priority,
+        "notes": body.notes,
+    }, user_id)
+    return {"ok": True}
+
+
+@app.delete("/api/target-areas/{area_id}")
+def remove_target_area(area_id: str, payload: dict = Depends(require_auth)):
+    user_id = payload.get("sub", "dev-user")
+    delete_target_area(area_id, user_id)
+    return {"ok": True}
 
 
 # ── Data management ───────────────────────────────────────────────────────────

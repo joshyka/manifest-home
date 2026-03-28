@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useRef } from 'react'
 import { Plus, X, ChevronRight, ChevronLeft, Pencil, Check } from 'lucide-react'
+import { useBlob } from '../lib/useBlob'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 type Status = 'todo' | 'progress' | 'done'
@@ -14,24 +15,10 @@ interface Task {
 }
 
 
-const DEFAULT_TASKS: Omit<Task, 'id'>[] = [
-  { label: 'Get lånelöfte from bank',    status: 'todo', category: 'Finance & Loan', categoryColor: '#2E7D52', custom: false },
-  { label: 'Save 15% down payment',      status: 'todo', category: 'Finance & Loan', categoryColor: '#2E7D52', custom: false },
+const DEFAULT_TASKS: Task[] = [
+  { id: 'default-1', label: 'Get lånelöfte from bank', status: 'todo', category: 'Finance & Loan', categoryColor: '#2E7D52', custom: false },
+  { id: 'default-2', label: 'Save 15% down payment',   status: 'todo', category: 'Finance & Loan', categoryColor: '#2E7D52', custom: false },
 ]
-
-const STORAGE_KEY = 'kj_checklist_v2'
-
-function buildDefault(): Task[] {
-  return DEFAULT_TASKS.map(t => ({ ...t, id: Math.random().toString(36).slice(2, 10) }))
-}
-
-function load(): Task[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) return JSON.parse(raw)
-  } catch {}
-  return buildDefault()
-}
 
 // ── Column config ─────────────────────────────────────────────────────────────
 const COLUMNS: { status: Status; label: string; bg: string; badge: string; dot: string }[] = [
@@ -148,16 +135,12 @@ function TaskCard({
 const CUSTOM_COLORS = ['#3DAA6E', '#E08C2C', '#D4A853', '#6366F1', '#EC4899', '#0EA5E9']
 
 export default function Checklist() {
-  const [tasks, setTasks] = useState<Task[]>(load)
+  const [tasks, saveTasks] = useBlob<Task[]>('checklist', DEFAULT_TASKS)
   const [newLabel, setNewLabel] = useState('')
   const [newCat, setNewCat]   = useState('')
 
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks))
-  }, [tasks])
-
   function moveTask(id: string, dir: 'left' | 'right') {
-    setTasks(prev => prev.map(t => {
+    saveTasks(tasks.map(t => {
       if (t.id !== id) return t
       const idx = ORDER.indexOf(t.status)
       const next = ORDER[dir === 'right' ? idx + 1 : idx - 1]
@@ -166,11 +149,11 @@ export default function Checklist() {
   }
 
   function removeTask(id: string) {
-    setTasks(prev => prev.filter(t => t.id !== id))
+    saveTasks(tasks.filter(t => t.id !== id))
   }
 
   function editTask(id: string, label: string) {
-    setTasks(prev => prev.map(t => t.id === id ? { ...t, label } : t))
+    saveTasks(tasks.map(t => t.id === id ? { ...t, label } : t))
   }
 
   function addTask() {
@@ -181,7 +164,7 @@ export default function Checklist() {
     const color = existing
       ? existing.categoryColor
       : CUSTOM_COLORS[new Set(tasks.map(t => t.categoryColor)).size % CUSTOM_COLORS.length]
-    setTasks(prev => [...prev, {
+    saveTasks([...tasks, {
       id: Math.random().toString(36).slice(2, 10),
       label,
       status: 'todo',

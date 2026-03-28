@@ -91,9 +91,47 @@ def delete_upcoming(uv_id: str, user_id: str):
     supa.table("upcoming_viewings").delete().eq("id", uv_id).eq("user_id", user_id).execute()
 
 
+# ── User blobs (checklist, comparison, calc snapshots) ────────────────────────
+def get_blob(key: str, user_id: str):
+    supa = get_client()
+    result = supa.table("user_blobs").select("data").eq("user_id", user_id).eq("key", key).execute()
+    if result.data:
+        return result.data[0]["data"]
+    return None  # null = never saved (use client-side defaults)
+
+
+def set_blob(key: str, data, user_id: str):
+    supa = get_client()
+    supa.table("user_blobs").upsert({"user_id": user_id, "key": key, "data": data}).execute()
+
+
+# ── Target areas ──────────────────────────────────────────────────────────────
+def load_target_areas(user_id: str) -> list[dict]:
+    supa = get_client()
+    result = supa.table("target_areas").select("*").eq("user_id", user_id).order("created_at").execute()
+    return result.data or []
+
+
+def save_target_area(row: dict, user_id: str):
+    supa = get_client()
+    supa.table("target_areas").insert({**row, "user_id": user_id}).execute()
+
+
+def patch_target_area(area_id: str, updates: dict, user_id: str):
+    supa = get_client()
+    supa.table("target_areas").update(updates).eq("id", area_id).eq("user_id", user_id).execute()
+
+
+def delete_target_area(area_id: str, user_id: str):
+    supa = get_client()
+    supa.table("target_areas").delete().eq("id", area_id).eq("user_id", user_id).execute()
+
+
 # ── Data management ───────────────────────────────────────────────────────────
 def clear_all_data(user_id: str):
     supa = get_client()
     supa.table("viewings").delete().eq("user_id", user_id).execute()
     supa.table("upcoming_viewings").delete().eq("user_id", user_id).execute()
+    supa.table("target_areas").delete().eq("user_id", user_id).execute()
+    supa.table("user_blobs").delete().eq("user_id", user_id).execute()
     supa.table("settings").update({k: v for k, v in DEFAULT_SETTINGS.items()}).eq("user_id", user_id).execute()

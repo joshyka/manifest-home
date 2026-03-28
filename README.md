@@ -27,15 +27,16 @@ A home-buying tracker tool to track savings, log viewings, compare listings, run
 | Bid Tracker | Bidding history — rounds, highest bid, your bid |
 | Comparison | Compare listings side by side |
 | Calculator | Swedish mortgage calculator with stress test |
-| Maps | Directions and nearby amenities |
+| Maps | Directions, nearby amenities, and target areas |
 
 ## Features
 
 - Onboarding wizard on first login
 - Delete confirmations on all destructive actions
-- Per-user data isolation via Supabase RLS
+- Per-user data isolation via Supabase RLS — each couple sees only their own data
 - PIN login or Google OAuth with email allowlist
-- Export/import all data as Excel (including calculator snapshots)
+- All data stored in Supabase — synced across devices, nothing in localStorage
+- Export/import all data as Excel
 
 ---
 
@@ -112,5 +113,12 @@ Licensed under the [Apache License 2.0](LICENSE).
 
 ## Data Storage
 
-- **Supabase PostgreSQL** — all app data (settings, viewings, upcoming), isolated per user
-- **localStorage** — comparison boards and checklist (browser only)
+All data is stored in **Supabase PostgreSQL**, isolated per user via Row Level Security:
+
+| Table | Data |
+| --- | --- |
+| `settings` | Savings targets, loan details, buyer names |
+| `viewings` | Viewed apartments and bid history |
+| `upcoming_viewings` | Scheduled viewings |
+| `target_areas` | Areas of interest with priority |
+| `user_blobs` | Checklist, comparison boards, calculator snapshots |

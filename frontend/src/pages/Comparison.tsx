@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import { useBlob } from '../lib/useBlob'
 import { listings as listingsApi } from '../lib/api'
 import type { FetchedListing } from '../lib/api'
 import { Plus, X, ExternalLink, ArrowUpDown, Loader2, Star, Home, Save, Trash2, ChevronDown, ChevronUp, RotateCcw } from 'lucide-react'
@@ -308,16 +309,9 @@ function AddForm({ onAdd }: { onAdd: (item: Omit<CompItem, 'id'>) => void }) {
 }
 
 // ── Main page ─────────────────────────────────────────────────────────────────
-const STORAGE_KEY  = 'kj_comparison_items'
-const SAVED_KEY    = 'kj_saved_comparisons'
-
 export default function Comparison() {
-  const [items, setItems] = useState<CompItem[]>(() => {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]') } catch { return [] }
-  })
-  const [saved, setSaved] = useState<SavedComparison[]>(() => {
-    try { return JSON.parse(localStorage.getItem(SAVED_KEY) || '[]') } catch { return [] }
-  })
+  const [items, saveItems] = useBlob<CompItem[]>('comparison_items', [])
+  const [saved, saveSaved] = useBlob<SavedComparison[]>('saved_comparisons', [])
   const [showAdd,      setShowAdd]      = useState(false)
   const [sortBy,       setSortBy]       = useState<SortKey>('price')
   const [saveName,     setSaveName]     = useState('')
@@ -327,15 +321,6 @@ export default function Comparison() {
   const [confirmRemoveId, setConfirmRemoveId] = useState<string | null>(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
 
-  // Persist to localStorage
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
-  }, [items])
-
-  useEffect(() => {
-    localStorage.setItem(SAVED_KEY, JSON.stringify(saved))
-  }, [saved])
-
   function saveComparison() {
     if (!saveName.trim()) return
     const snap: SavedComparison = {
@@ -344,33 +329,33 @@ export default function Comparison() {
       date: new Date().toLocaleDateString('sv-SE'),
       items: [...items],
     }
-    setSaved(prev => [snap, ...prev])
-    setItems([])
+    saveSaved([snap, ...saved])
+    saveItems([])
     setSaveName('')
     setShowSaveBox(false)
     setShowHistory(true)
   }
 
   function loadComparison(snap: SavedComparison) {
-    setItems(snap.items)
+    saveItems(snap.items)
     setShowHistory(false)
   }
 
   function deleteSnapshot(id: string) {
-    setSaved(prev => prev.filter(s => s.id !== id))
+    saveSaved(saved.filter(s => s.id !== id))
   }
 
   function addItem(item: Omit<CompItem, 'id'>) {
-    setItems(prev => [...prev, { ...item, id: crypto.randomUUID().slice(0, 8) }])
+    saveItems([...items, { ...item, id: crypto.randomUUID().slice(0, 8) }])
     setShowAdd(false)
   }
 
   function removeItem(id: string) {
-    setItems(prev => prev.filter(i => i.id !== id))
+    saveItems(items.filter(i => i.id !== id))
   }
 
   function updateItem(id: string, key: keyof CompItem, val: any) {
-    setItems(prev => prev.map(i => i.id === id ? { ...i, [key]: val } : i))
+    saveItems(items.map(i => i.id === id ? { ...i, [key]: val } : i))
   }
 
   // Sort
@@ -415,7 +400,7 @@ export default function Comparison() {
               ) : (
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-red-600 font-medium">Clear current?</span>
-                  <button className="btn-danger" onClick={() => { setItems([]); setConfirmClear(false) }}>Yes</button>
+                  <button className="btn-danger" onClick={() => { saveItems([]); setConfirmClear(false) }}>Yes</button>
                   <button className="btn-secondary" onClick={() => setConfirmClear(false)}>No</button>
                 </div>
               )}

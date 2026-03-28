@@ -176,6 +176,40 @@ export const listings = {
     }),
 }
 
+// ── Blobs (checklist, comparison, calc snapshots) ──────────────────────────────
+export const blobs = {
+  get: <T>(key: string) => request<T | null>(`/blob/${key}`),
+  set: <T>(key: string, data: T) =>
+    request<{ ok: boolean }>(`/blob/${key}`, {
+      method: 'PUT',
+      body: JSON.stringify({ data }),
+    }),
+}
+
+// ── Target areas ───────────────────────────────────────────────────────────────
+export interface TargetArea {
+  id: string
+  name: string
+  priority: string
+  notes: string
+}
+
+export const targetAreas = {
+  list: () => request<TargetArea[]>('/target-areas'),
+  add: (data: { name: string; priority: string; notes: string }) =>
+    request<{ ok: boolean; id: string }>('/target-areas', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  update: (id: string, data: { name: string; priority: string; notes: string }) =>
+    request<{ ok: boolean }>(`/target-areas/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  remove: (id: string) =>
+    request<{ ok: boolean }>(`/target-areas/${id}`, { method: 'DELETE' }),
+}
+
 // ── Data management ────────────────────────────────────────────────────────────
 export const data = {
   clear: () => request<{ ok: boolean }>('/data', { method: 'DELETE' }),

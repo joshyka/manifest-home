@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, useRef } from 'react'
 import * as XLSX from 'xlsx'
-import { dashboard, data as dataApi, viewings as viewingsApi, upcoming as upcomingApi, settings as settingsApi } from '../lib/api'
+import { dashboard, data as dataApi, viewings as viewingsApi, upcoming as upcomingApi, settings as settingsApi, targetAreas as targetAreasApi, blobs } from '../lib/api'
 import MetricCard from '../components/MetricCard'
 import Alert from '../components/Alert'
 import SavingsChart from '../components/SavingsChart'
@@ -27,32 +27,33 @@ export default function Dashboard() {
 
   async function handleClear() {
     await dataApi.clear()
-    localStorage.removeItem('kj_comparison_items')
-    localStorage.removeItem('kj_saved_comparisons')
-    localStorage.removeItem('kj_calc_snapshots')
+    // Invalidate all blob caches so pages reload with empty/default state
+    qc.removeQueries({ queryKey: ['blob'] })
     qc.invalidateQueries()
     setConfirmClear(false)
   }
 
   async function handleExport() {
-    const [vs, us, s] = await Promise.all([
+    const [vs, us, s, targetAreas, checklist, comparison, savedComps, calcSnaps] = await Promise.all([
       viewingsApi.list(),
       upcomingApi.list(),
       settingsApi.get(),
+      targetAreasApi.list(),
+      blobs.get<any[]>('checklist'),
+      blobs.get<any[]>('comparison_items'),
+      blobs.get<any[]>('saved_comparisons'),
+      blobs.get<any[]>('calc_snapshots'),
     ])
-    const checklist   = JSON.parse(localStorage.getItem('kj_checklist_v2')      || '[]')
-    const comparison  = JSON.parse(localStorage.getItem('kj_comparison_items')  || '[]')
-    const savedComps  = JSON.parse(localStorage.getItem('kj_saved_comparisons') || '[]')
-    const calcSnaps   = JSON.parse(localStorage.getItem('kj_calc_snapshots')    || '[]')
 
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([s]),         'Settings')
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(vs),          'Viewings')
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(us),          'Upcoming')
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(checklist),   'Checklist')
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(comparison),  'Comparison')
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(savedComps),  'Saved Comparisons')
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(calcSnaps),   'Calculator')
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(checklist   ?? []), 'Checklist')
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(comparison  ?? []), 'Comparison')
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(savedComps  ?? []), 'Saved Comparisons')
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(calcSnaps   ?? []), 'Calculator')
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(targetAreas), 'Target Areas')
     XLSX.writeFile(wb, `keyjourney-${new Date().toISOString().slice(0,10)}.xlsx`)
   }
 
@@ -74,10 +75,7 @@ export default function Dashboard() {
 
       // Clear all existing data first
       await dataApi.clear()
-      localStorage.removeItem('kj_comparison_items')
-      localStorage.removeItem('kj_saved_comparisons')
-      localStorage.removeItem('kj_checklist_v2')
-      localStorage.removeItem('kj_calc_snapshots')
+      qc.removeQueries({ queryKey: ['blob'] })
 
       // Import settings
       if (settingsSheet) {
@@ -118,15 +116,28 @@ export default function Dashboard() {
 
       const calcSheet = wb.Sheets['Calculator']
 
-      // Restore localStorage sheets
+      // Restore blob data via API
       if (checklistSheet)
-        localStorage.setItem('kj_checklist_v2',      JSON.stringify(XLSX.utils.sheet_to_json(checklistSheet)))
+        await blobs.set('checklist',           XLSX.utils.sheet_to_json(checklistSheet))
       if (compSheet)
-        localStorage.setItem('kj_comparison_items',  JSON.stringify(XLSX.utils.sheet_to_json(compSheet)))
+        await blobs.set('comparison_items',    XLSX.utils.sheet_to_json(compSheet))
       if (savedCompSheet)
-        localStorage.setItem('kj_saved_comparisons', JSON.stringify(XLSX.utils.sheet_to_json(savedCompSheet)))
+        await blobs.set('saved_comparisons',   XLSX.utils.sheet_to_json(savedCompSheet))
       if (calcSheet)
-        localStorage.setItem('kj_calc_snapshots',    JSON.stringify(XLSX.utils.sheet_to_json(calcSheet)))
+        await blobs.set('calc_snapshots',      XLSX.utils.sheet_to_json(calcSheet))
+
+      // Import target areas via API
+      const areasSheet = wb.Sheets['Target Areas']
+      if (areasSheet) {
+        const rows = XLSX.utils.sheet_to_json<any>(areasSheet)
+        for (const r of rows) {
+          await targetAreasApi.add({
+            name:     r.name     || '',
+            priority: r.priority || 'Medium',
+            notes:    r.notes    || '',
+          })
+        }
+      }
 
       qc.invalidateQueries()
       setImportMsg('Import successful.')

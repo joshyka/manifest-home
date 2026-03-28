@@ -2,6 +2,8 @@
 -- Each user gets their own isolated data via Row Level Security
 
 -- Drop existing tables and policies cleanly
+DROP TABLE IF EXISTS user_blobs CASCADE;
+DROP TABLE IF EXISTS target_areas CASCADE;
 DROP TABLE IF EXISTS upcoming_viewings CASCADE;
 DROP TABLE IF EXISTS viewings CASCADE;
 DROP TABLE IF EXISTS settings CASCADE;
@@ -72,5 +74,37 @@ CREATE TABLE upcoming_viewings (
 ALTER TABLE upcoming_viewings ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Users manage own upcoming" ON upcoming_viewings
+  USING (user_id = auth.uid())
+  WITH CHECK (user_id = auth.uid());
+
+
+-- Target areas
+CREATE TABLE target_areas (
+  id TEXT PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  name TEXT DEFAULT '',
+  priority TEXT DEFAULT 'Medium',
+  notes TEXT DEFAULT '',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE target_areas ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users manage own target areas" ON target_areas
+  USING (user_id = auth.uid())
+  WITH CHECK (user_id = auth.uid());
+
+
+-- User blobs: generic per-user JSON storage (checklist, comparison, calc snapshots)
+CREATE TABLE user_blobs (
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  key TEXT NOT NULL,
+  data JSONB DEFAULT '[]',
+  PRIMARY KEY (user_id, key)
+);
+
+ALTER TABLE user_blobs ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users manage own blobs" ON user_blobs
   USING (user_id = auth.uid())
   WITH CHECK (user_id = auth.uid());
