@@ -104,6 +104,12 @@ VITE_APP_EMAIL=home@yourapp.app            # dummy email for PIN login
 
 ---
 
+## License
+
+Licensed under the [Apache License 2.0](LICENSE).
+
+---
+
 ## Data Storage
 
 - **Supabase PostgreSQL** — all app data (settings, viewings, upcoming), isolated per user
