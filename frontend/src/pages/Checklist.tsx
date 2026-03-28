@@ -23,33 +23,8 @@ const CATEGORIES = [
 ]
 
 const DEFAULT_TASKS: Omit<Task, 'id'>[] = [
-  // Finance
-  { label: 'Get lånelöfte from bank',                               status: 'todo', category: 'Finance & Loan', categoryColor: '#2E7D52', custom: false },
-  { label: 'Set savings target in the app',                         status: 'todo', category: 'Finance & Loan', categoryColor: '#2E7D52', custom: false },
-  { label: 'Calculate total cash needed (down + closing costs)',    status: 'todo', category: 'Finance & Loan', categoryColor: '#2E7D52', custom: false },
-  { label: 'Check lånelöfte expiry — renew if within 60 days',     status: 'todo', category: 'Finance & Loan', categoryColor: '#2E7D52', custom: false },
-  // Search
-  { label: 'Set up Hemnet saved search with alerts',                status: 'todo', category: 'Search',         categoryColor: '#3DAA6E', custom: false },
-  { label: 'Set up Booli saved search alerts',                      status: 'todo', category: 'Search',         categoryColor: '#3DAA6E', custom: false },
-  { label: 'Define must-haves vs nice-to-haves',                    status: 'todo', category: 'Search',         categoryColor: '#3DAA6E', custom: false },
-  { label: 'Research target neighbourhoods on Maps',                status: 'todo', category: 'Search',         categoryColor: '#3DAA6E', custom: false },
-  // Viewings
-  { label: 'Log every viewing in the app',                          status: 'todo', category: 'Viewings',       categoryColor: '#D4A853', custom: false },
-  { label: 'Add shortlisted apartments to Comparison',              status: 'todo', category: 'Viewings',       categoryColor: '#D4A853', custom: false },
-  { label: 'Check monthly costs in Calculator',                     status: 'todo', category: 'Viewings',       categoryColor: '#D4A853', custom: false },
-  { label: 'Research sold prices nearby on Booli',                  status: 'todo', category: 'Viewings',       categoryColor: '#D4A853', custom: false },
-  // Bidding
-  { label: 'Confirm lånelöfte valid before entering auction',       status: 'todo', category: 'Bidding',        categoryColor: '#E08C2C', custom: false },
-  { label: 'Set absolute max bid before auction starts',            status: 'todo', category: 'Bidding',        categoryColor: '#E08C2C', custom: false },
-  { label: 'Track all bid rounds in Viewings log',                  status: 'todo', category: 'Bidding',        categoryColor: '#E08C2C', custom: false },
-  // Closing
-  { label: 'Sign köpekontrakt (purchase contract)',                  status: 'todo', category: 'Closing',        categoryColor: '#2E7D52', custom: false },
-  { label: 'Pay handpenning (deposit, typically 10%)',              status: 'todo', category: 'Closing',        categoryColor: '#2E7D52', custom: false },
-  { label: 'Arrange remaining balance transfer',                    status: 'todo', category: 'Closing',        categoryColor: '#2E7D52', custom: false },
-  { label: 'Apply for lagfart (title deed registration)',           status: 'todo', category: 'Closing',        categoryColor: '#2E7D52', custom: false },
-  { label: 'Get home insurance before move-in',                     status: 'todo', category: 'Closing',        categoryColor: '#2E7D52', custom: false },
-  { label: 'Book moving company',                                   status: 'todo', category: 'Closing',        categoryColor: '#2E7D52', custom: false },
-  { label: 'Confirm tillträde (possession) date with seller',       status: 'todo', category: 'Closing',        categoryColor: '#2E7D52', custom: false },
+  { label: 'Get lånelöfte from bank',    status: 'todo', category: 'Finance & Loan', categoryColor: '#2E7D52', custom: false },
+  { label: 'Save 15% down payment',      status: 'todo', category: 'Finance & Loan', categoryColor: '#2E7D52', custom: false },
 ]
 
 const STORAGE_KEY = 'kj_checklist_v2'
