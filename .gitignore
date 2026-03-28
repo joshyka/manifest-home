@@ -1,15 +1,21 @@
 # Your data — contains savings amounts, loan details, viewings
 data/tracker.xlsx
 
-# Streamlit config and secrets
-.streamlit/
+# Secrets — never commit these
+.env
+frontend/.env.local
 
-# Python virtual environment
+# Python virtual environments
 .venv/
+backend/venv/
 
 # Python cache
 __pycache__/
 *.pyc
+
+# Node
+frontend/node_modules/
+frontend/dist/
 
 # macOS
 .DS_Store
