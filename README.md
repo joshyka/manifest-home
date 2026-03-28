@@ -9,11 +9,10 @@ A private home-buying tracker for the Swedish market. Track savings, log viewing
 | Layer | Tech |
 | --- | --- |
 | Frontend | React + TypeScript + Vite + Tailwind |
-| Backend | FastAPI (Python) |
+| Backend | FastAPI (Python) — serverless via Vercel |
 | Database | Supabase (PostgreSQL) |
 | Auth | Supabase Google OAuth |
-| Hosting (frontend) | Vercel |
-| Hosting (backend) | Render |
+| Hosting | Vercel (frontend + backend) |
 
 ---
 
@@ -38,34 +37,23 @@ A private home-buying tracker for the Swedish market. Track savings, log viewing
 
 1. Go to [supabase.com](https://supabase.com) → New project (free tier)
 2. In the SQL editor, paste and run **`supabase/schema.sql`**
-3. Under **Settings → API**, copy:
-   - Project URL
-   - `anon` public key
-   - `service_role` secret key
-   - JWT Secret
+3. Under **Authentication → Providers → Google** — enable Google login and add your OAuth credentials from [console.cloud.google.com](https://console.cloud.google.com)
+4. Under **Authentication → URL Configuration** — add `http://localhost:5173` and your Vercel URL to Redirect URLs
+5. Under **Project Settings → API**, copy your keys into `.env`
 
-### 2. Enable Google Auth in Supabase
+### 2. Configure environment variables
 
-1. Supabase dashboard → Authentication → Providers → Google → Enable
-2. Add your Google OAuth credentials (from [console.cloud.google.com](https://console.cloud.google.com))
-3. Add your site URL to **Redirect URLs**: `https://yoursite.vercel.app`
+Copy `.env` and fill in all values:
 
-### 3. Configure environment variables
-
-**Backend** (`.env` in project root):
 ```
 SUPABASE_URL=https://xxxx.supabase.co
-SUPABASE_SERVICE_KEY=eyJ...
-SUPABASE_JWT_SECRET=...
-ALLOWED_EMAILS=you@gmail.com,friend@gmail.com
-FRONTEND_URL=https://keyjourney.vercel.app
-```
+SUPABASE_SERVICE_KEY=eyJ...          # service_role key — backend only
+SUPABASE_JWT_SECRET=...              # Settings → API → JWT Secret
+ALLOWED_EMAILS=you@gmail.com         # comma-separated, or blank to allow all
+FRONTEND_URL=https://yourapp.vercel.app
 
-**Frontend** (`frontend/.env.local`):
-```
 VITE_SUPABASE_URL=https://xxxx.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJ...
-VITE_API_URL=         # blank for local dev; set to Render URL in production
+VITE_SUPABASE_ANON_KEY=eyJ...        # publishable/anon key — frontend safe
 ```
 
 ---
@@ -95,42 +83,39 @@ npm run dev
 
 ---
 
-## Deployment
+## Deployment (Vercel + Supabase)
 
-### Frontend → Vercel
+Both frontend and backend deploy together from the same repo — no separate backend hosting needed.
 
 1. Push repo to GitHub
-2. [vercel.com](https://vercel.com) → New Project → import repo → set **Root Directory** to `frontend`
-3. Add environment variables in Vercel:
+2. [vercel.com](https://vercel.com) → New Project → import repo → leave root directory as `/`
+3. Add all environment variables in Vercel project settings:
+   - `SUPABASE_URL`
+   - `SUPABASE_SERVICE_KEY`
+   - `SUPABASE_JWT_SECRET`
    - `VITE_SUPABASE_URL`
    - `VITE_SUPABASE_ANON_KEY`
-   - `VITE_API_URL` → your Render backend URL (e.g. `https://keyjourney-api.onrender.com`)
-4. Deploy — you'll get a URL like `keyjourney.vercel.app`
-
-### Backend → Render
-
-1. [render.com](https://render.com) → New Web Service → connect repo
-2. **Root directory**: `backend`
-3. **Build command**: `pip install -r requirements.txt`
-4. **Start command**: `uvicorn main:app --host 0.0.0.0 --port $PORT`
-5. Add environment variables: all keys from `.env`
-6. Free tier is fine (cold starts after 15 min idle — acceptable for personal use)
+4. Deploy — frontend and `/api/*` routes are handled automatically via `vercel.json`
 
 ---
 
 ## Access Control
 
-Set `ALLOWED_EMAILS` in the backend `.env` to a comma-separated list of Google account emails:
+Each user signs in with Google and only sees their own data (enforced by Supabase Row Level Security).
+
+Optionally restrict to specific accounts via `ALLOWED_EMAILS`:
+
+```env
+ALLOWED_EMAILS=you@gmail.com,partner@gmail.com
 ```
-ALLOWED_EMAILS=you@gmail.com,partner@gmail.com,friend@gmail.com
-```
-Any other Google account will be blocked with a 403. Leave blank to allow any Google account.
+
+Leave blank to allow any Google account.
 
 ---
 
 ## Data Storage
 
-- **Supabase PostgreSQL** — all app data (settings, viewings, upcoming)
+- **Supabase PostgreSQL** — all app data (settings, viewings, upcoming), isolated per user
 - **localStorage** — comparison boards and checklist (browser only)
 
 ---
@@ -139,9 +124,11 @@ Any other Google account will be blocked with a 403. Leave blank to allow any Go
 
 ```
 manifest-home/
+├── api/
+│   └── index.py             # Vercel Python serverless entry point
 ├── backend/
 │   ├── main.py              # FastAPI — all API endpoints
-│   └── requirements.txt
+│   └── requirements.txt     # Python deps for local dev
 ├── frontend/
 │   ├── src/
 │   │   ├── pages/           # Dashboard, Savings, Checklist, Viewings,
@@ -152,15 +139,17 @@ manifest-home/
 │   │   │   └── supabase.ts  # Supabase client (auth)
 │   │   ├── App.tsx          # Router + auth gate
 │   │   └── main.tsx
-│   ├── vercel.json          # SPA routing for Vercel
+│   ├── vercel.json          # SPA routing fallback
 │   ├── package.json
 │   └── vite.config.ts       # Proxies /api → localhost:8000 in dev
 ├── utils/
-│   ├── data.py              # All Supabase read/write operations
+│   ├── data.py              # All Supabase read/write operations (per user)
 │   ├── savings.py           # Projection calculations
 │   └── supabase_client.py   # Supabase client init
 ├── supabase/
 │   └── schema.sql           # Run once in Supabase SQL editor
-├── .env                     # Backend secrets (git-ignored)
+├── requirements.txt         # Python deps for Vercel
+├── vercel.json              # Vercel monorepo config (frontend + API)
+├── .env                     # All secrets (git-ignored)
 └── start.sh                 # One-command local launcher
 ```
