@@ -1,6 +1,6 @@
 # KeyJourney
 
-A home-buying tracker tool to track savings, log viewings, compare listings, run mortgage calculations, and manage your buying checklist — all in one place.
+Your personal home-buying command centre — track savings progress, log viewings, compare listings, calculate mortgage costs, and stay on top of every step in your journey.
 
 ---
 

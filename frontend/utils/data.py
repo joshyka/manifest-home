@@ -38,7 +38,7 @@ def load_settings(user_id: str) -> dict:
     try:
         settings["down_pct"] = float(settings["down_pct"])
     except (ValueError, TypeError):
-        settings["down_pct"] = 15.0
+        settings["down_pct"] = 10.0
     return settings
 
 

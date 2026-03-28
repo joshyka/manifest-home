@@ -17,7 +17,7 @@ import BidTracker from './pages/BidTracker'
 
 function App() {
   const [session, setSession]       = useState<Session | null | undefined>(undefined)
-  const [onboarded, setOnboarded]   = useState(false)
+  const [onboarded, setOnboarded]   = useState(() => localStorage.getItem('kj_onboarded') === '1')
   const [authorized, setAuthorized] = useState(false)
   const [denied, setDenied]         = useState(false)
 
@@ -66,7 +66,7 @@ function App() {
 
   if (!session) return <Login />
 
-  if (!onboarded) return <Onboarding onComplete={() => setOnboarded(true)} />
+  if (!onboarded) return <Onboarding onComplete={() => { localStorage.setItem('kj_onboarded', '1'); setOnboarded(true) }} />
 
   return (
     <Layout>

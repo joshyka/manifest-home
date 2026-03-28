@@ -20,7 +20,7 @@ export default function Onboarding({ onComplete }: Props) {
   const [p1Monthly,     setP1Monthly]     = useState('')
   const [p2Monthly,     setP2Monthly]     = useState('')
   const [aptPrice,      setAptPrice]      = useState('')
-  const [downPct,       setDownPct]       = useState('15')
+  const [downPct,       setDownPct]       = useState('10')
   const [loanAmount,    setLoanAmount]    = useState('')
   const [loanBank,      setLoanBank]      = useState('')
   const [loanExpiry,    setLoanExpiry]    = useState('')
@@ -42,7 +42,7 @@ export default function Onboarding({ onComplete }: Props) {
         p1_monthly:      parseInt(p1Monthly)  || 0,
         p2_monthly:      parseInt(p2Monthly)  || 0,
         apartment_price: parseInt(aptPrice)   || 0,
-        down_pct:        parseFloat(downPct)  || 15,
+        down_pct:        parseFloat(downPct)  || 10,
         loan_amount:     parseInt(loanAmount) || 0,
         loan_bank:       loanBank.trim(),
         loan_expiry:     loanExpiry,

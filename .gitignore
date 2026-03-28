@@ -1,21 +1,46 @@
-# Your data — contains savings amounts, loan details, viewings
-data/tracker.xlsx
-
 # Secrets — never commit these
 .env
+.env.local
+.env*.local
 frontend/.env.local
+frontend/.env
 
 # Python virtual environments
 .venv/
+venv/
 backend/venv/
+frontend/venv/
 
 # Python cache
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+.Python
 
 # Node
+node_modules/
 frontend/node_modules/
 frontend/dist/
+frontend/.vite/
+
+# Build output
+dist/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
 
 # macOS
 .DS_Store
+Thumbs.db
+
+# Vercel
+.vercel

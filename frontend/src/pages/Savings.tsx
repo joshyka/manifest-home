@@ -141,9 +141,9 @@ export default function Savings() {
             {[
               ['Apartment Target Price', `${fmt(s.apartment_price)} kr`],
               ['Down Payment %', `${s.down_pct}%  —  target ${fmt(target)} kr`],
-              [`${s.p1_name || 'Person 1'} — Current Savings`, `${fmt(s.p1_current)} kr`],
+              [`${s.p1_name || 'Person 1'} — Total Savings`, `${fmt(s.p1_current)} kr`],
               [`${s.p1_name || 'Person 1'} — Monthly Savings`, `${fmt(s.p1_monthly)} kr`],
-              [`${s.p2_name || 'Person 2'} — Current Savings`, `${fmt(s.p2_current)} kr`],
+              [`${s.p2_name || 'Person 2'} — Total Savings`, `${fmt(s.p2_current)} kr`],
               [`${s.p2_name || 'Person 2'} — Monthly Savings`, `${fmt(s.p2_monthly)} kr`],
               ['Lånelöfte Amount', s.loan_amount ? `${fmt(s.loan_amount)} kr` : 'Not entered'],
               ['Lånelöfte Expiry', s.loan_expiry && s.loan_expiry !== 'nan' ? s.loan_expiry : 'Not entered'],
@@ -181,7 +181,7 @@ export default function Savings() {
                 <label className="label">Down Payment %</label>
                 <input
                   type="number" className="input" min={10} max={50} step={0.5}
-                  placeholder="e.g. 15"
+                  placeholder="e.g. 10"
                   value={form.down_pct || ''}
                   onChange={e => set('down_pct', parseFloat(e.target.value) || 10)}
                 />
@@ -202,7 +202,7 @@ export default function Savings() {
                   onChange={e => set('p1_name', e.target.value)} />
               </div>
               <div>
-                <label className="label">{form.p1_name || 'Person 1'} — Current Savings</label>
+                <label className="label">{form.p1_name || 'Person 1'} — Total Savings</label>
                 <input type="number" className="input" min={0} step={10000} placeholder="e.g. 150000"
                   value={form.p1_current || ''}
                   onChange={e => set('p1_current', parseInt(e.target.value) || 0)} />
@@ -219,7 +219,7 @@ export default function Savings() {
                   onChange={e => set('p2_name', e.target.value)} />
               </div>
               <div>
-                <label className="label">{form.p2_name || 'Person 2'} — Current Savings</label>
+                <label className="label">{form.p2_name || 'Person 2'} — Total Savings</label>
                 <input type="number" className="input" min={0} step={10000} placeholder="e.g. 150000"
                   value={form.p2_current || ''}
                   onChange={e => set('p2_current', parseInt(e.target.value) || 0)} />

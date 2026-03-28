@@ -26,8 +26,6 @@ interface CalcResult {
   ltv: number
   downPayment: number
   monthlyInterestGross: number
-  taxRelief: number
-  monthlyInterestNet: number
   amortisationRate: number
   monthlyAmortisation: number
   extraAmortisationRate: number
@@ -55,18 +53,6 @@ function calculate(
   // Monthly interest (gross)
   const monthlyInterestGross = Math.round(loanAmount * (interestRate / 100) / 12)
 
-  // Ränteavdrag (Swedish interest tax deduction)
-  // 30% deduction on annual interest up to 100,000 kr, 21% above that
-  const annualInterest = loanAmount * (interestRate / 100)
-  let annualTaxRelief: number
-  if (annualInterest <= 100_000) {
-    annualTaxRelief = annualInterest * 0.30
-  } else {
-    annualTaxRelief = 100_000 * 0.30 + (annualInterest - 100_000) * 0.21
-  }
-  const taxRelief           = Math.round(annualTaxRelief / 12)
-  const monthlyInterestNet  = monthlyInterestGross - taxRelief
-
   // Amortisation (Finansinspektionen rules)
   let amortisationRate = 0
   if (ltv > 70) amortisationRate = 2
@@ -82,7 +68,7 @@ function calculate(
   const monthlyAmortisation      = Math.round(loanAmount * (amortisationRate / 100) / 12)
   const monthlyExtraAmortisation = Math.round(loanAmount * (extraAmortisationRate / 100) / 12)
 
-  const totalMonthly = monthlyInterestNet + monthlyAmortisation + monthlyExtraAmortisation + avgift + drift
+  const totalMonthly = monthlyInterestGross + monthlyAmortisation + monthlyExtraAmortisation + avgift + drift
 
   // Loan-to-income ratio
   const loanToIncome = grossAnnualIncome > 0 ? loanAmount / grossAnnualIncome : 0
@@ -99,7 +85,7 @@ function calculate(
 
   return {
     loanAmount, ltv, downPayment,
-    monthlyInterestGross, taxRelief, monthlyInterestNet,
+    monthlyInterestGross,
     amortisationRate, monthlyAmortisation,
     extraAmortisationRate, monthlyExtraAmortisation,
     totalMonthly, loanToIncome, stressTestMonthly, affordability,
@@ -154,7 +140,7 @@ export default function Calculator() {
   const [downPct,     setDownPct]     = useState(10)
   const [rate,        setRate]        = useState(3.5)
   const [avgift,      setAvgift]      = useState(0)
-  const [drift,       setDrift]       = useState(3000)
+  const [drift,       setDrift]       = useState(1500)
   const [income,      setIncome]      = useState(0)
   const [useOwn,      setUseOwn]      = useState(false)
   const [snapshots, saveSnapshots] = useBlob<Snapshot[]>('calc_snapshots', [])
@@ -181,7 +167,7 @@ export default function Calculator() {
   function loadFromSettings() {
     if (!savedSettings) return
     setPrice(savedSettings.apartment_price || 0)
-    setDownPct(savedSettings.down_pct || 15)
+    setDownPct(savedSettings.down_pct || 10)
     const combined = (savedSettings.p1_monthly || 0) + (savedSettings.p2_monthly || 0)
     setIncome(Math.round(combined * 2.5)) // rough estimate
     setUseOwn(true)
@@ -289,19 +275,9 @@ export default function Calculator() {
                 <div className="section-label mb-2">Monthly Cost Breakdown</div>
 
                 <Row
-                  label="Gross interest"
+                  label="Interest"
                   sub={`${rate}% on ${fmt(result.loanAmount)} kr`}
                   value={`${fmt(result.monthlyInterestGross)} kr`}
-                />
-                <Row
-                  label="Ränteavdrag (tax deduction)"
-                  sub="30% relief on first 100k kr interest, 21% above"
-                  value={`− ${fmt(result.taxRelief)} kr`}
-                  green
-                />
-                <Row
-                  label="Net interest"
-                  value={`${fmt(result.monthlyInterestNet)} kr`}
                 />
                 <Row
                   label="Amortisation"
@@ -333,7 +309,7 @@ export default function Calculator() {
                 <div className="flex justify-between items-center mt-3 pt-4 border-t-2 border-gray-100">
                   <div>
                     <div className="font-black text-gray-900 text-sm">Total monthly cost</div>
-                    <div className="text-[11px] text-gray-400">After ränteavdrag</div>
+                    <div className="text-[11px] text-gray-400">Interest + amortisation + fees</div>
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="text-2xl font-black text-teal-600 tabular-nums">
@@ -381,10 +357,6 @@ export default function Calculator() {
                       {result.ltv > 70 ? '2%/year (LTV > 70%)' : result.ltv > 50 ? '1%/year (LTV 50–70%)' : 'None (LTV < 50%)'}
                       {result.extraAmortisationRate > 0 ? ' + 1%/year (loan > 4.5× income)' : ''}
                     </span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="font-bold shrink-0">Ränteavdrag:</span>
-                    <span>30% tax deduction on interest up to 100,000 kr/year, 21% above</span>
                   </div>
                   <div className="flex items-start gap-2">
                     <span className="font-bold shrink-0">Kvar-att-leva-på:</span>

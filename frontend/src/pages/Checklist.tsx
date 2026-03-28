@@ -35,7 +35,7 @@ interface Task {
 
 const DEFAULT_TASKS: Task[] = [
   { id: 'default-1', label: 'Get lånelöfte from bank', status: 'todo', category: 'Finance & Loan', categoryColor: '#2E7D52', custom: false },
-  { id: 'default-2', label: 'Save 15% down payment',   status: 'todo', category: 'Finance & Loan', categoryColor: '#2E7D52', custom: false },
+  { id: 'default-2', label: 'Save 10% down payment',   status: 'todo', category: 'Finance & Loan', categoryColor: '#2E7D52', custom: false },
 ]
 
 // ── Column config ─────────────────────────────────────────────────────────────
