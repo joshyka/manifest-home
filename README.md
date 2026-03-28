@@ -20,58 +20,22 @@ A home-buying tracker tool to track savings, log viewings, compare listings, run
 
 | Page | Purpose |
 | --- | --- |
-| Dashboard | Savings overview, KPIs, loan status, upcoming viewings |
-| Savings | Track savings targets, monthly contributions and projection chart |
-| Checklist | Kanban board (To Do / In Progress / Done) with custom categories |
-| Viewings | Log apartments viewed, upcoming reminders, bidding history |
-| Bid Tracker | All bidding attempts in a table — rounds, highest bid, your bid |
-| Comparison | Compare listings from Hemnet, Booli, etc. side by side |
-| Calculator | Swedish mortgage calculator (ränteavdrag, amortering, stress test) |
-| Maps | Directions and nearby amenities (transit, gym, grocery, etc.) |
+| Dashboard | KPIs, savings progress, loan status, upcoming viewings |
+| Savings | Monthly contributions and projection chart |
+| Checklist | Kanban board with custom categories |
+| Viewings | Log viewed apartments and upcoming reminders |
+| Bid Tracker | Bidding history — rounds, highest bid, your bid |
+| Comparison | Compare listings side by side |
+| Calculator | Swedish mortgage calculator with stress test |
+| Maps | Directions and nearby amenities |
 
 ## Features
 
-- Onboarding wizard on first login with option to skip to dashboard
-- Mobile responsive — sidebar on desktop, hamburger drawer on mobile
-- Quick-add viewing FAB button on mobile
+- Onboarding wizard on first login
 - Delete confirmations on all destructive actions
-- Per-user data isolation via Supabase Row Level Security
-- PIN login for shared household account + Google OAuth for individual accounts
-- Access control via `ALLOWED_EMAILS` — unauthorised users are blocked and redirected
-- Calculator snapshots saved to Excel export/import
-
----
-
-## One-time Setup
-
-### 1. Create a Supabase project
-
-1. Go to [supabase.com](https://supabase.com) → New project (free tier)
-2. In the SQL editor, paste and run **`supabase/schema.sql`**
-3. Under **Authentication → Providers → Email** — ensure email/password is enabled
-4. Under **Authentication → Providers → Google** — enable and paste Google OAuth Client ID and Secret
-5. Under **Project Settings → API**, copy your keys into `.env`
-
-### 2. Create the app user
-
-In the Supabase dashboard → **Authentication → Users → Add user**:
-- Email: any dummy email (e.g. `home@yourapp.app`)
-- Password: your PIN (letters + numbers, min 8 chars)
-
-### 3. Configure environment variables
-
-Fill in `.env`:
-
-```env
-SUPABASE_URL=https://xxxx.supabase.co
-SUPABASE_SERVICE_KEY=sb_secret_...     # service_role key — backend only
-FRONTEND_URL=https://yourapp.vercel.app
-ALLOWED_EMAILS=you@gmail.com,friend@gmail.com  # comma-separated, leave blank to allow all
-
-VITE_SUPABASE_URL=https://xxxx.supabase.co
-VITE_SUPABASE_ANON_KEY=sb_publishable_...  # anon/publishable key — frontend safe
-VITE_APP_EMAIL=home@yourapp.app            # dummy email for PIN login
-```
+- Per-user data isolation via Supabase RLS
+- PIN login or Google OAuth with email allowlist
+- Export/import all data as Excel (including calculator snapshots)
 
 ---
 
@@ -81,13 +45,34 @@ VITE_APP_EMAIL=home@yourapp.app            # dummy email for PIN login
 ./start.sh
 ```
 
-Then open **http://localhost:5173**
+Then open [http://localhost:5173](http://localhost:5173)
 
 ---
 
-## Deployment (Vercel + Supabase)
+## One-time Setup
 
-Both frontend and backend deploy together from the same repo.
+### Supabase
+
+1. Go to [supabase.com](https://supabase.com) → New project (free tier)
+2. In the SQL editor, paste and run **`supabase/schema.sql`**
+3. Under **Authentication → Providers → Email** — ensure email/password is enabled
+4. Under **Authentication → Users → Add user** → enter a dummy email (e.g. `home@yourapp.app`) and your PIN as password
+5. Under **Project Settings → API**, copy your keys into `.env`
+
+### Google Auth
+
+1. Go to [console.cloud.google.com](https://console.cloud.google.com) → Google Auth Platform → Get started → fill in app name → External audience
+2. Clients → Create Client → Web application → add Supabase callback URL as Authorised redirect URI:
+   `https://xxxx.supabase.co/auth/v1/callback`
+3. Copy **Client ID** and **Client Secret** → Supabase → Authentication → Providers → Google → enable → paste → save
+
+> **Note:** The Google sign-in screen will show `xxxx.supabase.co` as the redirect domain — this is normal and safe. Custom branding requires a custom domain and can be skipped for a private app.
+
+---
+
+## Deployment
+
+### Vercel
 
 1. Push repo to GitHub
 2. [vercel.com](https://vercel.com) → New Project → import repo
@@ -101,6 +86,21 @@ Both frontend and backend deploy together from the same repo.
    - `VITE_SUPABASE_ANON_KEY`
    - `VITE_APP_EMAIL`
 5. Deploy — frontend and `/api/*` routes are handled automatically
+
+### Environment Variables
+
+Fill in `.env`:
+
+```env
+SUPABASE_URL=https://xxxx.supabase.co
+SUPABASE_SERVICE_KEY=sb_secret_...     # service_role key — backend only
+FRONTEND_URL=https://yourapp.vercel.app
+ALLOWED_EMAILS=you@gmail.com,friend@gmail.com,home@yourapp.app  # include PIN account email too; leave blank to allow all
+
+VITE_SUPABASE_URL=https://xxxx.supabase.co
+VITE_SUPABASE_ANON_KEY=sb_publishable_...  # anon/publishable key — frontend safe
+VITE_APP_EMAIL=home@yourapp.app            # dummy email for PIN login
+```
 
 ---
 
