@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { Session } from '@supabase/supabase-js'
 import { supabase } from './lib/supabase'
+import { settings as settingsApi } from './lib/api'
 import Layout from './components/Layout'
 import Onboarding from './components/Onboarding'
 import Login from './pages/Login'
@@ -15,8 +16,10 @@ import Checklist from './pages/Checklist'
 import BidTracker from './pages/BidTracker'
 
 function App() {
-  const [session, setSession] = useState<Session | null | undefined>(undefined)
-  const [onboarded, setOnboarded] = useState(false)
+  const [session, setSession]       = useState<Session | null | undefined>(undefined)
+  const [onboarded, setOnboarded]   = useState(false)
+  const [authorized, setAuthorized] = useState(false)
+  const [denied, setDenied]         = useState(false)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session))
@@ -24,8 +27,37 @@ function App() {
     return () => subscription.unsubscribe()
   }, [])
 
+  useEffect(() => {
+    if (!session) { setAuthorized(false); setDenied(false); return }
+    settingsApi.get()
+      .then(() => setAuthorized(true))
+      .catch(() => setDenied(true))
+  }, [session])
+
+  useEffect(() => {
+    if (!denied) return
+    const t = setTimeout(async () => {
+      await supabase.auth.signOut()
+      setDenied(false)
+    }, 3000)
+    return () => clearTimeout(t)
+  }, [denied])
+
+  if (denied) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4"
+           style={{ background: 'linear-gradient(135deg, #1E5C3A 0%, #2E7D52 60%, #3DAA6E 100%)' }}>
+        <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-xs text-center space-y-3">
+          <div className="text-3xl">🚫</div>
+          <h2 className="text-lg font-black text-gray-900">403 — Access Denied</h2>
+          <p className="text-xs text-gray-300">Redirecting to login…</p>
+        </div>
+      </div>
+    )
+  }
+
   // Loading
-  if (session === undefined) {
+  if (session === undefined || (session && !authorized)) {
     return (
       <div className="min-h-screen bg-forest-50 flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin" />

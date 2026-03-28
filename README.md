@@ -11,7 +11,7 @@ A home-buying tracker tool to track savings, log viewings, compare listings, run
 | Frontend | React + TypeScript + Vite + Tailwind |
 | Backend | FastAPI (Python) — serverless via Vercel |
 | Database | Supabase (PostgreSQL) |
-| Auth | Supabase email/password (PIN login) |
+| Auth | Supabase — PIN login or Google OAuth |
 | Hosting | Vercel (frontend + backend) |
 
 ---
@@ -36,6 +36,9 @@ A home-buying tracker tool to track savings, log viewings, compare listings, run
 - Quick-add viewing FAB button on mobile
 - Delete confirmations on all destructive actions
 - Per-user data isolation via Supabase Row Level Security
+- PIN login for shared household account + Google OAuth for individual accounts
+- Access control via `ALLOWED_EMAILS` — unauthorised users are blocked and redirected
+- Calculator snapshots saved to Excel export/import
 
 ---
 
@@ -46,7 +49,8 @@ A home-buying tracker tool to track savings, log viewings, compare listings, run
 1. Go to [supabase.com](https://supabase.com) → New project (free tier)
 2. In the SQL editor, paste and run **`supabase/schema.sql`**
 3. Under **Authentication → Providers → Email** — ensure email/password is enabled
-4. Under **Project Settings → API**, copy your keys into `.env`
+4. Under **Authentication → Providers → Google** — enable and paste Google OAuth Client ID and Secret
+5. Under **Project Settings → API**, copy your keys into `.env`
 
 ### 2. Create the app user
 
@@ -61,12 +65,12 @@ Fill in `.env`:
 ```env
 SUPABASE_URL=https://xxxx.supabase.co
 SUPABASE_SERVICE_KEY=sb_secret_...     # service_role key — backend only
-ALLOWED_EMAILS=                        # comma-separated emails, or blank to allow all
 FRONTEND_URL=https://yourapp.vercel.app
+ALLOWED_EMAILS=you@gmail.com,friend@gmail.com  # comma-separated, leave blank to allow all
 
 VITE_SUPABASE_URL=https://xxxx.supabase.co
 VITE_SUPABASE_ANON_KEY=sb_publishable_...  # anon/publishable key — frontend safe
-VITE_APP_EMAIL=home@yourapp.app            # the email you created above
+VITE_APP_EMAIL=home@yourapp.app            # dummy email for PIN login
 ```
 
 ---
@@ -91,8 +95,8 @@ Both frontend and backend deploy together from the same repo.
 4. Add all environment variables in Vercel project settings:
    - `SUPABASE_URL`
    - `SUPABASE_SERVICE_KEY`
-   - `ALLOWED_EMAILS`
    - `FRONTEND_URL`
+   - `ALLOWED_EMAILS`
    - `VITE_SUPABASE_URL`
    - `VITE_SUPABASE_ANON_KEY`
    - `VITE_APP_EMAIL`

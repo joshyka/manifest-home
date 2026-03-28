@@ -22,6 +22,9 @@ async function request<T>(path: string, opts?: RequestInit): Promise<T> {
     window.location.href = '/'
     throw new Error('Session expired')
   }
+  if (res.status === 403) {
+    throw new Error('403')
+  }
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }))
     throw new Error(err.detail ?? 'Request failed')
