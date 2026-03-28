@@ -55,7 +55,7 @@ export default function Login() {
             />
             <button
               type="submit"
-              disabled={loading || pin.length < 4}
+              disabled={loading}
               className="w-full py-3 rounded-2xl text-sm font-semibold text-white transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               style={{ background: 'linear-gradient(135deg, #1E5C3A, #2E7D52)' }}
             >
