@@ -120,6 +120,7 @@ export const viewings = {
     outcome?: string
     num_bid_rounds?: number
     final_price?: string
+    my_bid?: string
     notes?: string
   }) =>
     request<{ ok: boolean; id: string }>('/viewings', {

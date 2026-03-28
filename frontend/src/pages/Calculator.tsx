@@ -162,7 +162,7 @@ export default function Calculator() {
           <h1 className="text-2xl font-black text-gray-900">Cost Calculator</h1>
           <p className="text-sm text-gray-400 mt-0.5">Swedish mortgage costs for Stockholm apartments</p>
         </div>
-        {savedSettings?.apartment_price > 0 && !useOwn && (
+        {(savedSettings?.apartment_price ?? 0) > 0 && !useOwn && (
           <button className="btn-secondary text-xs" onClick={loadFromSettings}>
             Load from my settings
           </button>
