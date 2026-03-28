@@ -1,14 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { viewings as viewingsApi, upcoming as upcomingApi } from '../lib/api'
 import type { Viewing } from '../lib/api'
 import Alert from '../components/Alert'
 import { Plus, X, Trash2, ChevronDown, ChevronUp, Clock, Pencil, Check } from 'lucide-react'
 
 // ── Listings tab ─────────────────────────────────────────────────────────────
-function ListingsTab() {
+function ListingsTab({ autoOpen }: { autoOpen: boolean }) {
   const qc = useQueryClient()
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(autoOpen)
   const [showArchived, setShowArchived] = useState(false)
   const [label, setLabel] = useState('')
   const [url, setUrl] = useState('')
@@ -18,6 +19,8 @@ function ListingsTab() {
   const [myBid, setMyBid]     = useState('')
   const [saved, setSaved]     = useState(false)
   const [err, setErr]         = useState('')
+
+  const [confirmArchiveId, setConfirmArchiveId] = useState<string | null>(null)
 
   // Inline edit state
   const [editId,    setEditId]    = useState<string | null>(null)
@@ -237,13 +240,23 @@ function ListingsTab() {
                     >
                       <Pencil size={13} />
                     </button>
-                    <button
-                      onClick={() => archiveMutation.mutate(v.id)}
-                      className="text-xs text-gray-400 hover:text-red-500 transition-colors"
-                      title="Remove listing"
-                    >
-                      <Trash2 size={13} />
-                    </button>
+                    {confirmArchiveId === v.id ? (
+                      <div className="flex items-center gap-1">
+                        <span className="text-[11px] text-red-500 font-medium">Remove?</span>
+                        <button onClick={() => { archiveMutation.mutate(v.id); setConfirmArchiveId(null) }}
+                          className="text-[11px] font-bold text-red-500 hover:text-red-600">Yes</button>
+                        <button onClick={() => setConfirmArchiveId(null)}
+                          className="text-[11px] font-bold text-gray-400 hover:text-gray-600">No</button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setConfirmArchiveId(v.id)}
+                        className="text-xs text-gray-400 hover:text-red-500 transition-colors"
+                        title="Remove listing"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -350,6 +363,7 @@ function UpcomingTab() {
   const [saved, setSaved] = useState(false)
   const [err, setErr] = useState('')
   const [showPast, setShowPast] = useState(false)
+  const [confirmRemoveId, setConfirmRemoveId] = useState<string | null>(null)
 
   const { data: list = [] } = useQuery({ queryKey: ['upcoming'], queryFn: upcomingApi.list })
 
@@ -453,13 +467,23 @@ function UpcomingTab() {
                   <div className="text-xs font-bold text-teal-700 mt-1">{daysAway(u.datetime)}</div>
                 )}
               </div>
-              <button
-                onClick={() => removeMutation.mutate(u.id)}
-                className="text-gray-300 hover:text-red-400 transition-colors"
-                title="Remove reminder"
-              >
-                <X size={16} />
-              </button>
+              {confirmRemoveId === u.id ? (
+                <div className="flex items-center gap-1 shrink-0">
+                  <span className="text-[11px] text-red-500 font-medium">Remove?</span>
+                  <button onClick={() => { removeMutation.mutate(u.id); setConfirmRemoveId(null) }}
+                    className="text-[11px] font-bold text-red-500 hover:text-red-600">Yes</button>
+                  <button onClick={() => setConfirmRemoveId(null)}
+                    className="text-[11px] font-bold text-gray-400 hover:text-gray-600">No</button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setConfirmRemoveId(u.id)}
+                  className="text-gray-300 hover:text-red-400 transition-colors"
+                  title="Remove reminder"
+                >
+                  <X size={16} />
+                </button>
+              )}
             </div>
           ))}
         </div>
@@ -486,12 +510,22 @@ function UpcomingTab() {
                       <span className="font-medium text-gray-700">{u.address}</span>
                       <span className="text-gray-400 ml-2">— {dtStr}</span>
                     </div>
-                    <button
-                      onClick={() => removeMutation.mutate(u.id)}
-                      className="text-gray-300 hover:text-red-400 transition-colors"
-                    >
-                      <X size={14} />
-                    </button>
+                    {confirmRemoveId === u.id ? (
+                      <div className="flex items-center gap-1">
+                        <span className="text-[11px] text-red-500 font-medium">Remove?</span>
+                        <button onClick={() => { removeMutation.mutate(u.id); setConfirmRemoveId(null) }}
+                          className="text-[11px] font-bold text-red-500 hover:text-red-600">Yes</button>
+                        <button onClick={() => setConfirmRemoveId(null)}
+                          className="text-[11px] font-bold text-gray-400 hover:text-gray-600">No</button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setConfirmRemoveId(u.id)}
+                        className="text-gray-300 hover:text-red-400 transition-colors"
+                      >
+                        <X size={14} />
+                      </button>
+                    )}
                   </div>
                 )
               })}
@@ -506,6 +540,15 @@ function UpcomingTab() {
 // ── Main component ────────────────────────────────────────────────────────────
 export default function Viewings() {
   const [tab, setTab] = useState<'listings' | 'upcoming'>('listings')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [autoOpen, setAutoOpen] = useState(false)
+
+  useEffect(() => {
+    if (searchParams.get('add') === '1') {
+      setAutoOpen(true)
+      setSearchParams({}, { replace: true })
+    }
+  }, [])
 
   return (
     <div className="space-y-6">
@@ -532,7 +575,7 @@ export default function Viewings() {
         ))}
       </div>
 
-      {tab === 'listings' ? <ListingsTab /> : <UpcomingTab />}
+      {tab === 'listings' ? <ListingsTab autoOpen={autoOpen} /> : <UpcomingTab />}
     </div>
   )
 }

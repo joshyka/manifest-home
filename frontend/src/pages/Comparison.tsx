@@ -69,13 +69,15 @@ function StarRating({ value, onChange }: { value: number; onChange: (v: number) 
 
 // ── Listing card ──────────────────────────────────────────────────────────────
 function ListingCard({
-  item, rank, onRemove, onUpdate, isBest,
+  item, rank, onRemove, onUpdate, isBest, confirmRemoveId, setConfirmRemoveId,
 }: {
   item: CompItem
   rank: number
   onRemove: () => void
   onUpdate: (id: string, key: keyof CompItem, val: any) => void
   isBest: boolean
+  confirmRemoveId: string | null
+  setConfirmRemoveId: (id: string | null) => void
 }) {
   const monthly    = monthlyMortgage(item.price, item.avgift)
   const pricePerSqm = item.sqm > 0 ? Math.round(item.price / item.sqm) : 0
@@ -91,12 +93,22 @@ function ListingCard({
       )}
 
       {/* Remove */}
-      <button
-        onClick={onRemove}
-        className="absolute top-3 right-3 text-gray-200 hover:text-red-400 transition-colors"
-      >
-        <X size={14} />
-      </button>
+      {confirmRemoveId === item.id ? (
+        <div className="absolute top-3 right-3 flex items-center gap-1">
+          <span className="text-[11px] text-red-500 font-medium">Remove?</span>
+          <button onClick={() => { onRemove(); setConfirmRemoveId(null) }}
+            className="text-[11px] font-bold text-red-500 hover:text-red-600">Yes</button>
+          <button onClick={() => setConfirmRemoveId(null)}
+            className="text-[11px] font-bold text-gray-400 hover:text-gray-600">No</button>
+        </div>
+      ) : (
+        <button
+          onClick={() => setConfirmRemoveId(item.id)}
+          className="absolute top-3 right-3 text-gray-200 hover:text-red-400 transition-colors"
+        >
+          <X size={14} />
+        </button>
+      )}
 
       {/* Name */}
       <div className="font-bold text-gray-900 text-sm leading-snug pr-4">{item.name}</div>
@@ -312,7 +324,9 @@ export default function Comparison() {
   const [saveName,     setSaveName]     = useState('')
   const [showSaveBox,  setShowSaveBox]  = useState(false)
   const [showHistory,  setShowHistory]  = useState(false)
-  const [confirmClear, setConfirmClear] = useState(false)
+  const [confirmClear,    setConfirmClear]    = useState(false)
+  const [confirmRemoveId, setConfirmRemoveId] = useState<string | null>(null)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
 
   // Persist to localStorage
   useEffect(() => {
@@ -483,6 +497,8 @@ export default function Comparison() {
                 onRemove={() => removeItem(item.id)}
                 onUpdate={updateItem}
                 isBest={item.id === bestId && items.length > 1}
+                confirmRemoveId={confirmRemoveId}
+                setConfirmRemoveId={setConfirmRemoveId}
               />
             ))}
           </div>
@@ -549,12 +565,22 @@ export default function Comparison() {
                   >
                     <RotateCcw size={11} /> Load
                   </button>
-                  <button
-                    onClick={() => deleteSnapshot(snap.id)}
-                    className="shrink-0 text-gray-300 hover:text-red-400 transition-colors"
-                  >
-                    <X size={14} />
-                  </button>
+                  {confirmDeleteId === snap.id ? (
+                    <div className="flex items-center gap-1 shrink-0">
+                      <span className="text-[11px] text-red-500 font-medium">Delete?</span>
+                      <button onClick={() => { deleteSnapshot(snap.id); setConfirmDeleteId(null) }}
+                        className="text-[11px] font-bold text-red-500 hover:text-red-600">Yes</button>
+                      <button onClick={() => setConfirmDeleteId(null)}
+                        className="text-[11px] font-bold text-gray-400 hover:text-gray-600">No</button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setConfirmDeleteId(snap.id)}
+                      className="shrink-0 text-gray-300 hover:text-red-400 transition-colors"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
                 </div>
               ))}
             </div>

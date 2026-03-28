@@ -20,14 +20,22 @@ A home-buying tracker tool to track savings, log viewings, compare listings, run
 
 | Page | Purpose |
 | --- | --- |
-| Dashboard | Savings overview, KPIs, upcoming viewings |
-| Savings | Track savings targets and monthly contributions |
+| Dashboard | Savings overview, KPIs, loan status, upcoming viewings |
+| Savings | Track savings targets, monthly contributions and projection chart |
 | Checklist | Kanban board (To Do / In Progress / Done) with custom categories |
 | Viewings | Log apartments viewed, upcoming reminders, bidding history |
 | Bid Tracker | All bidding attempts in a table — rounds, highest bid, your bid |
 | Comparison | Compare listings from Hemnet, Booli, etc. side by side |
 | Calculator | Swedish mortgage calculator (ränteavdrag, amortering, stress test) |
 | Maps | Directions and nearby amenities (transit, gym, grocery, etc.) |
+
+## Features
+
+- Onboarding wizard on first login with option to skip to dashboard
+- Mobile responsive — sidebar on desktop, hamburger drawer on mobile
+- Quick-add viewing FAB button on mobile
+- Delete confirmations on all destructive actions
+- Per-user data isolation via Supabase Row Level Security
 
 ---
 

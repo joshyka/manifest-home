@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, PiggyBank, Calendar, Map, Calculator, GitCompare, CheckSquare, Gavel, LogOut, Menu, X } from 'lucide-react'
+import { NavLink, useNavigate } from 'react-router-dom'
+import { LayoutDashboard, PiggyBank, Calendar, Map, Calculator, GitCompare, CheckSquare, Gavel, LogOut, Menu, X, Plus } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { dashboard } from '../lib/api'
 import { supabase } from '../lib/supabase'
@@ -111,6 +111,7 @@ function SidebarContents({ pct, current, target, p1, p2, onNav }: {
 
 export default function Layout({ children }: Props) {
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const navigate = useNavigate()
   const { data } = useQuery({ queryKey: ['dashboard'], queryFn: dashboard.get })
 
   const p1 = data?.settings?.p1_name || ''
@@ -174,11 +175,24 @@ export default function Layout({ children }: Props) {
       )}
 
       {/* Main */}
-      <main className="flex-1 min-w-0 overflow-auto pt-14 md:pt-0">
-        <div className="max-w-6xl mx-auto px-4 md:px-8 py-6 md:py-8 animate-fade-in">
+      <main className="flex-1 min-w-0 flex flex-col overflow-auto pt-14 md:pt-0">
+        <div className="flex-1 max-w-6xl w-full mx-auto px-4 md:px-8 py-6 md:py-8 animate-fade-in">
           {children}
         </div>
+        <div className="text-center text-xs text-gray-400 py-4 border-t border-gray-100">
+          © 2026 KeyJourney
+        </div>
       </main>
+
+      {/* FAB — mobile only */}
+      <button
+        className="md:hidden fixed bottom-6 right-5 z-40 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-transform active:scale-95"
+        style={{ background: 'linear-gradient(135deg, #1E5C3A, #3DAA6E)' }}
+        onClick={() => navigate('/viewings?add=1')}
+        title="Add viewing"
+      >
+        <Plus size={26} className="text-white" />
+      </button>
 
     </div>
   )

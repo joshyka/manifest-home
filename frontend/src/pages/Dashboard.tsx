@@ -6,14 +6,14 @@ import Alert from '../components/Alert'
 import SavingsChart from '../components/SavingsChart'
 import { Clock, Trash2 } from 'lucide-react'
 
-function formatDaysAway(dt: string): { label: string; text: string } {
+function formatDaysAway(dt: string): string {
   const d = new Date(dt)
   const now = new Date()
   const days = Math.round((d.getTime() - now.getTime()) / 86_400_000)
-  if (days < 0) return { label: 'Past', text: 'past' }
-  if (days === 0) return { label: 'Today', text: 'today' }
-  if (days === 1) return { label: 'Tomorrow', text: 'tomorrow' }
-  return { label: `${days}d`, text: `${days} days away` }
+  if (days < 0) return 'Past'
+  if (days === 0) return 'Today'
+  if (days === 1) return 'Tomorrow'
+  return `${days}d`
 }
 
 export default function Dashboard() {
@@ -146,7 +146,7 @@ export default function Dashboard() {
           ) : (
             <div className="space-y-3">
               {upcoming.map(uv => {
-                const { label } = formatDaysAway(uv.datetime)
+                const label = formatDaysAway(uv.datetime)
                 const dt = new Date(uv.datetime)
                 const dtStr = dt.toLocaleDateString('en-SE', { weekday: 'short', day: 'numeric', month: 'short' })
                   + ', ' + dt.toLocaleTimeString('en-SE', { hour: '2-digit', minute: '2-digit' })

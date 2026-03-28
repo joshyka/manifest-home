@@ -13,14 +13,6 @@ interface Task {
   custom: boolean
 }
 
-// ── Default tasks ─────────────────────────────────────────────────────────────
-const CATEGORIES = [
-  { id: 'finance',  label: 'Finance & Loan', color: '#2E7D52' },
-  { id: 'search',   label: 'Search',         color: '#3DAA6E' },
-  { id: 'viewings', label: 'Viewings',       color: '#D4A853' },
-  { id: 'bidding',  label: 'Bidding',        color: '#E08C2C' },
-  { id: 'closing',  label: 'Closing',        color: '#2E7D52' },
-]
 
 const DEFAULT_TASKS: Omit<Task, 'id'>[] = [
   { label: 'Get lånelöfte from bank',    status: 'todo', category: 'Finance & Loan', categoryColor: '#2E7D52', custom: false },
