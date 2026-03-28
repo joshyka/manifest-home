@@ -1,7 +1,28 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { settings as settingsApi } from '../lib/api'
-import { TrendingUp, AlertTriangle, CheckCircle, Info } from 'lucide-react'
+import { TrendingUp, AlertTriangle, CheckCircle, Info, Save, Trash2 } from 'lucide-react'
+
+const SNAP_KEY = 'kj_calc_snapshots'
+
+interface Snapshot {
+  id: string
+  savedAt: string
+  price: number
+  downPct: number
+  rate: number
+  avgift: number
+  drift: number
+  income: number
+  totalMonthly: number
+  stressTestMonthly: number
+  loanAmount: number
+  affordability: string
+}
+
+function loadSnapshots(): Snapshot[] {
+  try { return JSON.parse(localStorage.getItem(SNAP_KEY) || '[]') } catch { return [] }
+}
 
 // ── Swedish mortgage calculation logic ────────────────────────────────────────
 
@@ -141,6 +162,29 @@ export default function Calculator() {
   const [drift,       setDrift]       = useState(3000)
   const [income,      setIncome]      = useState(0)
   const [useOwn,      setUseOwn]      = useState(false)
+  const [snapshots,   setSnapshots]   = useState<Snapshot[]>(loadSnapshots)
+
+  function saveSnapshot() {
+    if (!result) return
+    const snap: Snapshot = {
+      id: Math.random().toString(36).slice(2, 10),
+      savedAt: new Date().toISOString(),
+      price, downPct, rate, avgift, drift, income,
+      totalMonthly: result.totalMonthly,
+      stressTestMonthly: result.stressTestMonthly,
+      loanAmount: result.loanAmount,
+      affordability: result.affordability,
+    }
+    const updated = [snap, ...snapshots].slice(0, 10)
+    setSnapshots(updated)
+    localStorage.setItem(SNAP_KEY, JSON.stringify(updated))
+  }
+
+  function deleteSnapshot(id: string) {
+    const updated = snapshots.filter(s => s.id !== id)
+    setSnapshots(updated)
+    localStorage.setItem(SNAP_KEY, JSON.stringify(updated))
+  }
 
   // Optionally pre-fill from saved savings settings
   function loadFromSettings() {
@@ -300,8 +344,13 @@ export default function Calculator() {
                     <div className="font-black text-gray-900 text-sm">Total monthly cost</div>
                     <div className="text-[11px] text-gray-400">After ränteavdrag</div>
                   </div>
-                  <div className="text-2xl font-black text-teal-600 tabular-nums">
-                    {fmt(result.totalMonthly)} kr
+                  <div className="flex items-center gap-3">
+                    <div className="text-2xl font-black text-teal-600 tabular-nums">
+                      {fmt(result.totalMonthly)} kr
+                    </div>
+                    <button className="btn-secondary text-xs" onClick={saveSnapshot} title="Save snapshot">
+                      <Save size={13} /> Save
+                    </button>
                   </div>
                 </div>
               </div>
@@ -356,6 +405,30 @@ export default function Calculator() {
           )}
         </div>
       </div>
+
+      {/* Saved snapshots */}
+      {snapshots.length > 0 && (
+        <div className="card space-y-3">
+          <div className="section-label">Saved Snapshots</div>
+          <div className="space-y-2">
+            {snapshots.map(s => (
+              <div key={s.id} className="flex items-center justify-between gap-4 p-3 bg-gray-50 rounded-2xl text-sm">
+                <div className="text-xs text-gray-400 whitespace-nowrap">
+                  {new Date(s.savedAt).toLocaleDateString('en-SE', { day: 'numeric', month: 'short', year: 'numeric' })}
+                </div>
+                <div className="flex-1 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-gray-600">
+                  <span>{fmt(s.price)} kr · {s.downPct}% down · {s.rate}%</span>
+                  <span className="font-bold text-teal-700">{fmt(s.totalMonthly)} kr/mo</span>
+                  <span className="text-amber-600">stress: {fmt(s.stressTestMonthly)} kr</span>
+                </div>
+                <button onClick={() => deleteSnapshot(s.id)} className="text-gray-300 hover:text-red-400 transition-colors shrink-0">
+                  <Trash2 size={13} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

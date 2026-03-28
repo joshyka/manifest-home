@@ -17,6 +17,11 @@ async function request<T>(path: string, opts?: RequestInit): Promise<T> {
     headers: { 'Content-Type': 'application/json', ...ah, ...opts?.headers },
     ...opts,
   })
+  if (res.status === 401) {
+    await supabase.auth.signOut()
+    window.location.href = '/'
+    throw new Error('Session expired')
+  }
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }))
     throw new Error(err.detail ?? 'Request failed')

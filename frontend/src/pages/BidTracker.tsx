@@ -40,12 +40,7 @@ export default function BidTracker() {
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
   // Summary stats
-  const total       = bids.length
-  const withHighest = bids.filter(b => b.highest)
-  const avgHighest  = withHighest.length
-    ? withHighest.reduce((s, b) => s + b.highest!, 0) / withHighest.length
-    : null
-
+  const total      = bids.length
   const mostRounds = bids.length
     ? Math.max(...bids.map(b => b.rounds.length))
     : 0
@@ -72,16 +67,10 @@ export default function BidTracker() {
       ) : (
         <>
           {/* Summary cards */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="card">
+          <div className="flex justify-end">
+            <div className="card inline-block">
               <div className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Bidding Attempts</div>
               <div className="text-3xl font-black text-teal-600">{total}</div>
-            </div>
-            <div className="card">
-              <div className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Avg Highest Bid</div>
-              <div className="text-3xl font-black text-gray-900">
-                {avgHighest ? `${fmt(avgHighest)} kr` : '—'}
-              </div>
             </div>
           </div>
 

@@ -1,10 +1,11 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
-import { dashboard, data as dataApi } from '../lib/api'
+import { useState, useRef } from 'react'
+import * as XLSX from 'xlsx'
+import { dashboard, data as dataApi, viewings as viewingsApi, upcoming as upcomingApi, settings as settingsApi } from '../lib/api'
 import MetricCard from '../components/MetricCard'
 import Alert from '../components/Alert'
 import SavingsChart from '../components/SavingsChart'
-import { Clock, Trash2 } from 'lucide-react'
+import { Clock, Trash2, Download, Upload } from 'lucide-react'
 
 function formatDaysAway(dt: string): string {
   const d = new Date(dt)
@@ -20,13 +21,121 @@ export default function Dashboard() {
   const qc = useQueryClient()
   const { data, isLoading, error } = useQuery({ queryKey: ['dashboard'], queryFn: dashboard.get })
   const [confirmClear, setConfirmClear] = useState(false)
+  const [importing, setImporting] = useState(false)
+  const [importMsg, setImportMsg] = useState('')
+  const fileRef = useRef<HTMLInputElement>(null)
 
   async function handleClear() {
     await dataApi.clear()
     localStorage.removeItem('kj_comparison_items')
     localStorage.removeItem('kj_saved_comparisons')
+    localStorage.removeItem('kj_calc_snapshots')
     qc.invalidateQueries()
     setConfirmClear(false)
+  }
+
+  async function handleExport() {
+    const [vs, us, s] = await Promise.all([
+      viewingsApi.list(),
+      upcomingApi.list(),
+      settingsApi.get(),
+    ])
+    const checklist   = JSON.parse(localStorage.getItem('kj_checklist_v2')      || '[]')
+    const comparison  = JSON.parse(localStorage.getItem('kj_comparison_items')  || '[]')
+    const savedComps  = JSON.parse(localStorage.getItem('kj_saved_comparisons') || '[]')
+    const calcSnaps   = JSON.parse(localStorage.getItem('kj_calc_snapshots')    || '[]')
+
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([s]),         'Settings')
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(vs),          'Viewings')
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(us),          'Upcoming')
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(checklist),   'Checklist')
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(comparison),  'Comparison')
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(savedComps),  'Saved Comparisons')
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(calcSnaps),   'Calculator')
+    XLSX.writeFile(wb, `keyjourney-${new Date().toISOString().slice(0,10)}.xlsx`)
+  }
+
+  async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setImporting(true)
+    setImportMsg('')
+    try {
+      const buf = await file.arrayBuffer()
+      const wb  = XLSX.read(buf, { type: 'array' })
+
+      const settingsSheet   = wb.Sheets['Settings']
+      const viewingsSheet   = wb.Sheets['Viewings']
+      const upcomingSheet   = wb.Sheets['Upcoming']
+      const checklistSheet  = wb.Sheets['Checklist']
+      const compSheet       = wb.Sheets['Comparison']
+      const savedCompSheet  = wb.Sheets['Saved Comparisons']
+
+      // Clear all existing data first
+      await dataApi.clear()
+      localStorage.removeItem('kj_comparison_items')
+      localStorage.removeItem('kj_saved_comparisons')
+      localStorage.removeItem('kj_checklist_v2')
+      localStorage.removeItem('kj_calc_snapshots')
+
+      // Import settings
+      if (settingsSheet) {
+        const rows = XLSX.utils.sheet_to_json<any>(settingsSheet)
+        if (rows[0]) await settingsApi.update(rows[0])
+      }
+
+      // Import viewings
+      if (viewingsSheet) {
+        const rows = XLSX.utils.sheet_to_json<any>(viewingsSheet)
+        for (const r of rows) {
+          await viewingsApi.add({
+            address:        r.address  || '',
+            date:           r.date     || '',
+            hemnet_url:     r.hemnet_url || '',
+            outcome:        r.outcome  || 'Viewed — no bid',
+            num_bid_rounds: r.num_bid_rounds || 0,
+            final_price:    r.final_price ? String(r.final_price) : '',
+            my_bid:         r.my_bid   ? String(r.my_bid) : '',
+            notes:          r.notes    || '',
+          })
+        }
+      }
+
+      // Import upcoming
+      if (upcomingSheet) {
+        const rows = XLSX.utils.sheet_to_json<any>(upcomingSheet)
+        for (const r of rows) {
+          await upcomingApi.add({
+            address:      r.address      || '',
+            datetime:     r.datetime     || '',
+            area:         r.area         || '',
+            asking_price: r.asking_price || '',
+            notes:        r.notes        || '',
+          })
+        }
+      }
+
+      const calcSheet = wb.Sheets['Calculator']
+
+      // Restore localStorage sheets
+      if (checklistSheet)
+        localStorage.setItem('kj_checklist_v2',      JSON.stringify(XLSX.utils.sheet_to_json(checklistSheet)))
+      if (compSheet)
+        localStorage.setItem('kj_comparison_items',  JSON.stringify(XLSX.utils.sheet_to_json(compSheet)))
+      if (savedCompSheet)
+        localStorage.setItem('kj_saved_comparisons', JSON.stringify(XLSX.utils.sheet_to_json(savedCompSheet)))
+      if (calcSheet)
+        localStorage.setItem('kj_calc_snapshots',    JSON.stringify(XLSX.utils.sheet_to_json(calcSheet)))
+
+      qc.invalidateQueries()
+      setImportMsg('Import successful.')
+    } catch {
+      setImportMsg('Import failed — check the file format.')
+    } finally {
+      setImporting(false)
+      if (fileRef.current) fileRef.current.value = ''
+    }
   }
 
   if (isLoading) return (
@@ -168,25 +277,45 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Clear data */}
-      <div className="card">
-        <div className="flex gap-3">
-          {!confirmClear ? (
-            <button className="btn-danger ml-auto" onClick={() => setConfirmClear(true)}>
-              <Trash2 size={14} /> Clear Data
-            </button>
-          ) : (
-            <div className="ml-auto flex items-center gap-2">
-              <span className="text-xs text-red-600 font-medium">Delete all data?</span>
-              <button className="btn-danger" onClick={handleClear}>
-                Yes, delete
+      {/* Data management */}
+      <div className="card space-y-3">
+        {importMsg && (
+          <Alert kind={importMsg.includes('failed') ? 'danger' : 'success'}>{importMsg}</Alert>
+        )}
+        <div className="flex flex-wrap gap-2 items-center">
+          {/* Export */}
+          <button className="btn-secondary" onClick={handleExport}>
+            <Download size={14} /> Download
+          </button>
+
+          {/* Import */}
+          <button className="btn-secondary" onClick={() => fileRef.current?.click()} disabled={importing}>
+            <Upload size={14} /> {importing ? 'Importing…' : 'Import'}
+          </button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".xlsx"
+            className="hidden"
+            onChange={handleImport}
+          />
+
+          {/* Clear */}
+          <div className="ml-auto">
+            {!confirmClear ? (
+              <button className="btn-danger" onClick={() => setConfirmClear(true)}>
+                <Trash2 size={14} /> Clear Data
               </button>
-              <button className="btn-secondary" onClick={() => setConfirmClear(false)}>
-                Cancel
-              </button>
-            </div>
-          )}
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-red-600 font-medium">Delete all data?</span>
+                <button className="btn-danger" onClick={handleClear}>Yes, delete</button>
+                <button className="btn-secondary" onClick={() => setConfirmClear(false)}>Cancel</button>
+              </div>
+            )}
+          </div>
         </div>
+        <p className="text-[11px] text-gray-400">Import replaces all existing data. Export downloads Settings, Viewings and Upcoming as an Excel file.</p>
       </div>
     </div>
   )

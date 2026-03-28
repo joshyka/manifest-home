@@ -69,10 +69,9 @@ function StarRating({ value, onChange }: { value: number; onChange: (v: number) 
 
 // ── Listing card ──────────────────────────────────────────────────────────────
 function ListingCard({
-  item, rank, onRemove, onUpdate, isBest, confirmRemoveId, setConfirmRemoveId,
+  item, onRemove, onUpdate, isBest, confirmRemoveId, setConfirmRemoveId,
 }: {
   item: CompItem
-  rank: number
   onRemove: () => void
   onUpdate: (id: string, key: keyof CompItem, val: any) => void
   isBest: boolean
@@ -493,7 +492,7 @@ export default function Comparison() {
               <ListingCard
                 key={item.id}
                 item={item}
-                rank={i + 1}
+
                 onRemove={() => removeItem(item.id)}
                 onUpdate={updateItem}
                 isBest={item.id === bestId && items.length > 1}
