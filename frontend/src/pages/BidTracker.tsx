@@ -61,7 +61,7 @@ export default function BidTracker() {
       </div>
 
       {total === 0 ? (
-        <Alert kind="info">
+        <Alert kind="success">
           No bidding data yet. Log viewings with "Went to bidding" in the Viewings page to see them here.
         </Alert>
       ) : (

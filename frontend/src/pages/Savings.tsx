@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { settings as settingsApi } from '../lib/api'
 import type { Settings, ProjectionRow } from '../lib/api'
 import Alert from '../components/Alert'
-import { Pencil, X, Save } from 'lucide-react'
+import { Pencil, X, Check } from 'lucide-react'
 
 function fmt(n: number) { return n.toLocaleString('sv-SE') }
 
@@ -118,9 +118,14 @@ export default function Savings() {
         </div>
         <div className="flex gap-2">
           {editing ? (
-            <button className="btn-secondary" onClick={() => setEditing(false)}>
-              <X size={14} /> Cancel
-            </button>
+            <div className="flex gap-2">
+              <button className="btn-primary" onClick={() => form && mutation.mutate(form)} disabled={mutation.isPending}>
+                <Check size={14} /> {mutation.isPending ? 'Saving…' : 'Save'}
+              </button>
+              <button className="btn-secondary" onClick={() => setEditing(false)}>
+                <X size={14} /> Cancel
+              </button>
+            </div>
           ) : (
             <button className="btn-primary" onClick={startEdit}>
               <Pencil size={14} /> Edit
@@ -130,7 +135,7 @@ export default function Savings() {
       </div>
 
       {/* Alerts */}
-      {saved && <Alert kind="success">Settings saved to tracker.xlsx</Alert>}
+      {saved && <Alert kind="success">Settings saved successfully.</Alert>}
       {loanAlertKind && <Alert kind={loanAlertKind}>{loanAlertMsg}</Alert>}
 
       {/* View mode */}
@@ -263,10 +268,6 @@ export default function Savings() {
             </div>
           </div>
 
-          <button type="submit" disabled={mutation.isPending} className="btn-primary">
-            <Save size={14} />
-            {mutation.isPending ? 'Saving…' : 'Save Settings'}
-          </button>
         </form>
       )}
 

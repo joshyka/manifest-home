@@ -31,12 +31,15 @@ Your personal home-buying command centre — track savings progress, log viewing
 
 ## Features
 
-- Onboarding wizard on first login
-- Delete confirmations on all destructive actions
-- Per-user data isolation via Supabase RLS — each couple sees only their own data
+- Onboarding wizard on first login — collects buyer names, savings, and target
+- Welcome greeting shown on every page after setup
+- Per-user data isolation via Supabase RLS — each user sees only their own data
 - PIN login or Google OAuth with email allowlist
 - All data stored in Supabase — synced across devices, nothing in localStorage
-- Export/import all data as Excel
+- Export / import full backup as Excel (settings, viewings, checklist, comparisons, snapshots, target areas)
+- Drag-and-drop kanban checklist with cross-column support
+- Swedish mortgage rules applied: 10% minimum down payment, amortisation tiers, stress test at 7%
+- Delete confirmations on all destructive actions
 
 ---
 

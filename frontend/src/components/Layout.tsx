@@ -91,17 +91,6 @@ function SidebarContents({ pct, current, target, p1, p2, onNav }: {
         ))}
       </nav>
 
-      {/* Sign out */}
-      <div className="p-3 border-t border-gray-100">
-        <button
-          onClick={() => supabase.auth.signOut()}
-          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-2xl text-sm font-medium
-                     text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-all"
-        >
-          <LogOut size={15} />
-          Sign out
-        </button>
-      </div>
     </>
   )
 }
@@ -174,6 +163,18 @@ export default function Layout({ children }: Props) {
       {/* Main */}
       <main className="flex-1 min-w-0 flex flex-col overflow-auto pt-14 md:pt-0">
         <div className="flex-1 max-w-5xl w-full mx-auto px-4 md:px-10 py-8 md:py-10 animate-fade-in">
+          <div className="flex items-center justify-end gap-3 -mt-2 mb-6">
+            <p className="text-sm text-gray-400">
+              Welcome back{p1 ? <>, <span className="font-semibold text-gray-600">{p1}{p2 ? ` & ${p2}` : ''}</span></> : ''} 👋
+            </p>
+            <button
+              onClick={() => supabase.auth.signOut()}
+              className="text-gray-300 hover:text-red-400 transition-colors"
+              title="Sign out"
+            >
+              <LogOut size={14} />
+            </button>
+          </div>
           {children}
         </div>
         <div className="text-center text-xs text-gray-300 py-4 border-t border-gray-100">

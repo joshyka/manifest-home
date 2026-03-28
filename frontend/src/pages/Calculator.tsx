@@ -196,9 +196,9 @@ export default function Calculator() {
 
           {/* Apartment */}
           <div className="card space-y-4">
-            <div className="section-label">Apartment</div>
+            <div className="section-label">Property</div>
             <div>
-              <label className="label">Asking Price (SEK)</label>
+              <label className="label">Apartment Price (SEK)</label>
               <input type="number" className="input" min={0} step={50000} placeholder="e.g. 4 500 000"
                 value={price || ''} onChange={e => setPrice(parseInt(e.target.value) || 0)} />
             </div>
@@ -234,9 +234,7 @@ export default function Calculator() {
               <label className="label">Combined Gross Monthly Income (SEK)</label>
               <input type="number" className="input" min={0} step={5000} placeholder="e.g. 80 000"
                 value={income || ''} onChange={e => setIncome(parseInt(e.target.value) || 0)} />
-              <p className="text-[11px] text-gray-400 mt-1 leading-relaxed">
-                Both buyers' <strong>before-tax</strong> salaries added together. E.g. if you earn 45,000 kr and your partner 40,000 kr → enter 85,000. Used to check if your loan exceeds the 4.5× income limit.
-              </p>
+              <p className="text-[11px] text-gray-300 mt-1">Combined gross salaries of both buyers. Used to check the 4.5× income limit.</p>
             </div>
           </div>
         </div>

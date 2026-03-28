@@ -175,7 +175,7 @@ export default function Dashboard() {
     ? `Expiring soon — ${ls.days} days`
     : ls.status === 'expired'
     ? 'Expired — renew immediately'
-    : 'Enter in Savings page'
+    : settings.loan_bank ? settings.loan_bank : 'Bank name not set'
 
   return (
     <div className="space-y-6">
@@ -232,11 +232,11 @@ export default function Dashboard() {
       <div className="grid grid-cols-3 gap-4">
         <MetricCard
           label="Lånelöfte Amount"
-          value={settings.loan_amount ? `${settings.loan_amount.toLocaleString('sv-SE')} kr` : 'Not entered'}
+          value={settings.loan_amount ? `${settings.loan_amount.toLocaleString('sv-SE')} kr` : '0 kr'}
           sub={loanSub}
         />
         <MetricCard
-          label="Total Viewings"
+          label="Viewings"
           value={String(kpis.total_viewings)}
           sub="apartments viewed so far"
         />
