@@ -45,7 +45,7 @@ export default function Login() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <input
               type="password"
-              inputMode="numeric"
+              inputMode="text"
               placeholder="PIN"
               value={pin}
               onChange={e => setPin(e.target.value)}
