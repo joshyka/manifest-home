@@ -1,6 +1,25 @@
-import { useState, useRef } from 'react'
-import { Plus, X, ChevronRight, ChevronLeft, Pencil, Check } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react'
+import { Plus, X, Pencil, Check, GripVertical } from 'lucide-react'
 import { useBlob } from '../lib/useBlob'
+import {
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  closestCorners,
+  type DragStartEvent,
+  type DragOverEvent,
+  type DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { useDroppable } from '@dnd-kit/core'
+import { CSS } from '@dnd-kit/utilities'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 type Status = 'todo' | 'progress' | 'done'
@@ -14,7 +33,6 @@ interface Task {
   custom: boolean
 }
 
-
 const DEFAULT_TASKS: Task[] = [
   { id: 'default-1', label: 'Get lånelöfte from bank', status: 'todo', category: 'Finance & Loan', categoryColor: '#2E7D52', custom: false },
   { id: 'default-2', label: 'Save 15% down payment',   status: 'todo', category: 'Finance & Loan', categoryColor: '#2E7D52', custom: false },
@@ -22,26 +40,30 @@ const DEFAULT_TASKS: Task[] = [
 
 // ── Column config ─────────────────────────────────────────────────────────────
 const COLUMNS: { status: Status; label: string; bg: string; badge: string; dot: string }[] = [
-  { status: 'todo',     label: 'To Do',      bg: 'bg-gray-50',    badge: 'bg-gray-200 text-gray-600',      dot: '#9CA3AF' },
-  { status: 'progress', label: 'In Progress', bg: 'bg-amber-50/60', badge: 'bg-amber-100 text-amber-700',   dot: '#E08C2C' },
-  { status: 'done',     label: 'Done',        bg: 'bg-teal-50/60',  badge: 'bg-teal-100 text-teal-700',     dot: '#2E7D52' },
+  { status: 'todo',     label: 'To Do',      bg: 'bg-gray-50',    badge: 'bg-gray-200 text-gray-600',    dot: '#9CA3AF' },
+  { status: 'progress', label: 'In Progress', bg: 'bg-amber-50/60', badge: 'bg-amber-100 text-amber-700', dot: '#E08C2C' },
+  { status: 'done',     label: 'Done',        bg: 'bg-teal-50/60',  badge: 'bg-teal-100 text-teal-700',   dot: '#2E7D52' },
 ]
 
-const ORDER: Status[] = ['todo', 'progress', 'done']
-
-// ── Task card ─────────────────────────────────────────────────────────────────
+// ── Sortable task card ─────────────────────────────────────────────────────────
 function TaskCard({
-  task, onMove, onRemove, onEdit,
+  task, onRemove, onEdit, isDragging = false,
 }: {
   task: Task
-  onMove: (id: string, dir: 'left' | 'right') => void
   onRemove: (id: string) => void
   onEdit: (id: string, label: string) => void
+  isDragging?: boolean
 }) {
-  const idx = ORDER.indexOf(task.status)
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: task.id })
   const [editing, setEditing] = useState(false)
   const [draft, setDraft]     = useState(task.label)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.35 : 1,
+  }
 
   function startEdit() {
     setDraft(task.label)
@@ -56,8 +78,19 @@ function TaskCard({
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-3 py-2.5 flex items-start gap-2 group hover:shadow-md transition-shadow">
-      {/* Category colour bar */}
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="bg-white rounded-2xl border border-gray-100 shadow-sm px-3 py-2.5 flex items-start gap-2 group hover:shadow-md transition-shadow"
+    >
+      <button
+        {...attributes}
+        {...listeners}
+        className="mt-0.5 shrink-0 text-gray-200 hover:text-gray-400 cursor-grab active:cursor-grabbing transition-colors touch-none"
+      >
+        <GripVertical size={14} />
+      </button>
+
       <div className="w-0.5 self-stretch rounded-full shrink-0 mt-0.5" style={{ background: task.categoryColor }} />
 
       <div className="flex-1 min-w-0">
@@ -83,50 +116,79 @@ function TaskCard({
         </span>
       </div>
 
-      {/* Actions */}
       <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
         {editing ? (
-          <button
-            onClick={commitEdit}
-            className="w-6 h-6 rounded-lg flex items-center justify-center text-teal-500 hover:bg-teal-50 transition-colors"
-          >
+          <button onClick={commitEdit} className="w-6 h-6 rounded-lg flex items-center justify-center text-teal-500 hover:bg-teal-50 transition-colors">
             <Check size={12} />
           </button>
         ) : (
-          <button
-            onClick={startEdit}
-            className="w-6 h-6 rounded-lg flex items-center justify-center text-gray-300 hover:text-teal-600 hover:bg-teal-50 transition-colors"
-            title="Edit"
-          >
+          <button onClick={startEdit} className="w-6 h-6 rounded-lg flex items-center justify-center text-gray-300 hover:text-teal-600 hover:bg-teal-50 transition-colors">
             <Pencil size={11} />
           </button>
         )}
-        {idx > 0 && (
-          <button
-            onClick={() => onMove(task.id, 'left')}
-            className="w-6 h-6 rounded-lg flex items-center justify-center text-gray-300 hover:text-gray-600 hover:bg-gray-100 transition-colors"
-            title="Move left"
-          >
-            <ChevronLeft size={13} />
-          </button>
-        )}
-        {idx < ORDER.length - 1 && (
-          <button
-            onClick={() => onMove(task.id, 'right')}
-            className="w-6 h-6 rounded-lg flex items-center justify-center text-gray-300 hover:text-teal-600 hover:bg-teal-50 transition-colors"
-            title="Move right"
-          >
-            <ChevronRight size={13} />
-          </button>
-        )}
-        <button
-          onClick={() => onRemove(task.id)}
-          className="w-6 h-6 rounded-lg flex items-center justify-center text-gray-200 hover:text-red-400 hover:bg-red-50 transition-colors"
-          title="Remove"
-        >
+        <button onClick={() => onRemove(task.id)} className="w-6 h-6 rounded-lg flex items-center justify-center text-gray-200 hover:text-red-400 hover:bg-red-50 transition-colors">
           <X size={12} />
         </button>
       </div>
+    </div>
+  )
+}
+
+// Overlay card shown while dragging
+function DragCard({ task }: { task: Task }) {
+  return (
+    <div className="bg-white rounded-2xl border border-teal-300 shadow-lg px-3 py-2.5 flex items-start gap-2 rotate-1 opacity-95">
+      <GripVertical size={14} className="mt-0.5 shrink-0 text-gray-300" />
+      <div className="w-0.5 self-stretch rounded-full shrink-0 mt-0.5" style={{ background: task.categoryColor }} />
+      <div className="flex-1 min-w-0">
+        <p className="text-sm leading-snug text-gray-800">{task.label}</p>
+        <span className="text-[10px] font-semibold mt-1 inline-block" style={{ color: task.categoryColor }}>{task.category}</span>
+      </div>
+    </div>
+  )
+}
+
+// ── Droppable column ───────────────────────────────────────────────────────────
+function Column({
+  col, tasks, onRemove, onEdit, activeId,
+}: {
+  col: typeof COLUMNS[number]
+  tasks: Task[]
+  onRemove: (id: string) => void
+  onEdit: (id: string, label: string) => void
+  activeId: string | null
+}) {
+  const { setNodeRef, isOver } = useDroppable({ id: col.status })
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`rounded-2xl p-4 space-y-3 min-h-[120px] transition-colors ${col.bg} ${isOver ? 'ring-2 ring-teal-300 ring-inset' : ''}`}
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full" style={{ background: col.dot }} />
+          <span className="text-sm font-bold text-gray-700">{col.label}</span>
+        </div>
+        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${col.badge}`}>{tasks.length}</span>
+      </div>
+
+      <SortableContext items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
+        <div className="space-y-2">
+          {tasks.length === 0 && (
+            <p className="text-xs text-gray-300 text-center py-4">Drop here</p>
+          )}
+          {tasks.map(task => (
+            <TaskCard
+              key={task.id}
+              task={task}
+              onRemove={onRemove}
+              onEdit={onEdit}
+              isDragging={task.id === activeId}
+            />
+          ))}
+        </div>
+      </SortableContext>
     </div>
   )
 }
@@ -135,54 +197,112 @@ function TaskCard({
 const CUSTOM_COLORS = ['#3DAA6E', '#E08C2C', '#D4A853', '#6366F1', '#EC4899', '#0EA5E9']
 
 export default function Checklist() {
-  const [tasks, saveTasks] = useBlob<Task[]>('checklist', DEFAULT_TASKS)
-  const [newLabel, setNewLabel] = useState('')
-  const [newCat, setNewCat]   = useState('')
+  const [blobTasks, saveTasks] = useBlob<Task[]>('checklist', DEFAULT_TASKS)
+  // Local copy used during drag — avoids API calls on every DragOver event
+  const [localTasks, setLocalTasks] = useState<Task[]>(blobTasks)
+  const [activeId, setActiveId]     = useState<string | null>(null)
+  const [newLabel, setNewLabel]     = useState('')
+  const [newCat, setNewCat]         = useState('')
 
-  function moveTask(id: string, dir: 'left' | 'right') {
-    saveTasks(tasks.map(t => {
-      if (t.id !== id) return t
-      const idx = ORDER.indexOf(t.status)
-      const next = ORDER[dir === 'right' ? idx + 1 : idx - 1]
-      return next ? { ...t, status: next } : t
-    }))
+  // Keep local in sync with blob when not dragging
+  useEffect(() => {
+    if (!activeId) setLocalTasks(blobTasks)
+  }, [blobTasks, activeId])
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor,   { activationConstraint: { delay: 200, tolerance: 5 } }),
+  )
+
+  const activeTask = activeId ? localTasks.find(t => t.id === activeId) : null
+
+  function handleDragStart({ active }: DragStartEvent) {
+    setActiveId(active.id as string)
+    setLocalTasks([...blobTasks]) // snapshot at drag start
+  }
+
+  function handleDragOver({ active, over }: DragOverEvent) {
+    if (!over) return
+    const activeTaskId = active.id as string
+    const overId       = over.id as string
+    if (activeTaskId === overId) return
+
+    const current   = localTasks
+    const dragged   = current.find(t => t.id === activeTaskId)
+    if (!dragged) return
+
+    // Is over a column header (droppable)?
+    const overCol = COLUMNS.find(c => c.status === overId)
+    if (overCol) {
+      if (dragged.status === overCol.status) return
+      setLocalTasks(current.map(t => t.id === activeTaskId ? { ...t, status: overCol.status } : t))
+      return
+    }
+
+    // Is over another task — move to that task's column
+    const overTask = current.find(t => t.id === overId)
+    if (overTask && overTask.status !== dragged.status) {
+      setLocalTasks(current.map(t => t.id === activeTaskId ? { ...t, status: overTask.status } : t))
+    }
+  }
+
+  function handleDragEnd({ active, over }: DragEndEvent) {
+    setActiveId(null)
+    let result = [...localTasks]
+
+    // Reorder within column if dropped on a sibling task
+    if (over && active.id !== over.id) {
+      const oldIndex = result.findIndex(t => t.id === active.id)
+      const newIndex = result.findIndex(t => t.id === over.id)
+      if (oldIndex !== -1 && newIndex !== -1 && result[oldIndex].status === result[newIndex].status) {
+        const [moved] = result.splice(oldIndex, 1)
+        result.splice(newIndex, 0, moved)
+      }
+    }
+
+    saveTasks(result) // single API call at drag end
   }
 
   function removeTask(id: string) {
-    saveTasks(tasks.filter(t => t.id !== id))
+    const updated = localTasks.filter(t => t.id !== id)
+    setLocalTasks(updated)
+    saveTasks(updated)
   }
 
   function editTask(id: string, label: string) {
-    saveTasks(tasks.map(t => t.id === id ? { ...t, label } : t))
+    const updated = localTasks.map(t => t.id === id ? { ...t, label } : t)
+    setLocalTasks(updated)
+    saveTasks(updated)
   }
 
   function addTask() {
     const label = newLabel.trim()
     if (!label) return
-    const catName = newCat.trim() || 'General'
-    const existing = tasks.find(t => t.category === catName)
-    const color = existing
+    const catName  = newCat.trim() || 'General'
+    const existing = localTasks.find(t => t.category === catName)
+    const color    = existing
       ? existing.categoryColor
-      : CUSTOM_COLORS[new Set(tasks.map(t => t.categoryColor)).size % CUSTOM_COLORS.length]
-    saveTasks([...tasks, {
+      : CUSTOM_COLORS[new Set(localTasks.map(t => t.categoryColor)).size % CUSTOM_COLORS.length]
+    const updated = [...localTasks, {
       id: Math.random().toString(36).slice(2, 10),
       label,
-      status: 'todo',
+      status: 'todo' as Status,
       category: catName,
       categoryColor: color,
       custom: true,
-    }])
+    }]
+    setLocalTasks(updated)
+    saveTasks(updated)
     setNewLabel('')
     setNewCat('')
   }
 
-  const done  = tasks.filter(t => t.status === 'done').length
-  const total = tasks.length
+  const done  = localTasks.filter(t => t.status === 'done').length
+  const total = localTasks.length
   const pct   = total > 0 ? Math.round((done / total) * 100) : 0
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-black text-gray-900">Checklist</h1>
@@ -194,7 +314,6 @@ export default function Checklist() {
         </div>
       </div>
 
-      {/* Overall progress bar */}
       <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
         <div
           className="h-full rounded-full transition-all duration-700"
@@ -207,44 +326,31 @@ export default function Checklist() {
         />
       </div>
 
-      {/* Kanban board */}
-      <div className="grid grid-cols-3 gap-4 items-start">
-        {COLUMNS.map(col => {
-          const colTasks = tasks.filter(t => t.status === col.status)
-          return (
-            <div key={col.status} className={`rounded-2xl p-4 space-y-3 ${col.bg}`}>
-              {/* Column header */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full" style={{ background: col.dot }} />
-                  <span className="text-sm font-bold text-gray-700">{col.label}</span>
-                </div>
-                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${col.badge}`}>
-                  {colTasks.length}
-                </span>
-              </div>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCorners}
+        onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
+        onDragEnd={handleDragEnd}
+      >
+        <div className="grid grid-cols-3 gap-4 items-start">
+          {COLUMNS.map(col => (
+            <Column
+              key={col.status}
+              col={col}
+              tasks={localTasks.filter(t => t.status === col.status)}
+              onRemove={removeTask}
+              onEdit={editTask}
+              activeId={activeId}
+            />
+          ))}
+        </div>
 
-              {/* Cards */}
-              <div className="space-y-2">
-                {colTasks.length === 0 && (
-                  <p className="text-xs text-gray-300 text-center py-4">No tasks here</p>
-                )}
-                {colTasks.map(task => (
-                  <TaskCard
-                    key={task.id}
-                    task={task}
-                    onMove={moveTask}
-                    onRemove={removeTask}
-                    onEdit={editTask}
-                  />
-                ))}
-              </div>
-            </div>
-          )
-        })}
-      </div>
+        <DragOverlay>
+          {activeTask && <DragCard task={activeTask} />}
+        </DragOverlay>
+      </DndContext>
 
-      {/* Add custom task */}
       <div className="card space-y-3">
         <div className="section-label">Add a custom task</div>
         <div className="flex gap-2 flex-wrap">

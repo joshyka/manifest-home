@@ -16,7 +16,7 @@ const AMENITIES = [
   { label: 'Gym',         query: 'gym fitness' },
   { label: 'Grocery',     query: 'grocery store ICA Coop' },
   { label: 'Pendeltåg',   query: 'pendeltåg station' },
-  { label: 'Metro',       query: 'tunnelbana station' },
+  { label: 'Spårvagn',    query: 'spårvagn tram station' },
   { label: 'Bus stop',    query: 'busshållplats' },
   { label: 'Vårdcentral', query: 'vårdcentral' },
   { label: 'Apotek',      query: 'apotek' },
@@ -124,8 +124,8 @@ export default function Maps() {
     embedUrl = `https://maps.google.com/maps?q=${encodeQ(dest)}&output=embed`
     openUrl  = `https://www.google.com/maps/search/${encodeQ(dest)}`
   } else {
-    embedUrl = 'https://maps.google.com/maps?q=Stockholm&output=embed'
-    openUrl  = 'https://www.google.com/maps'
+    embedUrl = 'https://maps.google.com/maps?q=Sweden&output=embed&z=5'
+    openUrl  = 'https://www.google.com/maps/place/Sweden'
   }
 
   return (
@@ -138,7 +138,7 @@ export default function Maps() {
       <div className="card space-y-4">
         {/* From / To */}
         <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-3">
-          <AddressInput label="From" value={from} onChange={setFrom} placeholder="e.g. Folkungagatan 45, Stockholm" />
+          <AddressInput label="From" value={from} onChange={setFrom} placeholder="e.g. Storgatan 1, Göteborg" />
           <button
             onClick={swap}
             className="mb-0.5 w-9 h-9 rounded-lg border border-gray-200 bg-white hover:bg-gray-50
@@ -147,7 +147,7 @@ export default function Maps() {
           >
             <ArrowUpDown size={15} />
           </button>
-          <AddressInput label="To" value={to} onChange={v => { setTo(v); setAmenity(null) }} placeholder="e.g. Kungsgatan 10, Stockholm" />
+          <AddressInput label="To" value={to} onChange={v => { setTo(v); setAmenity(null) }} placeholder="e.g. Avenyn 10, Göteborg" />
         </div>
 
         {/* Travel mode */}

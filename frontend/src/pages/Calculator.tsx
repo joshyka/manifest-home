@@ -195,7 +195,7 @@ export default function Calculator() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-black text-gray-900">Cost Calculator</h1>
-          <p className="text-sm text-gray-400 mt-0.5">Swedish mortgage costs for Stockholm apartments</p>
+          <p className="text-sm text-gray-400 mt-0.5">Swedish mortgage costs and affordability</p>
         </div>
         {(savedSettings?.apartment_price ?? 0) > 0 && !useOwn && (
           <button className="btn-secondary text-xs" onClick={loadFromSettings}>
