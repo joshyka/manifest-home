@@ -54,9 +54,8 @@ export default function Onboarding({ onComplete }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
-         style={{ background: 'linear-gradient(135deg, #1E5C3A 0%, #2E7D52 60%, #3DAA6E 100%)' }}>
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 space-y-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-surface">
+      <div className="bg-white rounded-3xl shadow-card w-full max-w-md p-8 space-y-6">
 
         {/* Step indicator */}
         <div className="flex items-center justify-center gap-2">
@@ -73,8 +72,8 @@ export default function Onboarding({ onComplete }: Props) {
         {/* Step 0 — Welcome */}
         {step === 0 && (
           <div className="text-center space-y-4">
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto text-3xl"
-                 style={{ background: 'linear-gradient(135deg, #1E5C3A, #2E7D52)', boxShadow: '0 8px 24px rgba(46,125,82,0.35)' }}>
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto text-2xl"
+                 style={{ background: '#F0FAF4', border: '1px solid #D1EAD8' }}>
               🏡
             </div>
             <div>
@@ -85,8 +84,7 @@ export default function Onboarding({ onComplete }: Props) {
             </div>
             <p className="text-xs text-gray-400">Takes about 2 minutes to set up. You can skip any step.</p>
             <button onClick={next}
-              className="w-full py-3 rounded-2xl text-sm font-bold text-white transition-all active:scale-95"
-              style={{ background: 'linear-gradient(135deg, #1E5C3A, #2E7D52)' }}>
+              className="w-full py-3 rounded-full text-sm font-semibold text-white bg-teal-600 hover:bg-teal-700 transition-all active:scale-95">
               Get started →
             </button>
             <button onClick={onComplete}
@@ -117,8 +115,7 @@ export default function Onboarding({ onComplete }: Props) {
             </div>
             <div className="flex gap-3 pt-2">
               <button onClick={next} disabled={!p1Name.trim()}
-                className="flex-1 py-3 rounded-2xl text-sm font-bold text-white disabled:opacity-40 transition-all active:scale-95"
-                style={{ background: 'linear-gradient(135deg, #1E5C3A, #2E7D52)' }}>
+                className="flex-1 py-3 rounded-full text-sm font-semibold text-white bg-teal-600 hover:bg-teal-700 disabled:opacity-40 transition-all active:scale-95">
                 Next →
               </button>
               <button onClick={skip} className="px-5 py-3 rounded-2xl text-sm font-semibold text-gray-400 hover:text-gray-600 transition-colors">
@@ -165,8 +162,7 @@ export default function Onboarding({ onComplete }: Props) {
             </div>
             <div className="flex gap-3 pt-2">
               <button onClick={next}
-                className="flex-1 py-3 rounded-2xl text-sm font-bold text-white transition-all active:scale-95"
-                style={{ background: 'linear-gradient(135deg, #1E5C3A, #2E7D52)' }}>
+                className="flex-1 py-3 rounded-full text-sm font-semibold text-white bg-teal-600 hover:bg-teal-700 transition-all active:scale-95">
                 Next →
               </button>
               <button onClick={skip} className="px-5 py-3 rounded-2xl text-sm font-semibold text-gray-400 hover:text-gray-600 transition-colors">
@@ -216,8 +212,7 @@ export default function Onboarding({ onComplete }: Props) {
             </div>
             <div className="flex gap-3 pt-2">
               <button onClick={finish} disabled={saving}
-                className="flex-1 py-3 rounded-2xl text-sm font-bold text-white disabled:opacity-50 transition-all active:scale-95"
-                style={{ background: 'linear-gradient(135deg, #1E5C3A, #2E7D52)' }}>
+                className="flex-1 py-3 rounded-full text-sm font-semibold text-white bg-teal-600 hover:bg-teal-700 disabled:opacity-50 transition-all active:scale-95">
                 {saving ? 'Saving…' : 'Done — go to dashboard →'}
               </button>
               <button onClick={skip} disabled={saving}

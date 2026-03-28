@@ -27,41 +27,39 @@ function SidebarContents({ pct, current, target, p1, p2, onNav }: {
   return (
     <>
       {/* Logo */}
-      <div className="px-6 py-6 border-b border-white/[0.06]">
+      <div className="px-6 py-6 border-b border-gray-100">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-2xl flex items-center justify-center text-xl"
-               style={{ background: 'rgba(212,168,83,0.15)', border: '1px solid rgba(212,168,83,0.25)' }}>
+               style={{ background: '#F0FAF4', border: '1px solid #D1EAD8' }}>
             🏡
           </div>
           <div className="font-black text-lg tracking-tight">
-            <span style={{ color: '#D4A853' }}>Key</span><span className="text-white/90">Journey</span>
+            <span style={{ color: '#2E7D52' }}>Key</span><span className="text-gray-800">Journey</span>
           </div>
         </div>
       </div>
 
       {/* Progress widget */}
       {(p1 || p2) && (
-        <div className="mx-4 mt-5 p-4 rounded-2xl border border-white/[0.07]"
-             style={{ background: 'rgba(255,255,255,0.04)' }}>
-          <div className="text-[10px] font-bold uppercase tracking-widest mb-1.5"
-               style={{ color: '#D4A853' }}>Buyers</div>
-          <div className="text-white font-semibold text-sm mb-3 truncate">
+        <div className="mx-4 mt-5 p-4 rounded-2xl border border-gray-100" style={{ background: '#F9FAFB' }}>
+          <div className="text-[10px] font-bold uppercase tracking-widest mb-1.5 text-gray-400">Buyers</div>
+          <div className="text-gray-800 font-semibold text-sm mb-3 truncate">
             {p1 || '—'}{p1 && p2 ? ' & ' : ''}{p2 || ''}
           </div>
-          <div className="text-[10px] font-bold uppercase tracking-widest mb-2 text-white/40">
+          <div className="text-[10px] font-bold uppercase tracking-widest mb-2 text-gray-400">
             Down Payment
           </div>
           <div className="flex justify-between items-baseline mb-2">
-            <span className="text-white font-bold text-sm">{current.toLocaleString('sv-SE')} kr</span>
-            <span className="text-xs font-bold" style={{ color: '#D4A853' }}>{pct}%</span>
+            <span className="text-gray-700 font-bold text-sm">{current.toLocaleString('sv-SE')} kr</span>
+            <span className="text-xs font-bold text-teal-600">{pct}%</span>
           </div>
-          <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
+          <div className="h-1.5 rounded-full overflow-hidden bg-gray-100">
             <div
               className="h-full rounded-full transition-all duration-700"
-              style={{ width: `${pct}%`, background: 'linear-gradient(90deg, #3DAA6E, #D4A853)' }}
+              style={{ width: `${pct}%`, background: 'linear-gradient(90deg, #2E7D52, #3DAA6E)' }}
             />
           </div>
-          <div className="text-[11px] mt-2 text-white/30">
+          <div className="text-[11px] mt-2 text-gray-400">
             Target: {target.toLocaleString('sv-SE')} kr
           </div>
         </div>
@@ -76,16 +74,15 @@ function SidebarContents({ pct, current, target, p1, p2, onNav }: {
             onClick={onNav}
             className={({ isActive }) =>
               clsx(
-                'flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all',
+                'flex items-center gap-3 px-4 py-2.5 rounded-2xl text-sm font-medium transition-all',
                 isActive
-                  ? 'text-white'
-                  : 'text-white/40 hover:text-white/80 hover:bg-white/5'
+                  ? 'text-teal-700'
+                  : 'text-gray-400 hover:text-gray-700 hover:bg-gray-50'
               )
             }
             style={({ isActive }) => isActive ? {
-              background: 'rgba(212,168,83,0.12)',
-              color: '#D4A853',
-              border: '1px solid rgba(212,168,83,0.18)',
+              background: '#F0FAF4',
+              color: '#2E7D52',
             } : {}}
           >
             <Icon size={15} />
@@ -95,11 +92,11 @@ function SidebarContents({ pct, current, target, p1, p2, onNav }: {
       </nav>
 
       {/* Sign out */}
-      <div className="p-3 border-t border-white/[0.06]">
+      <div className="p-3 border-t border-gray-100">
         <button
           onClick={() => supabase.auth.signOut()}
-          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold
-                     text-white/30 hover:text-white/60 hover:bg-white/5 transition-all"
+          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-2xl text-sm font-medium
+                     text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-all"
         >
           <LogOut size={15} />
           Sign out
@@ -124,21 +121,21 @@ export default function Layout({ children }: Props) {
     <div className="flex min-h-screen bg-surface">
 
       {/* Sidebar — desktop only */}
-      <aside className="hidden md:flex w-64 shrink-0 flex-col" style={{ background: '#1E5C3A' }}>
+      <aside className="hidden md:flex w-60 shrink-0 flex-col border-r border-gray-100" style={{ background: '#FFFFFF' }}>
         <SidebarContents pct={pct} current={current} target={target} p1={p1} p2={p2} />
       </aside>
 
       {/* Mobile top bar */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-40 flex items-center px-4 py-3 border-b border-white/[0.06]"
-           style={{ background: '#1E5C3A' }}>
+      <div className="md:hidden fixed top-0 left-0 right-0 z-40 flex items-center px-4 py-3 border-b border-gray-100"
+           style={{ background: '#FFFFFF' }}>
         <button
           onClick={() => setDrawerOpen(true)}
-          className="p-1.5 rounded-xl text-white/60 hover:text-white hover:bg-white/10 transition-all"
+          className="p-1.5 rounded-xl text-gray-400 hover:text-gray-700 hover:bg-gray-50 transition-all"
         >
           <Menu size={22} />
         </button>
         <div className="flex-1 text-center font-black text-base tracking-tight">
-          <span style={{ color: '#D4A853' }}>Key</span><span className="text-white/90">Journey</span>
+          <span style={{ color: '#2E7D52' }}>Key</span><span className="text-gray-800">Journey</span>
         </div>
         {/* spacer to center the title */}
         <div className="w-8" />
@@ -156,13 +153,13 @@ export default function Layout({ children }: Props) {
           {/* Drawer panel */}
           <aside
             className="relative w-72 flex flex-col h-full"
-            style={{ background: '#1E5C3A' }}
+            style={{ background: '#FFFFFF' }}
             onClick={e => e.stopPropagation()}
           >
             {/* Close button */}
             <button
               onClick={() => setDrawerOpen(false)}
-              className="absolute top-4 right-4 p-1.5 rounded-xl text-white/40 hover:text-white hover:bg-white/10 transition-all"
+              className="absolute top-4 right-4 p-1.5 rounded-xl text-gray-400 hover:text-gray-700 hover:bg-gray-50 transition-all"
             >
               <X size={20} />
             </button>
@@ -176,10 +173,10 @@ export default function Layout({ children }: Props) {
 
       {/* Main */}
       <main className="flex-1 min-w-0 flex flex-col overflow-auto pt-14 md:pt-0">
-        <div className="flex-1 max-w-6xl w-full mx-auto px-4 md:px-8 py-6 md:py-8 animate-fade-in">
+        <div className="flex-1 max-w-5xl w-full mx-auto px-4 md:px-10 py-8 md:py-10 animate-fade-in">
           {children}
         </div>
-        <div className="text-center text-xs text-gray-400 py-4 border-t border-gray-100">
+        <div className="text-center text-xs text-gray-300 py-4 border-t border-gray-100">
           © 2026 KeyJourney
         </div>
       </main>

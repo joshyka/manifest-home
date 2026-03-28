@@ -8,6 +8,8 @@
   body {
     @apply bg-surface text-gray-900 font-sans antialiased;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   h1, h2, h3 { @apply font-bold tracking-tight; }
@@ -15,8 +17,7 @@
 
 @layer components {
   .card {
-    @apply bg-white rounded-3xl border border-gray-100/80 shadow-card p-6
-           transition-all duration-200;
+    @apply bg-white rounded-3xl shadow-card p-6 transition-all duration-200;
   }
 
   .card-hover {
@@ -24,33 +25,32 @@
   }
 
   .btn-primary {
-    @apply inline-flex items-center gap-2 px-4 py-2 bg-teal-600 text-white font-semibold
-           rounded-xl hover:bg-teal-700 active:scale-95 transition-all text-sm shadow-sm;
+    @apply inline-flex items-center gap-2 px-5 py-2 bg-teal-600 text-white font-semibold
+           rounded-full hover:bg-teal-700 active:scale-95 transition-all text-sm;
   }
 
   .btn-secondary {
-    @apply inline-flex items-center gap-2 px-4 py-2 bg-white text-gray-700 font-semibold
-           rounded-xl border border-gray-200 hover:bg-gray-50 active:scale-95 transition-all text-sm shadow-sm;
+    @apply inline-flex items-center gap-2 px-5 py-2 bg-white text-gray-700 font-semibold
+           rounded-full border border-gray-200 hover:bg-gray-50 active:scale-95 transition-all text-sm shadow-sm;
   }
 
   .btn-danger {
-    @apply inline-flex items-center gap-2 px-4 py-2 bg-red-50 text-red-700 font-semibold
-           rounded-xl border border-red-200 hover:bg-red-100 active:scale-95 transition-all text-sm;
+    @apply inline-flex items-center gap-2 px-5 py-2 bg-red-50 text-red-600 font-semibold
+           rounded-full border border-red-100 hover:bg-red-100 active:scale-95 transition-all text-sm;
   }
 
   .input {
-    @apply w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50/50
-           focus:outline-none focus:ring-2 focus:ring-teal-500/25 focus:border-teal-500
-           focus:bg-white transition-all placeholder:text-gray-300;
+    @apply w-full px-4 py-2.5 border border-gray-200 rounded-2xl text-sm bg-white
+           focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500
+           transition-all placeholder:text-gray-300;
   }
 
   .label {
-    @apply block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1.5;
+    @apply block text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-1.5;
   }
 
   .section-label {
-    @apply flex items-center gap-2 px-4 py-2.5 bg-teal-50 border-l-4 border-teal-600
-           rounded-r-xl mb-4 text-teal-700 font-bold text-sm;
+    @apply flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-widest mb-4;
   }
 
   /* Skeleton shimmer */
@@ -59,13 +59,13 @@
   }
 }
 
-/* Premium scrollbar */
-::-webkit-scrollbar { width: 5px; height: 5px; }
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { @apply bg-gray-200 rounded-full; }
 ::-webkit-scrollbar-thumb:hover { @apply bg-gray-300; }
 
-/* Number animation */
+/* Animations */
 @keyframes countUp {
   from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0); }
