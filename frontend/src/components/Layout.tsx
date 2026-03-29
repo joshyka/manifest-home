@@ -1,19 +1,20 @@
 import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, PiggyBank, Calendar, Map, Calculator, GitCompare, CheckSquare, Gavel, LogOut, Menu, X, Plus } from 'lucide-react'
+import { LayoutDashboard, PiggyBank, Calendar, Map, Calculator, GitCompare, CheckSquare, Gavel, LogOut, Menu, X, Plus, MapPin } from 'lucide-react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { dashboard } from '../lib/api'
 import { supabase } from '../lib/supabase'
 import clsx from 'clsx'
 
 const NAV = [
-  { to: '/dashboard',   label: 'Dashboard',   icon: LayoutDashboard },
+  { to: '/dashboard',   label: 'Overview',    icon: LayoutDashboard },
   { to: '/savings',     label: 'Savings',     icon: PiggyBank },
   { to: '/checklist',   label: 'Checklist',   icon: CheckSquare },
   { to: '/viewings',    label: 'Viewings',    icon: Calendar },
   { to: '/bid-tracker', label: 'Bid Tracker', icon: Gavel },
   { to: '/comparison',  label: 'Comparison',  icon: GitCompare },
   { to: '/calculator',  label: 'Calculator',  icon: Calculator },
+  { to: '/areas',       label: 'Areas',       icon: MapPin },
   { to: '/maps',        label: 'Maps',        icon: Map },
 ]
 
@@ -29,9 +30,15 @@ function SidebarContents({ pct, current, target, p1, p2, onNav }: {
       {/* Logo */}
       <div className="px-6 py-6 border-b border-gray-100">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-2xl flex items-center justify-center text-xl"
+          <div className="w-9 h-9 rounded-2xl flex items-center justify-center"
                style={{ background: '#F0FAF4', border: '1px solid #D1EAD8' }}>
-            🏡
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="8" cy="8" r="4.5" stroke="#2E7D52" strokeWidth="2"/>
+              <circle cx="8" cy="8" r="1.5" fill="#2E7D52"/>
+              <path d="M11 11.5L20 20.5" stroke="#2E7D52" strokeWidth="2" strokeLinecap="round"/>
+              <path d="M17 18.5L19 16.5" stroke="#2E7D52" strokeWidth="2" strokeLinecap="round"/>
+              <path d="M19 20.5L21 18.5" stroke="#2E7D52" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
           </div>
           <div className="font-black text-lg tracking-tight">
             <span style={{ color: '#2E7D52' }}>Key</span><span className="text-gray-800">Journey</span>
@@ -45,9 +52,6 @@ function SidebarContents({ pct, current, target, p1, p2, onNav }: {
           <div className="text-[10px] font-bold uppercase tracking-widest mb-1.5 text-gray-400">Buyers</div>
           <div className="text-gray-800 font-semibold text-sm mb-3 truncate">
             {p1 || '—'}{p1 && p2 ? ' & ' : ''}{p2 || ''}
-          </div>
-          <div className="text-[10px] font-bold uppercase tracking-widest mb-2 text-gray-400">
-            Down Payment
           </div>
           <div className="flex justify-between items-baseline mb-2">
             <span className="text-gray-700 font-bold text-sm">{current.toLocaleString('sv-SE')} kr</span>
@@ -166,20 +170,20 @@ export default function Layout({ children }: Props) {
         <div className="flex-1 max-w-5xl w-full mx-auto px-4 md:px-10 py-8 md:py-10 animate-fade-in">
           <div className="flex items-center justify-end gap-3 -mt-2 mb-6">
             <p className="text-sm text-gray-400">
-              Welcome back{p1 ? <>, <span className="font-semibold text-gray-600">{p1}{p2 ? ` & ${p2}` : ''}</span></> : ''} 👋
+              Welcome back{p1 ? <>, <span className="font-semibold text-gray-600">{p1}{p2 ? ` & ${p2}` : ''}</span></> : ''}
             </p>
             <button
               onClick={() => { qc.clear(); supabase.auth.signOut() }}
-              className="text-gray-300 hover:text-red-400 transition-colors"
-              title="Sign out"
+              className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-red-400 transition-colors"
             >
-              <LogOut size={14} />
+              <LogOut size={13} />
+              Sign out
             </button>
           </div>
           {children}
         </div>
         <div className="text-center text-xs text-gray-300 py-4 border-t border-gray-100">
-          © 2026 KeyJourney
+          <span className="text-gray-400">© 2026 KeyJourney</span>
         </div>
       </main>
 

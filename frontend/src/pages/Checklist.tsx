@@ -306,7 +306,7 @@ export default function Checklist() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-black text-gray-900">Checklist</h1>
-          <p className="text-sm text-gray-400 mt-0.5">Track every step of your home buying journey</p>
+          <p className="text-sm text-gray-400 mt-0.5">Your home buying checklist, organised</p>
         </div>
         <div className="text-right">
           <div className="text-2xl font-black text-teal-600">{pct}%</div>
@@ -352,7 +352,6 @@ export default function Checklist() {
       </DndContext>
 
       <div className="card space-y-3">
-        <div className="section-label">Add a custom task</div>
         <div className="flex gap-2 flex-wrap">
           <input
             className="input w-36 shrink-0"

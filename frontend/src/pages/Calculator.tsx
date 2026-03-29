@@ -138,9 +138,9 @@ export default function Calculator() {
 
   const [price,       setPrice]       = useState(0)
   const [downPct,     setDownPct]     = useState(10)
-  const [rate,        setRate]        = useState(3.5)
+  const [rate,        setRate]        = useState(0)
   const [avgift,      setAvgift]      = useState(0)
-  const [drift,       setDrift]       = useState(1500)
+  const [drift,       setDrift]       = useState(0)
   const [income,      setIncome]      = useState(0)
   const [useOwn,      setUseOwn]      = useState(false)
   const [snapshots, saveSnapshots] = useBlob<Snapshot[]>('calc_snapshots', [])
@@ -181,7 +181,7 @@ export default function Calculator() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-black text-gray-900">Cost Calculator</h1>
-          <p className="text-sm text-gray-400 mt-0.5">Swedish mortgage costs and affordability</p>
+          <p className="text-sm text-gray-400 mt-0.5">Estimate your monthly costs and affordability</p>
         </div>
         {(savedSettings?.apartment_price ?? 0) > 0 && !useOwn && (
           <button className="btn-secondary text-xs" onClick={loadFromSettings}>
@@ -208,14 +208,13 @@ export default function Calculator() {
                 value={downPct || ''} onChange={e => setDownPct(parseFloat(e.target.value) || 10)} />
             </div>
             <div>
-              <label className="label">Avgift / månadsavgift (SEK/month)</label>
+              <label className="label">Avgift (SEK/month)</label>
               <input type="number" className="input" min={0} step={100} placeholder="e.g. 4 500"
                 value={avgift || ''} onChange={e => setAvgift(parseInt(e.target.value) || 0)} />
-              <p className="text-[11px] text-gray-300 mt-1">Monthly HOA fee charged by the bostadsrättsförening</p>
             </div>
             <div>
-              <label className="label">Drift / other monthly costs (SEK)</label>
-              <input type="number" className="input" min={0} step={500} placeholder="e.g. 3 000"
+              <label className="label">Other monthly costs (SEK)</label>
+              <input type="number" className="input" min={0} step={500} placeholder="e.g. 1 500"
                 value={drift || ''} onChange={e => setDrift(parseInt(e.target.value) || 0)} />
               <p className="text-[11px] text-gray-300 mt-1">Electricity, internet, home insurance, etc.</p>
             </div>
@@ -226,7 +225,7 @@ export default function Calculator() {
             <div className="section-label">Mortgage</div>
             <div>
               <label className="label">Interest Rate % (annual)</label>
-              <input type="number" className="input" min={0} max={20} step={0.1} placeholder="e.g. 3.5"
+              <input type="number" className="input" min={0} max={20} step={0.1} placeholder="e.g. 3,5"
                 value={rate || ''} onChange={e => setRate(parseFloat(e.target.value) || 0)} />
               <p className="text-[11px] text-gray-300 mt-1">Current Swedish 3-month rate ~3–4%. Banks stress-test at 7%.</p>
             </div>
@@ -244,7 +243,7 @@ export default function Calculator() {
           {!result ? (
             <div className="card flex flex-col items-center justify-center h-64 text-center">
               <TrendingUp size={32} className="text-gray-200 mb-3" />
-              <p className="text-sm text-gray-400">Enter an apartment price to see<br/>your monthly cost breakdown.</p>
+              <p className="text-sm text-gray-400">Enter a price to calculate your monthly costs.</p>
             </div>
           ) : (
             <>
@@ -298,7 +297,7 @@ export default function Calculator() {
                   muted={avgift === 0}
                 />
                 <Row
-                  label="Drift / other"
+                  label="Others"
                   value={`${fmt(drift)} kr`}
                   muted={drift === 0}
                 />

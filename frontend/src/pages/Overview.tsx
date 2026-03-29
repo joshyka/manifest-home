@@ -175,14 +175,14 @@ export default function Dashboard() {
     ? `Expiring soon — ${ls.days} days`
     : ls.status === 'expired'
     ? 'Expired — renew immediately'
-    : settings.loan_bank ? settings.loan_bank : 'Bank name not set'
+    : settings.loan_bank ? settings.loan_bank : 'Bank'
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-black text-gray-900">Dashboard</h1>
-        <p className="text-sm text-gray-400 mt-0.5">Your home buying journey at a glance</p>
+        <h1 className="text-2xl font-black text-gray-900">Overview</h1>
+        <p className="text-sm text-gray-400 mt-0.5">Your journey at a glance</p>
       </div>
 
       {/* Alerts */}
@@ -211,7 +211,6 @@ export default function Dashboard() {
           value={`${kpis.current_savings.toLocaleString('sv-SE')} kr`}
           sub={`Target: ${kpis.target.toLocaleString('sv-SE')} kr`}
           progress={kpis.savings_pct}
-          accent
         />
         <MetricCard
           label="Down Payment Target"
@@ -231,7 +230,7 @@ export default function Dashboard() {
       {/* KPI row 2 */}
       <div className="grid grid-cols-3 gap-4">
         <MetricCard
-          label="Lånelöfte Amount"
+          label="Loan Promise"
           value={settings.loan_amount ? `${settings.loan_amount.toLocaleString('sv-SE')} kr` : '0 kr'}
           sub={loanSub}
         />
@@ -241,7 +240,7 @@ export default function Dashboard() {
           sub="apartments viewed so far"
         />
         <MetricCard
-          label="Bidding Attempts"
+          label="Bids Placed"
           value={String(kpis.bids_gone)}
           sub="apartments you've bid on"
         />
@@ -251,17 +250,17 @@ export default function Dashboard() {
       <div className="grid grid-cols-5 gap-4">
         {/* Savings chart */}
         <div className="col-span-3 card">
-          <h3 className="text-base font-bold text-gray-900 mb-4">Savings Projection 2026</h3>
+          <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-4">Forecast</h3>
           <SavingsChart data={projection} />
         </div>
 
         {/* Upcoming viewings */}
         <div className="col-span-2 card">
-          <h3 className="text-base font-bold text-gray-900 mb-4">Upcoming Viewings</h3>
+          <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-4">Upcoming Viewings</h3>
           {upcoming.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-40 text-center">
-              <Clock size={28} className="text-gray-200 mb-2" />
-              <p className="text-sm text-gray-400">No upcoming viewings.<br/>Add them in the Viewings page.</p>
+            <div className="flex flex-col items-center justify-center h-40 gap-2">
+              <Clock size={28} className="text-gray-200" />
+              <p className="text-sm text-gray-300">No upcoming viewings</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -315,7 +314,7 @@ export default function Dashboard() {
           <div className="ml-auto">
             {!confirmClear ? (
               <button className="btn-danger" onClick={() => setConfirmClear(true)}>
-                <Trash2 size={14} /> Clear Data
+                <Trash2 size={14} /> Delete
               </button>
             ) : (
               <div className="flex items-center gap-2">
@@ -326,7 +325,7 @@ export default function Dashboard() {
             )}
           </div>
         </div>
-        <p className="text-[11px] text-gray-400">Import replaces all existing data. Export downloads Settings, Viewings and Upcoming as an Excel file.</p>
+        <p className="text-[11px] text-gray-400">Export your data as a backup. Import overwrites all existing data.</p>
       </div>
     </div>
   )

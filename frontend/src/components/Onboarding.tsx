@@ -72,9 +72,15 @@ export default function Onboarding({ onComplete }: Props) {
         {/* Step 0 — Welcome */}
         {step === 0 && (
           <div className="text-center space-y-4">
-            <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto text-2xl"
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto"
                  style={{ background: '#F0FAF4', border: '1px solid #D1EAD8' }}>
-              🏡
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="8" cy="8" r="4.5" stroke="#2E7D52" strokeWidth="2"/>
+                <circle cx="8" cy="8" r="1.5" fill="#2E7D52"/>
+                <path d="M11 11.5L20 20.5" stroke="#2E7D52" strokeWidth="2" strokeLinecap="round"/>
+                <path d="M17 18.5L19 16.5" stroke="#2E7D52" strokeWidth="2" strokeLinecap="round"/>
+                <path d="M19 20.5L21 18.5" stroke="#2E7D52" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
             </div>
             <div>
               <h1 className="text-2xl font-black text-gray-900">Welcome to KeyJourney</h1>
@@ -194,7 +200,7 @@ export default function Onboarding({ onComplete }: Props) {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="label">Lånelöfte amount (kr) <span className="text-gray-300 font-normal">(optional)</span></label>
+                  <label className="label">Loan Promise (kr) <span className="text-gray-300 font-normal">(optional)</span></label>
                   <input type="number" className="input" placeholder="e.g. 3000000" value={loanAmount}
                     onChange={e => setLoanAmount(e.target.value)} />
                 </div>
@@ -205,7 +211,7 @@ export default function Onboarding({ onComplete }: Props) {
                 </div>
               </div>
               <div>
-                <label className="label">Lånelöfte expiry <span className="text-gray-300 font-normal">(optional)</span></label>
+                <label className="label">Loan Promise Expiry <span className="text-gray-300 font-normal">(optional)</span></label>
                 <input type="date" className="input" value={loanExpiry}
                   onChange={e => setLoanExpiry(e.target.value)} />
               </div>

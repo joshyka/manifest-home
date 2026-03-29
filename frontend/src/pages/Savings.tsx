@@ -14,7 +14,7 @@ function ProjectionTable({ rows }: { rows: ProjectionRow[] }) {
         <thead>
           <tr className="border-b border-gray-100">
             <th className="text-left py-2.5 px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Month</th>
-            <th className="text-right py-2.5 px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Cumulative</th>
+            <th className="text-right py-2.5 px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Savings</th>
             <th className="text-right py-2.5 px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Target</th>
             <th className="text-right py-2.5 px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Gap</th>
           </tr>
@@ -111,21 +111,21 @@ export default function Savings() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="space-y-3">
         <div>
           <h1 className="text-2xl font-black text-gray-900">Savings</h1>
-          <p className="text-sm text-gray-400 mt-0.5">Track your down payment progress and loan promise</p>
+          <p className="text-sm text-gray-400 mt-0.5">Track your savings and loan status</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex justify-end gap-2">
           {editing ? (
-            <div className="flex gap-2">
+            <>
               <button className="btn-primary" onClick={() => form && mutation.mutate(form)} disabled={mutation.isPending}>
                 <Check size={14} /> {mutation.isPending ? 'Saving…' : 'Save'}
               </button>
               <button className="btn-secondary" onClick={() => setEditing(false)}>
                 <X size={14} /> Cancel
               </button>
-            </div>
+            </>
           ) : (
             <button className="btn-primary" onClick={startEdit}>
               <Pencil size={14} /> Edit
@@ -141,18 +141,17 @@ export default function Savings() {
       {/* View mode */}
       {!editing && (
         <div className="card">
-          <h2 className="text-base font-bold text-gray-900 mb-4">Current Settings</h2>
           <div className="divide-y divide-gray-50">
             {[
-              ['Apartment Target Price', `${fmt(s.apartment_price)} kr`],
+              ['Target Price', `${fmt(s.apartment_price)} kr`],
               ['Down Payment %', `${s.down_pct}%  —  target ${fmt(target)} kr`],
               [`${s.p1_name || 'Person 1'} — Total Savings`, `${fmt(s.p1_current)} kr`],
               [`${s.p1_name || 'Person 1'} — Monthly Savings`, `${fmt(s.p1_monthly)} kr`],
               [`${s.p2_name || 'Person 2'} — Total Savings`, `${fmt(s.p2_current)} kr`],
               [`${s.p2_name || 'Person 2'} — Monthly Savings`, `${fmt(s.p2_monthly)} kr`],
-              ['Lånelöfte Amount', s.loan_amount ? `${fmt(s.loan_amount)} kr` : 'Not entered'],
-              ['Lånelöfte Expiry', s.loan_expiry && s.loan_expiry !== 'nan' ? s.loan_expiry : 'Not entered'],
-              ['Lender / Bank', s.loan_bank && s.loan_bank !== 'nan' ? s.loan_bank : 'Not entered'],
+              ['Loan Promise', s.loan_amount ? `${fmt(s.loan_amount)} kr` : '0 kr'],
+              ['Loan Promise Expiry', s.loan_expiry && s.loan_expiry !== 'nan' ? new Date(s.loan_expiry).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' }) : 'dd-mm-yy'],
+              ['Bank', s.loan_bank && s.loan_bank !== 'nan' ? s.loan_bank : 'Not set'],
             ].map(([label, value]) => (
               <div key={label} className="flex justify-between items-baseline py-3 text-sm">
                 <span className="text-gray-400 font-medium">{label}</span>
@@ -259,7 +258,7 @@ export default function Savings() {
                   onChange={e => set('loan_expiry', e.target.value)} />
               </div>
               <div>
-                <label className="label">Lender / Bank</label>
+                <label className="label">Bank</label>
                 <input type="text" className="input"
                   placeholder="e.g. SEB, Swedbank, SBAB"
                   value={form.loan_bank && form.loan_bank !== 'nan' ? form.loan_bank : ''}

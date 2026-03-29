@@ -94,7 +94,7 @@ export default function SavingsChart({ data }: Props) {
           stroke="#2E7D52"
           strokeWidth={2.5}
           fill="url(#savingsGrad)"
-          name="Projected Savings"
+          name="Savings"
           dot={false}
           activeDot={{ r: 5, fill: '#2E7D52', stroke: 'white', strokeWidth: 2 }}
         />

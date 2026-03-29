@@ -69,7 +69,7 @@ export default function BidTracker() {
           {/* Summary cards */}
           <div className="flex justify-end">
             <div className="card inline-block">
-              <div className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Bidding Attempts</div>
+              <div className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Bids Placed</div>
               <div className="text-3xl font-black text-teal-600">{total}</div>
             </div>
           </div>

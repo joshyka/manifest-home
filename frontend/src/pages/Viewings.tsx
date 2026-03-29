@@ -124,10 +124,9 @@ function ListingsTab({ autoOpen }: { autoOpen: boolean }) {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-base font-semibold text-gray-800">Listing Log</h2>
+      <div className="flex items-center justify-end">
         <button className="btn-primary" onClick={() => setOpen(o => !o)}>
-          {open ? <><X size={14} /> Cancel</> : <><Plus size={14} /> Add Listing</>}
+          {open ? <><X size={14} /> Cancel</> : <><Plus size={14} /> Add</>}
         </button>
       </div>
 
@@ -136,11 +135,10 @@ function ListingsTab({ autoOpen }: { autoOpen: boolean }) {
       {/* Add form */}
       {open && (
         <div className="card border-teal-100">
-          <div className="section-label mb-3">Add a listing</div>
           <form onSubmit={handleAdd} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="label">Label</label>
+                <label className="label">Address</label>
                 <input className="input" placeholder="e.g. Folkungagatan 45 — 3 rooms" value={label}
                   onChange={e => setLabel(e.target.value)} />
               </div>
@@ -181,16 +179,14 @@ function ListingsTab({ autoOpen }: { autoOpen: boolean }) {
             )}
             {err && <Alert kind="danger">{err}</Alert>}
             <button type="submit" disabled={addMutation.isPending} className="btn-primary">
-              {addMutation.isPending ? 'Saving…' : 'Save Listing'}
+              {addMutation.isPending ? 'Saving…' : 'Save'}
             </button>
           </form>
         </div>
       )}
 
       {/* Active listings */}
-      {active.length === 0 ? (
-        <p className="text-sm text-gray-400 py-4">No active listings. Click Add Listing to get started.</p>
-      ) : (
+      {active.length === 0 ? null : (
         <div className="card divide-y divide-gray-50">
           <div className="pb-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">
             {active.length} active listing{active.length !== 1 ? 's' : ''}
@@ -414,10 +410,9 @@ function UpcomingTab() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-base font-semibold text-gray-800">Upcoming Reminders</h2>
+      <div className="flex items-center justify-end">
         <button className="btn-primary" onClick={() => setOpen(o => !o)}>
-          {open ? <><X size={14} /> Cancel</> : <><Plus size={14} /> Add Reminder</>}
+          {open ? <><X size={14} /> Cancel</> : <><Plus size={14} /> Add</>}
         </button>
       </div>
 
@@ -425,11 +420,10 @@ function UpcomingTab() {
 
       {open && (
         <div className="card border-teal-100">
-          <div className="section-label mb-3">Add a reminder</div>
           <form onSubmit={handleAdd} className="space-y-4">
             <div className="grid grid-cols-3 gap-4">
               <div className="col-span-1">
-                <label className="label">Address / Description</label>
+                <label className="label">Address</label>
                 <input className="input" placeholder="e.g. Folkungagatan 45, Södermalm" value={address}
                   onChange={e => setAddress(e.target.value)} />
               </div>
@@ -444,18 +438,13 @@ function UpcomingTab() {
             </div>
             {err && <Alert kind="danger">{err}</Alert>}
             <button type="submit" disabled={addMutation.isPending} className="btn-primary">
-              {addMutation.isPending ? 'Saving…' : 'Save Reminder'}
+              {addMutation.isPending ? 'Saving…' : 'Save'}
             </button>
           </form>
         </div>
       )}
 
-      {future.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <Clock size={32} className="text-gray-200 mb-2" />
-          <p className="text-sm text-gray-400">No upcoming viewings.<br/>Click Add Reminder above.</p>
-        </div>
-      ) : (
+      {future.length === 0 ? null : (
         <div className="space-y-3">
           {future.map(u => (
             <div key={u.id} className="card flex items-start gap-3 py-4">
@@ -555,7 +544,7 @@ export default function Viewings() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-black text-gray-900">Viewings</h1>
-        <p className="text-sm text-gray-400 mt-0.5">Log every apartment you visit and track bidding history</p>
+        <p className="text-sm text-gray-400 mt-0.5">Log viewings and track bidding history</p>
       </div>
 
       {/* Tabs */}
@@ -570,7 +559,7 @@ export default function Viewings() {
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >
-            {t === 'listings' ? 'Listings' : 'Upcoming'}
+            {t === 'listings' ? 'Listings' : 'Reminders'}
           </button>
         ))}
       </div>

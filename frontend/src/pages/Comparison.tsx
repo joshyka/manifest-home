@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useBlob } from '../lib/useBlob'
 import { listings as listingsApi } from '../lib/api'
 import type { FetchedListing } from '../lib/api'
-import { Plus, X, ExternalLink, ArrowUpDown, Loader2, Star, Home, Save, Trash2, ChevronDown, ChevronUp, RotateCcw } from 'lucide-react'
+import { Plus, X, ExternalLink, ArrowUpDown, Loader2, Star, Save, Trash2, ChevronDown, ChevronUp, RotateCcw } from 'lucide-react'
 import Alert from '../components/Alert'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -20,7 +20,7 @@ interface CompItem {
   rating: number   // 1–5
 }
 
-type SortKey = 'price' | 'sqm' | 'pricePerSqm' | 'monthly' | 'rating'
+type SortKey = 'price' | 'sqm' | 'monthly' | 'rating'
 
 interface SavedComparison {
   id: string
@@ -163,7 +163,7 @@ function ListingCard({
       <div className="bg-teal-50 border border-teal-100 rounded-2xl px-4 py-3 mt-auto">
         <div className="text-[10px] font-bold text-teal-600 uppercase tracking-wider">Est. monthly cost</div>
         <div className="text-xl font-black text-teal-700 tabular-nums mt-0.5">{fmt(monthly)} kr</div>
-        <div className="text-[10px] text-teal-500 mt-0.5">10% down · 3.5% rate · excl. drift</div>
+        <div className="text-[10px] text-teal-500 mt-0.5">10% down · 3.5% rate · excl. others</div>
       </div>
 
       {/* Rating + link */}
@@ -229,11 +229,10 @@ function AddForm({ onAdd }: { onAdd: (item: Omit<CompItem, 'id'>) => void }) {
 
   return (
     <div className="card border-teal-100 space-y-4">
-      <div className="section-label">Add a listing</div>
 
       {/* URL input + fetch */}
       <div>
-        <label className="label">Listing URL (Hemnet, Booli, etc.)</label>
+        <label className="label">Listing URL</label>
         <div className="flex gap-2">
           <input
             className="input flex-1"
@@ -247,11 +246,11 @@ function AddForm({ onAdd }: { onAdd: (item: Omit<CompItem, 'id'>) => void }) {
             onClick={handleFetch}
             disabled={fetching || !url.trim()}
           >
-            {fetching ? <Loader2 size={14} className="animate-spin" /> : 'Fetch'}
+            {fetching ? <Loader2 size={14} className="animate-spin" /> : 'Load'}
           </button>
         </div>
         <p className="text-[11px] text-gray-400 mt-1">
-          We'll try to extract the price and details automatically. You can edit anything below.
+          Listing details will be loaded automatically. Review and edit before adding.
         </p>
       </div>
 
@@ -260,12 +259,6 @@ function AddForm({ onAdd }: { onAdd: (item: Omit<CompItem, 'id'>) => void }) {
       {/* Show form once fetched (or on error to allow manual entry) */}
       {fetched !== null && (
         <>
-          {fetched.partial && (
-            <Alert kind="info">
-              Could not fetch full page details — the site may block automated requests.
-              Please fill in <strong>price, size and avgift</strong> manually from the listing.
-            </Alert>
-          )}
           {fetched.image && (
             <img src={fetched.image} alt={name} className="w-full h-40 object-cover rounded-2xl" />
           )}
@@ -300,7 +293,7 @@ function AddForm({ onAdd }: { onAdd: (item: Omit<CompItem, 'id'>) => void }) {
             </div>
           </div>
           <button className="btn-primary" onClick={handleAdd}>
-            <Plus size={14} /> Add to comparison
+            <Plus size={14} /> Add to compare
           </button>
         </>
       )}
@@ -346,6 +339,7 @@ export default function Comparison() {
   }
 
   function addItem(item: Omit<CompItem, 'id'>) {
+    if (items.length >= 4) return
     saveItems([...items, { ...item, id: crypto.randomUUID().slice(0, 8) }])
     setShowAdd(false)
   }
@@ -362,7 +356,6 @@ export default function Comparison() {
   const sorted = [...items].sort((a, b) => {
     if (sortBy === 'price')       return a.price - b.price
     if (sortBy === 'sqm')         return b.sqm - a.sqm
-    if (sortBy === 'pricePerSqm') return (a.sqm ? a.price / a.sqm : Infinity) - (b.sqm ? b.price / b.sqm : Infinity)
     if (sortBy === 'monthly')     return monthlyMortgage(a.price, a.avgift) - monthlyMortgage(b.price, b.avgift)
     if (sortBy === 'rating')      return b.rating - a.rating
     return 0
@@ -374,7 +367,6 @@ export default function Comparison() {
   const SORT_OPTIONS: { key: SortKey; label: string }[] = [
     { key: 'price',       label: 'Price' },
     { key: 'sqm',         label: 'Size' },
-    { key: 'pricePerSqm', label: 'Price/m²' },
     { key: 'monthly',     label: 'Monthly cost' },
     { key: 'rating',      label: 'My rating' },
   ]
@@ -382,36 +374,40 @@ export default function Comparison() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between gap-3 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-black text-gray-900">Comparison</h1>
-          <p className="text-sm text-gray-400 mt-0.5">Compare listings from any website side by side</p>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          {items.length > 0 && !showSaveBox && (
-            <>
-              <button className="btn-secondary" onClick={() => { setShowSaveBox(true); setShowAdd(false) }}>
-                <Save size={14} /> Save comparison
-              </button>
-              {!confirmClear ? (
-                <button className="btn-danger" onClick={() => setConfirmClear(true)}>
-                  <Trash2 size={14} /> Clear all
+      <div className="space-y-3">
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div>
+            <h1 className="text-2xl font-black text-gray-900">Comparison</h1>
+            <p className="text-sm text-gray-400 mt-0.5">Compare up to 4 listings side by side</p>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            {items.length > 0 && !showSaveBox && (
+              <>
+                <button className="btn-secondary" onClick={() => { setShowSaveBox(true); setShowAdd(false) }}>
+                  <Save size={14} /> Save comparison
                 </button>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-red-600 font-medium">Clear current?</span>
-                  <button className="btn-danger" onClick={() => { saveItems([]); setConfirmClear(false) }}>Yes</button>
-                  <button className="btn-secondary" onClick={() => setConfirmClear(false)}>No</button>
-                </div>
-              )}
-            </>
-          )}
-          {!showSaveBox && (
-            <button className="btn-primary" onClick={() => setShowAdd(s => !s)}>
-              {showAdd ? <><X size={14} /> Cancel</> : <><Plus size={14} /> Add listing</>}
-            </button>
-          )}
+                {!confirmClear ? (
+                  <button className="btn-danger" onClick={() => setConfirmClear(true)}>
+                    <Trash2 size={14} /> Clear all
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-red-600 font-medium">Clear current?</span>
+                    <button className="btn-danger" onClick={() => { saveItems([]); setConfirmClear(false) }}>Yes</button>
+                    <button className="btn-secondary" onClick={() => setConfirmClear(false)}>No</button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </div>
+        {!showSaveBox && items.length < 4 && (
+          <div className="flex justify-end">
+            <button className="btn-primary" onClick={() => setShowAdd(s => !s)}>
+              {showAdd ? <><X size={14} /> Cancel</> : <><Plus size={14} /> Add</>}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Save box */}
@@ -440,13 +436,7 @@ export default function Comparison() {
 
       {showAdd && <AddForm onAdd={addItem} />}
 
-      {items.length === 0 && !showAdd ? (
-        <div className="card flex flex-col items-center justify-center py-16 text-center">
-          <Home size={36} className="text-gray-200 mb-3" />
-          <p className="text-sm font-semibold text-gray-400">No listings yet</p>
-          <p className="text-xs text-gray-300 mt-1">Paste a Hemnet, Booli or any listing URL to get started</p>
-        </div>
-      ) : items.length > 0 && (
+      {items.length > 0 && (
         <>
           {/* Sort bar */}
           <div className="flex items-center gap-2 flex-wrap">

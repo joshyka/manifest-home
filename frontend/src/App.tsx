@@ -6,14 +6,17 @@ import { settings as settingsApi } from './lib/api'
 import Layout from './components/Layout'
 import Onboarding from './components/Onboarding'
 import Login from './pages/Login'
-import Dashboard from './pages/Dashboard'
+import Dashboard from './pages/Overview'
 import Savings from './pages/Savings'
 import Viewings from './pages/Viewings'
 import Maps from './pages/Maps'
+import Areas from './pages/Areas'
 import Calculator from './pages/Calculator'
 import Comparison from './pages/Comparison'
 import Checklist from './pages/Checklist'
 import BidTracker from './pages/BidTracker'
+import Privacy from './pages/Privacy'
+import Terms from './pages/Terms'
 
 function App() {
   const [session, setSession]       = useState<Session | null | undefined>(undefined)
@@ -64,7 +67,13 @@ function App() {
     )
   }
 
-  if (!session) return <Login />
+  if (!session) return (
+    <Routes>
+      <Route path="/privacy" element={<Privacy />} />
+      <Route path="/terms" element={<Terms />} />
+      <Route path="*" element={<Login />} />
+    </Routes>
+  )
 
   if (!onboarded) return <Onboarding onComplete={() => { localStorage.setItem('kj_onboarded', '1'); setOnboarded(true) }} />
 
@@ -76,6 +85,7 @@ function App() {
         <Route path="/savings" element={<Savings />} />
         <Route path="/viewings" element={<Viewings />} />
         <Route path="/maps" element={<Maps />} />
+        <Route path="/areas" element={<Areas />} />
         <Route path="/calculator" element={<Calculator />} />
         <Route path="/comparison" element={<Comparison />} />
         <Route path="/checklist" element={<Checklist />} />

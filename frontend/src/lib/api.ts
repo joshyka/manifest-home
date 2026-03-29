@@ -90,13 +90,10 @@ export interface Viewing {
   date: string
   area: string
   listed_price: string
-  size_sqm: string
-  avgift: string
   outcome: string
   num_bid_rounds: number
   final_price: string
   my_bid: string
-  rating: string
   notes: string
   hemnet_url: string
   booli_url: string
