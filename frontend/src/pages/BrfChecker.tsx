@@ -172,23 +172,23 @@ function BrfForm({ initial, onSave, onCancel }: {
     <div className="card border-teal-100 space-y-4">
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="label">BRF Name</label>
+          <label className="label !text-green-600">BRF Name</label>
           <input className="input" placeholder="e.g. BRF Solsidan" value={name} onChange={e => setName(e.target.value)} autoFocus />
         </div>
         <div>
-          <label className="label">Address</label>
+          <label className="label !text-green-600">Address</label>
           <input className="input" placeholder="e.g. Folkungagatan 45, Stockholm" value={address} onChange={e => setAddress(e.target.value)} />
         </div>
         <div>
-          <label className="label">Andel i föreningens skuld (kr)</label>
+          <label className="label !text-green-600">Andel i föreningens skuld (kr)</label>
           <input type="number" className="input" placeholder="e.g. 350000" min={0} value={debt} onChange={e => setDebt(e.target.value)} />
         </div>
         <div>
-          <label className="label">Månadsavgift (kr/month)</label>
+          <label className="label !text-green-600">Månadsavgift (kr/month)</label>
           <input type="number" className="input" placeholder="e.g. 3500" min={0} value={fee} onChange={e => setFee(e.target.value)} />
         </div>
         <div>
-          <label className="label">Apartment size (m²)</label>
+          <label className="label !text-green-600">Apartment size (m²)</label>
           <input type="number" className="input" placeholder="e.g. 65" min={0} value={aptSqm} onChange={e => setAptSqm(e.target.value)} />
         </div>
         <div className="flex items-end pb-2">
@@ -201,12 +201,11 @@ function BrfForm({ initial, onSave, onCancel }: {
               className="w-4 h-4 rounded accent-teal-600 cursor-pointer"
             />
             <label htmlFor="owns-land" className="text-sm font-medium text-gray-700 cursor-pointer">
-              Äger marken
+              Owns the land
             </label>
           </div>
         </div>
       </div>
-      <p className="text-[11px] text-gray-400">All values are visible on the Hemnet listing page.</p>
       <div className="flex gap-2">
         <button
           className="btn-primary"

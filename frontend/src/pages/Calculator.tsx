@@ -115,7 +115,7 @@ function Row({ label, value, sub, bold, green, muted }: {
 
 function AffordabilityBadge({ status, lti }: { status: CalcResult['affordability']; lti: number }) {
   const config = {
-    good:     { icon: <CheckCircle size={16} />, bg: 'bg-green-50',  border: 'border-green-200', text: 'text-green-700',  label: 'Good',     desc: 'Well within typical bank limits' },
+    good:     { icon: <CheckCircle size={16} />, bg: 'bg-green-50',  border: 'border-green-200', text: 'text-green-700',  label: 'Good',     desc: '' },
     moderate: { icon: <Info size={16} />,        bg: 'bg-amber-50',  border: 'border-amber-200', text: 'text-amber-700', label: 'Moderate', desc: 'At the edge of 4.5× income rule' },
     tight:    { icon: <AlertTriangle size={16}/>, bg: 'bg-red-50',    border: 'border-red-200',   text: 'text-red-700',   label: 'Tight',    desc: 'Exceeds 4.5× — bank may add extra amortisation' },
   }[status]
@@ -142,6 +142,7 @@ export default function Calculator() {
   const [avgift,      setAvgift]      = useState(0)
   const [drift,       setDrift]       = useState(0)
   const [income,      setIncome]      = useState(0)
+  const [netIncome,   setNetIncome]   = useState(0)
   const [useOwn,      setUseOwn]      = useState(false)
   const [snapshots, saveSnapshots] = useBlob<Snapshot[]>('calc_snapshots', [])
 
@@ -180,7 +181,7 @@ export default function Calculator() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-black text-gray-900">Cost Calculator</h1>
+          <h1 className="text-2xl font-black text-gray-900">Calculator</h1>
           <p className="text-sm text-gray-400 mt-0.5">Estimate your monthly costs and affordability</p>
         </div>
         {(savedSettings?.apartment_price ?? 0) > 0 && !useOwn && (
@@ -190,7 +191,7 @@ export default function Calculator() {
         )}
       </div>
 
-      <div className="grid grid-cols-5 gap-5">
+      <div className="grid grid-cols-5 gap-5 items-start">
         {/* ── Inputs ─────────────────────────────────────────────────────── */}
         <div className="col-span-2 space-y-4">
 
@@ -198,25 +199,24 @@ export default function Calculator() {
           <div className="card space-y-4">
             <div className="section-label">Property</div>
             <div>
-              <label className="label">Apartment Price (SEK)</label>
+              <label className="label !text-green-600">Apartment Price (SEK)</label>
               <input type="number" className="input" min={0} step={50000} placeholder="e.g. 4 500 000"
                 value={price || ''} onChange={e => setPrice(parseInt(e.target.value) || 0)} />
             </div>
             <div>
-              <label className="label">Down Payment %</label>
+              <label className="label !text-green-600">Down Payment %</label>
               <input type="number" className="input" min={10} max={100} step={1} placeholder="10"
                 value={downPct || ''} onChange={e => setDownPct(parseFloat(e.target.value) || 10)} />
             </div>
             <div>
-              <label className="label">Avgift (SEK/month)</label>
+              <label className="label !text-green-600">Avgift (SEK/month)</label>
               <input type="number" className="input" min={0} step={100} placeholder="e.g. 4 500"
                 value={avgift || ''} onChange={e => setAvgift(parseInt(e.target.value) || 0)} />
             </div>
             <div>
-              <label className="label">Other monthly costs (SEK)</label>
+              <label className="label !text-green-600">Other monthly costs (SEK)</label>
               <input type="number" className="input" min={0} step={500} placeholder="e.g. 1 500"
                 value={drift || ''} onChange={e => setDrift(parseInt(e.target.value) || 0)} />
-              <p className="text-[11px] text-gray-300 mt-1">Electricity, internet, home insurance, etc.</p>
             </div>
           </div>
 
@@ -224,16 +224,27 @@ export default function Calculator() {
           <div className="card space-y-4">
             <div className="section-label">Mortgage</div>
             <div>
-              <label className="label">Interest Rate % (annual)</label>
-              <input type="number" className="input" min={0} max={20} step={0.1} placeholder="e.g. 3,5"
-                value={rate || ''} onChange={e => setRate(parseFloat(e.target.value) || 0)} />
+              <label className="label !text-green-600">Interest Rate % (annual)</label>
+              <div className="flex items-center gap-3">
+                <input type="range" min={0} max={10} step={0.1}
+                  value={rate}
+                  onChange={e => setRate(parseFloat(e.target.value))}
+                  className="flex-1 green-slider" />
+                <span className="text-sm text-gray-600 w-12 text-right tabular-nums">{rate.toFixed(1)}%</span>
+              </div>
               <p className="text-[11px] text-gray-300 mt-1">Current Swedish 3-month rate ~3–4%. Banks stress-test at 7%.</p>
             </div>
             <div>
-              <label className="label">Combined Gross Monthly Income (SEK)</label>
+              <label className="label !text-green-600">Combined Gross Monthly Income (SEK)</label>
               <input type="number" className="input" min={0} step={5000} placeholder="e.g. 80 000"
                 value={income || ''} onChange={e => setIncome(parseInt(e.target.value) || 0)} />
-              <p className="text-[11px] text-gray-300 mt-1">Combined gross salaries of both buyers. Used to check the 4.5× income limit.</p>
+              <p className="text-[11px] text-gray-300 mt-1">Combined gross salaries. Used for the 4.5× bank rule.</p>
+            </div>
+            <div>
+              <label className="label !text-green-600">Combined Net Monthly Income (SEK)</label>
+              <input type="number" className="input" min={0} step={5000} placeholder="e.g. 55 000"
+                value={netIncome || ''} onChange={e => setNetIncome(parseInt(e.target.value) || 0)} />
+              <p className="text-[11px] text-gray-300 mt-1">After-tax take-home pay. Used to show money left over.</p>
             </div>
           </div>
         </div>
@@ -241,7 +252,7 @@ export default function Calculator() {
         {/* ── Results ────────────────────────────────────────────────────── */}
         <div className="col-span-3 space-y-4">
           {!result ? (
-            <div className="card flex flex-col items-center justify-center h-64 text-center">
+            <div className="card flex flex-col items-center justify-center text-center" style={{minHeight: '748px'}}>
               <TrendingUp size={32} className="text-gray-200 mb-3" />
               <p className="text-sm text-gray-400">Enter a price to calculate your monthly costs.</p>
             </div>
@@ -260,7 +271,7 @@ export default function Calculator() {
                     { label: 'Down Payment',  value: `${fmt(result.downPayment)} kr` },
                   ].map(({ label, value }) => (
                     <div key={label} className="bg-gray-50 rounded-2xl p-3 text-center">
-                      <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">{label}</div>
+                      <div className="text-[11px] font-bold text-green-600 uppercase tracking-wider">{label}</div>
                       <div className="text-base font-black text-gray-900 mt-1 tabular-nums">{value}</div>
                     </div>
                   ))}
@@ -269,7 +280,12 @@ export default function Calculator() {
 
               {/* Monthly cost breakdown */}
               <div className="card">
-                <div className="section-label mb-2">Monthly Cost Breakdown</div>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="section-label">Monthly Cost Breakdown</div>
+                  <button className="btn-secondary !px-3" onClick={saveSnapshot} title="Save snapshot">
+                    <Save size={14} />
+                  </button>
+                </div>
 
                 <Row
                   label="Interest"
@@ -279,7 +295,7 @@ export default function Calculator() {
                 <Row
                   label="Amortisation"
                   sub={result.amortisationRate > 0
-                    ? `${result.amortisationRate}% / year — LTV ${result.ltv.toFixed(0)}% (Finansinspektionen rule)`
+                    ? `${result.amortisationRate}% / year — LTV ${result.ltv.toFixed(0)}%`
                     : 'LTV < 50% — no requirement'}
                   value={`${fmt(result.monthlyAmortisation)} kr`}
                   muted={result.amortisationRate === 0}
@@ -306,61 +322,56 @@ export default function Calculator() {
                 <div className="flex justify-between items-center mt-3 pt-4 border-t-2 border-gray-100">
                   <div>
                     <div className="font-black text-gray-900 text-sm">Total monthly cost</div>
-                    <div className="text-[11px] text-gray-400">Interest + amortisation + fees</div>
+                    <div className="text-[11px] text-gray-400">Interest + amortisation + avgift</div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="text-2xl font-black text-teal-600 tabular-nums">
-                      {fmt(result.totalMonthly)} kr
-                    </div>
-                    <button className="btn-secondary text-xs" onClick={saveSnapshot} title="Save snapshot">
-                      <Save size={13} /> Save
-                    </button>
+                  <div className="text-base font-black text-teal-600 tabular-nums">
+                    {fmt(result.totalMonthly)} kr
                   </div>
                 </div>
+
+                {/* Disposable income */}
+                {netIncome > 0 && (() => {
+                  const leftover = netIncome - result.totalMonthly
+                  const color = leftover >= 15000 ? 'text-green-600' : leftover >= 8000 ? 'text-amber-600' : 'text-red-500'
+                  return (
+                    <div className="flex justify-between items-center pt-3 border-t border-gray-50">
+                      <div>
+                        <div className="font-black text-gray-900 text-sm">Money left over</div>
+                      </div>
+                      <div className={`text-base font-black tabular-nums ${color}`}>{fmt(leftover)} kr</div>
+                    </div>
+                  )
+                })()}
               </div>
 
               {/* Stress test */}
               <div className="card border-amber-100 bg-amber-50/40">
-                <div className="flex items-start gap-3">
-                  <AlertTriangle size={15} className="text-amber-500 mt-0.5 shrink-0" />
-                  <div className="flex-1">
-                    <div className="text-sm font-bold text-amber-800 mb-0.5">Bank stress test @ 7%</div>
-                    <p className="text-xs text-amber-700 leading-relaxed">
-                      Before approving your mortgage, Swedish banks check if you could <strong>still afford the payments if interest rates rose to 7%</strong> — even if today's rate is lower. This is what your monthly cost would look like in that scenario. If this number is too high relative to your income, the bank may offer you a smaller loan.
-                    </p>
-                    <div className="text-xl font-black text-amber-700 mt-2 tabular-nums">
-                      {fmt(result.stressTestMonthly)} kr / month
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle size={15} className="text-amber-500 shrink-0" />
+                    <div>
+                      <p className="text-xs text-amber-700 font-medium">Stress-tested at 7% as required by Swedish banks.</p>
+                      {income > 0 && (
+                        <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                          <span className="text-[11px] font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+                            Gross {((result.stressTestMonthly / income) * 100).toFixed(0)}%
+                          </span>
+                          {netIncome > 0 && (
+                            <span className="text-[11px] font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+                              Net {((result.stressTestMonthly / netIncome) * 100).toFixed(0)}%
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
-                    {income > 0 && (
-                      <p className="text-xs text-amber-600 mt-1">
-                        = {((result.stressTestMonthly / income) * 100).toFixed(0)}% of your gross monthly income
-                      </p>
-                    )}
+                  </div>
+                  <div className="text-base font-black text-amber-700 tabular-nums shrink-0">
+                    {fmt(result.stressTestMonthly)} kr
                   </div>
                 </div>
               </div>
 
-              {/* Swedish rules info */}
-              <div className="card bg-teal-50/40 border-teal-100">
-                <div className="text-xs font-bold text-teal-700 uppercase tracking-wider mb-3">Swedish Rules Applied</div>
-                <div className="space-y-2 text-xs text-teal-800">
-                  <div className="flex items-start gap-2">
-                    <span className="font-bold shrink-0">Kontantinsats:</span>
-                    <span>Minimum 10% down payment required by law (Bolånelagen)</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="font-bold shrink-0">Amorteringskrav:</span>
-                    <span>
-                      {result.ltv > 70 ? '2%/year (LTV > 70%)' : result.ltv > 50 ? '1%/year (LTV 50–70%)' : 'None (LTV < 50%)'}
-                      {result.extraAmortisationRate > 0 ? ' + 1%/year (loan > 4.5× income)' : ''}
-                    </span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="font-bold shrink-0">Kvar-att-leva-på:</span>
-                    <span>Banks also check remaining disposable income — rule of thumb ~13,000–16,000 kr/person/month</span>
-                  </div>
-                </div>
-              </div>
+
             </>
           )}
         </div>
@@ -369,7 +380,7 @@ export default function Calculator() {
       {/* Saved snapshots */}
       {snapshots.length > 0 && (
         <div className="card space-y-3">
-          <div className="section-label">Saved Snapshots</div>
+          <div className="section-label">Previous Calculations</div>
           <div className="space-y-2">
             {snapshots.map(s => (
               <div key={s.id} className="flex items-center justify-between gap-4 p-3 bg-gray-50 rounded-2xl text-sm">

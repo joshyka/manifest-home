@@ -176,7 +176,7 @@ function Column({
       <SortableContext items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
         <div className="space-y-2">
           {tasks.length === 0 && (
-            <p className="text-xs text-gray-300 text-center py-4">Drop here</p>
+            <div className="py-4" />
           )}
           {tasks.map(task => (
             <TaskCard
@@ -203,6 +203,7 @@ export default function Checklist() {
   const [activeId, setActiveId]     = useState<string | null>(null)
   const [newLabel, setNewLabel]     = useState('')
   const [newCat, setNewCat]         = useState('')
+  const [showAdd, setShowAdd]       = useState(false)
 
   // Keep local in sync with blob when not dragging
   useEffect(() => {
@@ -306,12 +307,43 @@ export default function Checklist() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-black text-gray-900">Checklist</h1>
-          <p className="text-sm text-gray-400 mt-0.5">Your home buying checklist, organised</p>
+          <p className="text-sm text-gray-400 mt-0.5">Your home buying checklist, drag to reorder.</p>
         </div>
         <div className="text-right">
           <div className="text-2xl font-black text-teal-600">{pct}%</div>
           <div className="text-xs text-gray-400">{done} of {total} done</div>
         </div>
+      </div>
+
+      {showAdd && (
+        <div className="card border-teal-100">
+          <div className="flex gap-2 flex-wrap">
+            <input
+              className="input w-36 shrink-0"
+              placeholder="Category…"
+              value={newCat}
+              onChange={e => setNewCat(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && addTask()}
+              autoFocus
+            />
+            <input
+              className="input flex-1 min-w-0"
+              placeholder="Task description…"
+              value={newLabel}
+              onChange={e => setNewLabel(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && addTask()}
+            />
+            <button className="btn-primary shrink-0" onClick={() => { addTask(); setShowAdd(false) }} disabled={!newLabel.trim()}>
+              Save
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="flex justify-end">
+        <button className="btn-primary" onClick={() => setShowAdd(o => !o)}>
+          {showAdd ? <><X size={14} /> Cancel</> : <><Plus size={14} /> Add</>}
+        </button>
       </div>
 
       <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
@@ -351,27 +383,6 @@ export default function Checklist() {
         </DragOverlay>
       </DndContext>
 
-      <div className="card space-y-3">
-        <div className="flex gap-2 flex-wrap">
-          <input
-            className="input w-36 shrink-0"
-            placeholder="Category…"
-            value={newCat}
-            onChange={e => setNewCat(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && addTask()}
-          />
-          <input
-            className="input flex-1 min-w-0"
-            placeholder="Task description…"
-            value={newLabel}
-            onChange={e => setNewLabel(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && addTask()}
-          />
-          <button className="btn-primary shrink-0" onClick={addTask} disabled={!newLabel.trim()}>
-            <Plus size={14} /> Add
-          </button>
-        </div>
-      </div>
     </div>
   )
 }

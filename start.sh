@@ -15,13 +15,13 @@ lsof -ti:8000,5173 | xargs kill -9 2>/dev/null || true
 # ── Backend ────────────────────────────────────────────────────────────────
 echo "  → Starting FastAPI backend on http://localhost:8000"
 
-if [ ! -d "$ROOT/frontend/backend/venv" ]; then
+if [ ! -d "$ROOT/backend/venv" ]; then
   echo "  → Creating Python venv..."
-  python3 -m venv "$ROOT/frontend/backend/venv"
+  python3 -m venv "$ROOT/backend/venv"
 fi
 
-source "$ROOT/frontend/backend/venv/bin/activate"
-pip install -q -r "$ROOT/frontend/backend/requirements.txt"
+source "$ROOT/backend/venv/bin/activate"
+python -m pip install -q -r "$ROOT/requirements.txt"
 
 # Load .env from project root if it exists
 if [ -f "$ROOT/.env" ]; then
@@ -30,8 +30,8 @@ else
   echo "  WARNING: .env not found — app will not connect to Supabase"
 fi
 
-cd "$ROOT/frontend/backend"
-uvicorn main:app --reload --port 8000 &
+cd "$ROOT"
+uvicorn backend.main:app --reload --port 8000 &
 BACKEND_PID=$!
 echo "  Backend PID: $BACKEND_PID"
 

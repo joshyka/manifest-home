@@ -111,7 +111,7 @@ export default function AddressInput({ value, onChange, placeholder, label }: Pr
 
   return (
     <div ref={containerRef} className="relative">
-      {label && <label className="label">{label}</label>}
+      {label && <label className="label text-green-600">{label}</label>}
       <div className="relative">
         <MapPin size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none" />
         {loading && (

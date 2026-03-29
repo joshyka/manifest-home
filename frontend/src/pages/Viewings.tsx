@@ -138,19 +138,19 @@ function ListingsTab({ autoOpen }: { autoOpen: boolean }) {
           <form onSubmit={handleAdd} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="label">Address</label>
+                <label className="label !text-green-600">Address</label>
                 <input className="input" placeholder="e.g. Folkungagatan 45 — 3 rooms" value={label}
                   onChange={e => setLabel(e.target.value)} />
               </div>
               <div>
-                <label className="label">Listing URL</label>
+                <label className="label !text-green-600">Listing URL</label>
                 <input className="input" placeholder="https://www.hemnet.se/bostad/..." value={url}
                   onChange={e => setUrl(e.target.value)} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="label">Date Added</label>
+                <label className="label !text-green-600">Date Added</label>
                 <input type="date" className="input" value={date} onChange={e => setDate(e.target.value)} />
               </div>
               <div className="flex items-end">
@@ -164,13 +164,13 @@ function ListingsTab({ autoOpen }: { autoOpen: boolean }) {
             {went && (
               <div className="space-y-3">
                 <div>
-                  <label className="label">All Bid Rounds (SEK, comma-separated)</label>
+                  <label className="label !text-green-600">All Bid Rounds (SEK, comma-separated)</label>
                   <input className="input" placeholder="e.g. 3200000, 3350000, 3500000" value={bids}
                     onChange={e => setBids(e.target.value)} />
                   <p className="text-xs text-gray-400 mt-1">All bids in the auction, highest last</p>
                 </div>
                 <div>
-                  <label className="label">My Bid (SEK) — optional</label>
+                  <label className="label !text-green-600">My Bid (SEK) — optional</label>
                   <input type="number" className="input" placeholder="e.g. 3350000" value={myBid}
                     onChange={e => setMyBid(e.target.value)} />
                   <p className="text-xs text-gray-400 mt-1">The amount you personally bid</p>
@@ -188,7 +188,7 @@ function ListingsTab({ autoOpen }: { autoOpen: boolean }) {
       {/* Active listings */}
       {active.length === 0 ? null : (
         <div className="card divide-y divide-gray-50">
-          <div className="pb-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+          <div className="pb-3 text-xs font-semibold text-green-600 uppercase tracking-wider">
             {active.length} active listing{active.length !== 1 ? 's' : ''}
           </div>
           {active.map(v => {
@@ -266,7 +266,7 @@ function ListingsTab({ autoOpen }: { autoOpen: boolean }) {
                     {editWent && (
                       <div className="space-y-3">
                         <div>
-                          <label className="label">All Bid Rounds (SEK, comma-separated)</label>
+                          <label className="label !text-green-600">All Bid Rounds (SEK, comma-separated)</label>
                           <input
                             className="input"
                             placeholder="e.g. 3200000, 3350000, 3500000"
@@ -277,7 +277,7 @@ function ListingsTab({ autoOpen }: { autoOpen: boolean }) {
                           <p className="text-xs text-gray-400 mt-1">All bids in the auction, highest last</p>
                         </div>
                         <div>
-                          <label className="label">My Bid (SEK) — optional</label>
+                          <label className="label !text-green-600">My Bid (SEK) — optional</label>
                           <input
                             type="number"
                             className="input"
@@ -422,16 +422,16 @@ function UpcomingTab() {
           <form onSubmit={handleAdd} className="space-y-4">
             <div className="grid grid-cols-3 gap-4">
               <div className="col-span-1">
-                <label className="label">Address</label>
+                <label className="label !text-green-600">Address</label>
                 <input className="input" placeholder="e.g. Folkungagatan 45, Södermalm" value={address}
                   onChange={e => setAddress(e.target.value)} />
               </div>
               <div>
-                <label className="label">Date</label>
+                <label className="label !text-green-600">Date</label>
                 <input type="date" className="input" value={date} onChange={e => setDate(e.target.value)} />
               </div>
               <div>
-                <label className="label">Time</label>
+                <label className="label !text-green-600">Time</label>
                 <input type="time" className="input" value={time} onChange={e => setTime(e.target.value)} />
               </div>
             </div>

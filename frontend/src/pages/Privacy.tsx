@@ -10,17 +10,17 @@ export default function Privacy() {
         <section className="space-y-2">
           <h2 className="text-sm font-bold text-gray-700">What data we collect</h2>
           <p className="text-sm text-gray-500 leading-relaxed">
-            KeyJourney collects only the data you enter yourself: your name, savings amounts, monthly contributions,
-            apartment price targets, mortgage details, viewed apartments, bid history, checklist tasks,
-            target areas, BRF financial details (debt, monthly fee, land ownership), and notes.
-            We also store your email address to identify your account.
+            KeyJourney collects only the data you enter yourself: your name, savings amounts,
+            monthly contributions, apartment price targets, mortgage details, viewed apartments,
+            bid history, checklist tasks, target areas, BRF financial details, calculator snapshots,
+            and notes. We also store your email address to identify your account.
           </p>
         </section>
 
         <section className="space-y-2">
           <h2 className="text-sm font-bold text-gray-700">Where it is stored</h2>
           <p className="text-sm text-gray-500 leading-relaxed">
-            All data is stored in Supabase, a PostgreSQL database hosted within the European Union.
+            All data is stored in Supabase — a PostgreSQL database hosted within the European Union.
             Data is not transferred to or processed by any third party outside the EU.
           </p>
         </section>
@@ -28,17 +28,26 @@ export default function Privacy() {
         <section className="space-y-2">
           <h2 className="text-sm font-bold text-gray-700">Who can see your data</h2>
           <p className="text-sm text-gray-500 leading-relaxed">
-            Only you can see your data. Every record in the database is isolated by your user ID using
-            Row Level Security — no other user or account can access your information.
+            Only you can see your data. Every record is isolated by your user ID using Row Level
+            Security — no other user or account can access your information.
+          </p>
+        </section>
+
+        <section className="space-y-2">
+          <h2 className="text-sm font-bold text-gray-700">Third-party services</h2>
+          <p className="text-sm text-gray-500 leading-relaxed">
+            The Maps page embeds Google Maps via an iframe. If you use the map, Google's standard
+            privacy policy applies to that interaction. No data you enter into KeyJourney is sent
+            to Google.
           </p>
         </section>
 
         <section className="space-y-2">
           <h2 className="text-sm font-bold text-gray-700">How to delete your data</h2>
           <p className="text-sm text-gray-500 leading-relaxed">
-            You can delete all your data at any time from the Dashboard page using the
-            "Delete" option. This permanently removes all records associated with your account.
-            To fully delete your account, contact us at the email below.
+            You can delete all your data at any time from the Overview page using the Delete option.
+            This permanently removes all records associated with your account. To fully delete your
+            account, contact the app owner directly.
           </p>
         </section>
 

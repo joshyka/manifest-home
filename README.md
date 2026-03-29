@@ -8,11 +8,11 @@ Your personal home-buying command centre — track savings progress, log viewing
 
 | Layer | Tech |
 | --- | --- |
-| Frontend | React + TypeScript + Vite + Tailwind |
+| Frontend | React + TypeScript + Vite + Tailwind CSS |
 | Backend | FastAPI (Python) — serverless via Vercel |
 | Database | Supabase (PostgreSQL) |
 | Auth | Supabase — PIN login or Google OAuth |
-| Hosting | Vercel (frontend + backend) |
+| Hosting | Vercel (frontend + API) |
 
 ---
 
@@ -21,27 +21,50 @@ Your personal home-buying command centre — track savings progress, log viewing
 | Page | Purpose |
 | --- | --- |
 | Overview | KPIs, savings progress, loan status, upcoming viewings |
-| Savings | Monthly contributions and projection chart |
-| Checklist | Kanban board with custom categories |
+| Savings | Monthly contributions, loan promise status, projection table |
+| Checklist | Drag-to-reorder kanban board with custom categories |
 | Viewings | Log viewed apartments and upcoming reminders |
 | Bid Tracker | Bidding history — rounds, highest bid, your bid |
 | Comparison | Compare up to 4 listings side by side |
-| Calculator | Swedish mortgage calculator with stress test |
+| Calculator | Swedish mortgage calculator with stress test and net income buffer |
 | Areas | Target areas grouped by priority |
 | BRF Checker | Evaluate a BRF's financial health — debt/sqm, fee/sqm, land ownership |
-| Maps | Directions and nearby amenities |
+| Maps | Directions and nearby amenities via Google Maps |
+
+---
 
 ## Features
 
 - Onboarding wizard on first login — collects buyer names, savings, and target
-- Welcome greeting shown on every page after setup
-- Per-user data isolation via Supabase RLS — each user sees only their own data
+- Per-user data isolation via Supabase RLS
 - PIN login or Google OAuth with email allowlist
 - All data stored in Supabase — synced across devices, nothing in localStorage
 - Export / import full backup as Excel (settings, viewings, checklist, comparisons, snapshots, target areas, BRF checks)
-- Drag-and-drop kanban checklist with cross-column support
-- Swedish mortgage rules applied: 10% minimum down payment, amortisation tiers, stress test at 7%
+- Drag-to-reorder kanban checklist with cross-column support
+- Swedish mortgage rules: 10% minimum down payment, amortisation tiers, stress test at 7%
+- Net income field in calculator to show monthly buffer after all housing costs
+- Previous calculation snapshots saved per user
 - Delete confirmations on all destructive actions
+
+---
+
+## Project Structure
+
+```text
+manifest-home/
+├── api/              # Vercel serverless entry point (index.py)
+├── backend/          # FastAPI app (main.py, routes, models)
+├── frontend/         # React + Vite app
+│   └── src/
+│       ├── pages/    # One file per page
+│       ├── components/
+│       └── lib/      # API client, Supabase client
+├── supabase/         # schema.sql
+├── utils/            # Shared Python utilities
+├── requirements.txt  # Python dependencies
+├── vercel.json       # Vercel build + rewrite config
+└── start.sh          # Local dev startup script
+```
 
 ---
 
@@ -60,59 +83,46 @@ Then open [http://localhost:5173](http://localhost:5173)
 ### Supabase
 
 1. Go to [supabase.com](https://supabase.com) → New project (free tier)
-2. In the SQL editor, paste and run **`supabase/schema.sql`**
+2. In the SQL editor, paste and run `supabase/schema.sql`
 3. Under **Authentication → Providers → Email** — ensure email/password is enabled
 4. Under **Authentication → Users → Add user** → enter a dummy email (e.g. `home@yourapp.app`) and your PIN as password
 5. Under **Project Settings → API**, copy your keys into `.env`
 
-### Google Auth
+### Google Auth (optional)
 
-1. Go to [console.cloud.google.com](https://console.cloud.google.com) → Google Auth Platform → Get started → fill in app name → External audience
+1. Go to [console.cloud.google.com](https://console.cloud.google.com) → Google Auth Platform → Get started → External audience
 2. Clients → Create Client → Web application → add Supabase callback URL as Authorised redirect URI:
    `https://xxxx.supabase.co/auth/v1/callback`
 3. Copy **Client ID** and **Client Secret** → Supabase → Authentication → Providers → Google → enable → paste → save
 
-> **Note:** The Google sign-in screen will show `xxxx.supabase.co` as the redirect domain — this is normal and safe. Custom branding requires a custom domain and can be skipped for a private app.
+> The Google sign-in screen will show `xxxx.supabase.co` as the redirect domain — this is normal for a private app.
 
 ---
 
-## Deployment
-
-### Vercel
+## Deployment (Vercel)
 
 1. Push repo to GitHub
 2. [vercel.com](https://vercel.com) → New Project → import repo
-3. Set **Root Directory** to `frontend`
-4. Add all environment variables in Vercel project settings:
-   - `SUPABASE_URL`
-   - `SUPABASE_SERVICE_KEY`
-   - `FRONTEND_URL`
-   - `ALLOWED_EMAILS`
-   - `VITE_SUPABASE_URL`
-   - `VITE_SUPABASE_ANON_KEY`
-   - `VITE_APP_EMAIL`
+3. Leave **Root Directory** blank (repo root) — `vercel.json` handles the rest
+4. Add environment variables in Vercel project settings (see below)
 5. Deploy — frontend and `/api/*` routes are handled automatically
 
 ### Environment Variables
 
-Fill in `.env`:
+Create a `.env` file locally (never commit it):
 
 ```env
 SUPABASE_URL=https://xxxx.supabase.co
-SUPABASE_SERVICE_KEY=sb_secret_...     # service_role key — backend only
+SUPABASE_SERVICE_KEY=sb_secret_...        # service_role key — backend only
 FRONTEND_URL=https://yourapp.vercel.app
-ALLOWED_EMAILS=you@gmail.com,friend@gmail.com,home@yourapp.app  # include PIN account email too; leave blank to allow all
+ALLOWED_EMAILS=you@gmail.com,home@yourapp.app  # leave blank to allow all
 
 VITE_SUPABASE_URL=https://xxxx.supabase.co
-VITE_SUPABASE_ANON_KEY=sb_publishable_...  # anon/publishable key — frontend safe
+VITE_SUPABASE_ANON_KEY=sb_publishable_...  # anon key — frontend safe
 VITE_APP_EMAIL=home@yourapp.app            # dummy email for PIN login
 ```
 
----
-
-## License
-
-Licensed under the [Apache License 2.0](LICENSE).
+Add the same keys in **Vercel → Settings → Environment Variables**.
 
 ---
 
@@ -127,3 +137,9 @@ All data is stored in **Supabase PostgreSQL**, isolated per user via Row Level S
 | `upcoming_viewings` | Scheduled viewings |
 | `target_areas` | Areas of interest with priority |
 | `user_blobs` | Checklist, comparison boards, calculator snapshots, BRF checks |
+
+---
+
+## License
+
+Licensed under the [Apache License 2.0](LICENSE).

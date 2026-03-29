@@ -1,12 +1,12 @@
 import { useState } from 'react'
-import { ArrowUpDown } from 'lucide-react'
+import { ArrowUpDown, Car, Train, Footprints, Bike } from 'lucide-react'
 import AddressInput from '../components/AddressInput'
 
 const TRAVEL_MODES = [
-  { label: 'Driving',   dirflg: 'd', mode: 'driving' },
-  { label: 'Transit',   dirflg: 'r', mode: 'transit' },
-  { label: 'Walking',   dirflg: 'w', mode: 'walking' },
-  { label: 'Cycling',   dirflg: 'b', mode: 'bicycling' },
+  { label: 'Driving',  icon: Car,        dirflg: 'd', mode: 'driving' },
+  { label: 'Transit',  icon: Train,       dirflg: 'r', mode: 'transit' },
+  { label: 'Walking',  icon: Footprints,  dirflg: 'w', mode: 'walking' },
+  { label: 'Cycling',  icon: Bike,        dirflg: 'b', mode: 'bicycling' },
 ]
 
 const AMENITIES = [
@@ -51,8 +51,8 @@ export default function Maps() {
     embedUrl = `https://maps.google.com/maps?q=${encodeQ(dest)}&output=embed`
     openUrl  = `https://www.google.com/maps/search/${encodeQ(dest)}`
   } else {
-    embedUrl = 'https://maps.google.com/maps?q=Sweden&output=embed&z=5'
-    openUrl  = 'https://www.google.com/maps/place/Sweden'
+    embedUrl = 'https://maps.google.com/maps?q=Stockholm,Sweden&output=embed&z=12'
+    openUrl  = 'https://www.google.com/maps/place/Stockholm,Sweden'
   }
 
   return (
@@ -64,39 +64,59 @@ export default function Maps() {
 
       <div className="card space-y-4">
         {/* From / To */}
-        <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-3">
-          <AddressInput label="From" value={from} onChange={setFrom} placeholder="e.g. Drottninggatan 1, Stockholm" />
-          <button
-            onClick={swap}
+        <div className="flex items-end gap-2">
+          <div className="flex-1 grid grid-cols-[1fr_auto_1fr] items-end gap-3">
+            <AddressInput label="From" value={from} onChange={setFrom} placeholder="e.g. Drottninggatan 1, Stockholm" />
+            <button
+              onClick={swap}
+              className="mb-0.5 w-9 h-9 rounded-lg border border-gray-200 bg-white hover:bg-gray-50
+                         flex items-center justify-center text-gray-400 hover:text-gray-700 transition-colors"
+              title="Swap"
+            >
+              <ArrowUpDown size={15} />
+            </button>
+            <AddressInput label="To" value={to} onChange={v => { setTo(v); setAmenity(null) }} placeholder="e.g. Kungsgatan 10, Stockholm" />
+          </div>
+          <a
+            href={openUrl}
+            target="_blank"
+            rel="noreferrer"
+            title="Open in Google Maps"
             className="mb-0.5 w-9 h-9 rounded-lg border border-gray-200 bg-white hover:bg-gray-50
-                       flex items-center justify-center text-gray-400 hover:text-gray-700 transition-colors"
-            title="Swap"
+                       flex items-center justify-center text-gray-400 hover:text-teal-600 transition-colors shrink-0"
           >
-            <ArrowUpDown size={15} />
-          </button>
-          <AddressInput label="To" value={to} onChange={v => { setTo(v); setAmenity(null) }} placeholder="e.g. Kungsgatan 10, Stockholm" />
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+              <polyline points="15 3 21 3 21 9"/>
+              <line x1="10" y1="14" x2="21" y2="3"/>
+            </svg>
+          </a>
         </div>
 
         {/* Travel mode */}
-        <div className="flex gap-2 flex-wrap">
-          {TRAVEL_MODES.map(m => (
-            <button
-              key={m.label}
-              onClick={() => { setMode(m); setAmenity(null) }}
-              className={`px-4 py-1.5 rounded-full text-sm font-semibold border transition-all ${
-                mode.label === m.label && !amenity
-                  ? 'bg-teal-600 text-white border-teal-600'
-                  : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
-              }`}
-            >
-              {m.label}
-            </button>
-          ))}
+        <div className="flex gap-2 flex-wrap justify-center">
+          {TRAVEL_MODES.map(m => {
+            const Icon = m.icon
+            return (
+              <button
+                key={m.label}
+                onClick={() => { setMode(m); setAmenity(null) }}
+                title={m.label}
+                className={`px-3 py-1.5 rounded-full border transition-all ${
+                  mode.label === m.label && !amenity
+                    ? 'bg-teal-600 border-teal-600 text-white'
+                    : 'bg-white border-gray-200 hover:border-gray-300 text-gray-500'
+                }`}
+              >
+                <Icon size={16} />
+              </button>
+            )
+          })}
         </div>
 
         {/* Amenity filters */}
         <div>
-          <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+          <div className="text-xs font-semibold text-green-600 uppercase tracking-wider mb-2">
             Nearby amenities{to.trim() ? <span className="normal-case font-normal ml-1">near <span className="font-semibold text-gray-600">{to.trim()}</span></span> : ''}
           </div>
           <div className="flex gap-2 flex-wrap">
@@ -136,14 +156,6 @@ export default function Maps() {
           {amenity && dest && <p className="text-xs text-gray-400 mt-2">Tap the highlighted filter again to go back to directions.</p>}
         </div>
 
-        <a
-          href={openUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="block text-center text-sm font-semibold text-teal-700 hover:text-teal-800 transition-colors"
-        >
-          Open in Google Maps ↗
-        </a>
       </div>
 
       {/* Embedded map */}

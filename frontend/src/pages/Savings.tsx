@@ -13,10 +13,10 @@ function ProjectionTable({ rows }: { rows: ProjectionRow[] }) {
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-gray-100">
-            <th className="text-left py-2.5 px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Month</th>
-            <th className="text-right py-2.5 px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Savings</th>
-            <th className="text-right py-2.5 px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Target</th>
-            <th className="text-right py-2.5 px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Gap</th>
+            <th className="text-left py-2.5 px-3 text-xs font-semibold text-green-600 uppercase tracking-wider">Month</th>
+            <th className="text-right py-2.5 px-3 text-xs font-semibold text-green-600 uppercase tracking-wider">Savings</th>
+            <th className="text-right py-2.5 px-3 text-xs font-semibold text-green-600 uppercase tracking-wider">Target</th>
+            <th className="text-right py-2.5 px-3 text-xs font-semibold text-green-600 uppercase tracking-wider">Gap</th>
           </tr>
         </thead>
         <tbody>
@@ -114,7 +114,7 @@ export default function Savings() {
       <div className="space-y-3">
         <div>
           <h1 className="text-2xl font-black text-gray-900">Savings</h1>
-          <p className="text-sm text-gray-400 mt-0.5">Track your savings and loan status</p>
+          <p className="text-sm text-gray-400 mt-0.5">Monitor your savings progress.</p>
         </div>
         <div className="flex justify-end gap-2">
           {editing ? (
@@ -141,14 +141,15 @@ export default function Savings() {
       {/* View mode */}
       {!editing && (
         <div className="card">
+          <div className="section-label mb-4">Savings Plan</div>
           <div className="divide-y divide-gray-50">
             {[
               ['Target Price', `${fmt(s.apartment_price)} kr`],
               ['Down Payment %', `${s.down_pct}%  —  target ${fmt(target)} kr`],
-              [`${s.p1_name || 'Person 1'} — Total Savings`, `${fmt(s.p1_current)} kr`],
-              [`${s.p1_name || 'Person 1'} — Monthly Savings`, `${fmt(s.p1_monthly)} kr`],
-              [`${s.p2_name || 'Person 2'} — Total Savings`, `${fmt(s.p2_current)} kr`],
-              [`${s.p2_name || 'Person 2'} — Monthly Savings`, `${fmt(s.p2_monthly)} kr`],
+              [`${s.p1_name || 'You'} — Total Savings`, `${fmt(s.p1_current)} kr`],
+              [`${s.p1_name || 'You'} — Monthly Savings`, `${fmt(s.p1_monthly)} kr`],
+              [`${s.p2_name || 'Partner'} — Total Savings`, `${fmt(s.p2_current)} kr`],
+              [`${s.p2_name || 'Partner'} — Monthly Savings`, `${fmt(s.p2_monthly)} kr`],
               ['Loan Promise', s.loan_amount ? `${fmt(s.loan_amount)} kr` : '0 kr'],
               ['Loan Promise Expiry', s.loan_expiry && s.loan_expiry !== 'nan' ? new Date(s.loan_expiry).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' }) : 'dd-mm-yy'],
               ['Bank', s.loan_bank && s.loan_bank !== 'nan' ? s.loan_bank : 'Not set'],
@@ -169,11 +170,11 @@ export default function Savings() {
           <div className="card space-y-4">
             <div className="section-label">Target Apartment</div>
             <p className="text-xs text-gray-400 -mt-2">
-              The apartment price sets your down payment target. Sweden requires a minimum 10% down payment.
+              Sets your down payment target. Minimum 10% required in Sweden.
             </p>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="label">Apartment Price (SEK)</label>
+                <label className="label !text-green-600">Apartment Price (SEK)</label>
                 <input
                   type="number" className="input" min={0} step={50000}
                   placeholder="e.g. 4000000"
@@ -182,7 +183,7 @@ export default function Savings() {
                 />
               </div>
               <div>
-                <label className="label">Down Payment %</label>
+                <label className="label !text-green-600">Down Payment %</label>
                 <input
                   type="number" className="input" min={10} max={50} step={0.5}
                   placeholder="e.g. 10"
@@ -197,39 +198,39 @@ export default function Savings() {
           <div className="card space-y-4">
             <div className="section-label">Your Savings</div>
             <p className="text-xs text-gray-400 -mt-2">
-              Enter each person's current total savings and how much they add each month.
+              Enter how much each of you has saved and contributes monthly.
             </p>
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <label className="label">Name (Person 1)</label>
+                <label className="label !text-green-600">Your Name</label>
                 <input type="text" className="input" value={form.p1_name}
                   onChange={e => set('p1_name', e.target.value)} />
               </div>
               <div>
-                <label className="label">{form.p1_name || 'Person 1'} — Total Savings</label>
+                <label className="label !text-green-600">{form.p1_name || 'You'} — Total Savings</label>
                 <input type="number" className="input" min={0} step={10000} placeholder="e.g. 150000"
                   value={form.p1_current || ''}
                   onChange={e => set('p1_current', parseInt(e.target.value) || 0)} />
               </div>
               <div>
-                <label className="label">{form.p1_name || 'Person 1'} — Monthly Savings</label>
+                <label className="label !text-green-600">{form.p1_name || 'You'} — Monthly Savings</label>
                 <input type="number" className="input" min={0} step={1000} placeholder="e.g. 10000"
                   value={form.p1_monthly || ''}
                   onChange={e => set('p1_monthly', parseInt(e.target.value) || 0)} />
               </div>
               <div>
-                <label className="label">Name (Person 2)</label>
+                <label className="label !text-green-600">Your Partner's Name</label>
                 <input type="text" className="input" value={form.p2_name}
                   onChange={e => set('p2_name', e.target.value)} />
               </div>
               <div>
-                <label className="label">{form.p2_name || 'Person 2'} — Total Savings</label>
+                <label className="label !text-green-600">{form.p2_name || 'Partner'} — Total Savings</label>
                 <input type="number" className="input" min={0} step={10000} placeholder="e.g. 150000"
                   value={form.p2_current || ''}
                   onChange={e => set('p2_current', parseInt(e.target.value) || 0)} />
               </div>
               <div>
-                <label className="label">{form.p2_name || 'Person 2'} — Monthly Savings</label>
+                <label className="label !text-green-600">{form.p2_name || 'Partner'} — Monthly Savings</label>
                 <input type="number" className="input" min={0} step={1000} placeholder="e.g. 10000"
                   value={form.p2_monthly || ''}
                   onChange={e => set('p2_monthly', parseInt(e.target.value) || 0)} />
@@ -241,24 +242,23 @@ export default function Savings() {
           <div className="card space-y-4">
             <div className="section-label">Lånelöfte (Loan Promise)</div>
             <p className="text-xs text-gray-400 -mt-2">
-              Your lånelöfte is issued by your bank and is valid for 3–6 months.
-              You need it before you can bid.
+              Issued by your bank, valid for 3–6 months. Required before you can bid.
             </p>
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <label className="label">Loan Promise Amount (SEK)</label>
+                <label className="label !text-green-600">Loan Promise Amount (SEK)</label>
                 <input type="number" className="input" min={0} step={100000} placeholder="e.g. 3000000"
                   value={form.loan_amount || ''}
                   onChange={e => set('loan_amount', parseInt(e.target.value) || 0)} />
               </div>
               <div>
-                <label className="label">Expiry Date</label>
+                <label className="label !text-green-600">Expiry Date</label>
                 <input type="date" className="input"
                   value={form.loan_expiry && form.loan_expiry !== 'nan' ? form.loan_expiry : ''}
                   onChange={e => set('loan_expiry', e.target.value)} />
               </div>
               <div>
-                <label className="label">Bank</label>
+                <label className="label !text-green-600">Bank</label>
                 <input type="text" className="input"
                   placeholder="e.g. SEB, Swedbank, SBAB"
                   value={form.loan_bank && form.loan_bank !== 'nan' ? form.loan_bank : ''}
@@ -272,7 +272,7 @@ export default function Savings() {
 
       {/* Projection table */}
       <div className="card">
-        <h2 className="text-base font-bold text-gray-900 mb-4">Monthly Breakdown</h2>
+        <h2 className="section-label">Monthly Breakdown</h2>
         {projDisplay.length > 0 ? (
           <ProjectionTable rows={projDisplay} />
         ) : (

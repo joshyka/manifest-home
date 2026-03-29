@@ -122,7 +122,7 @@ function ListingCard({
           { label: 'Rooms',      value: item.rooms  ? `${item.rooms} rum`         : '—' },
         ].map(({ label, value }) => (
           <div key={label} className="bg-gray-50 rounded-xl px-3 py-2">
-            <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{label}</div>
+            <div className="text-[10px] font-bold text-green-600 uppercase tracking-wider">{label}</div>
             <div className="text-sm font-black text-gray-900 mt-0.5 tabular-nums">{value}</div>
           </div>
         ))}
@@ -131,27 +131,27 @@ function ListingCard({
       {/* Editable fields */}
       <div className="space-y-2">
         <div>
-          <label className="label">Asking Price (SEK)</label>
+          <label className="label !text-green-600">Asking Price (SEK)</label>
           <input type="number" className="input" step={50000} min={0}
             value={item.price || ''}
             onChange={e => onUpdate(item.id, 'price', parseInt(e.target.value) || 0)} />
         </div>
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <label className="label">Size (m²)</label>
+            <label className="label !text-green-600">Size (m²)</label>
             <input type="number" className="input" step={1} min={0}
               value={item.sqm || ''}
               onChange={e => onUpdate(item.id, 'sqm', parseFloat(e.target.value) || 0)} />
           </div>
           <div>
-            <label className="label">Avgift (kr/mo)</label>
+            <label className="label !text-green-600">Avgift (kr/mo)</label>
             <input type="number" className="input" step={100} min={0}
               value={item.avgift || ''}
               onChange={e => onUpdate(item.id, 'avgift', parseInt(e.target.value) || 0)} />
           </div>
         </div>
         <div>
-          <label className="label">Notes</label>
+          <label className="label !text-green-600">Notes</label>
           <textarea className="input resize-none text-xs" rows={2}
             placeholder="Pros, cons, gut feeling…"
             value={item.notes}
@@ -232,7 +232,7 @@ function AddForm({ onAdd }: { onAdd: (item: Omit<CompItem, 'id'>) => void }) {
 
       {/* URL input + fetch */}
       <div>
-        <label className="label">Listing URL</label>
+        <label className="label !text-green-600">Listing URL</label>
         <div className="flex gap-2">
           <input
             className="input flex-1"
@@ -267,27 +267,27 @@ function AddForm({ onAdd }: { onAdd: (item: Omit<CompItem, 'id'>) => void }) {
           )}
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
-              <label className="label">Name / Address</label>
+              <label className="label !text-green-600">Name / Address</label>
               <input className="input" value={name} onChange={e => setName(e.target.value)}
                 placeholder="e.g. Folkungagatan 45, Södermalm" />
             </div>
             <div>
-              <label className="label">Asking Price (SEK)</label>
+              <label className="label !text-green-600">Asking Price (SEK)</label>
               <input type="number" className="input" step={50000} min={0}
                 value={price || ''} onChange={e => setPrice(parseInt(e.target.value) || 0)} />
             </div>
             <div>
-              <label className="label">Avgift (kr/month)</label>
+              <label className="label !text-green-600">Avgift (kr/month)</label>
               <input type="number" className="input" step={100} min={0}
                 value={avgift || ''} onChange={e => setAvgift(parseInt(e.target.value) || 0)} />
             </div>
             <div>
-              <label className="label">Size (m²)</label>
+              <label className="label !text-green-600">Size (m²)</label>
               <input type="number" className="input" step={1} min={0}
                 value={sqm || ''} onChange={e => setSqm(parseFloat(e.target.value) || 0)} />
             </div>
             <div>
-              <label className="label">Rooms</label>
+              <label className="label !text-green-600">Rooms</label>
               <input type="number" className="input" step={1} min={0}
                 value={rooms || ''} onChange={e => setRooms(parseInt(e.target.value) || 0)} />
             </div>
@@ -367,7 +367,7 @@ export default function Comparison() {
   const SORT_OPTIONS: { key: SortKey; label: string }[] = [
     { key: 'price',       label: 'Price' },
     { key: 'sqm',         label: 'Size' },
-    { key: 'monthly',     label: 'Monthly cost' },
+    { key: 'monthly',     label: 'Avgift' },
     { key: 'rating',      label: 'My rating' },
   ]
 
@@ -440,7 +440,7 @@ export default function Comparison() {
         <>
           {/* Sort bar */}
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1">
+            <span className="text-xs font-bold text-green-600 uppercase tracking-wider flex items-center gap-1">
               <ArrowUpDown size={11} /> Sort by
             </span>
             {SORT_OPTIONS.map(o => (

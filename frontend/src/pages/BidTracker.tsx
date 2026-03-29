@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { viewings as viewingsApi } from '../lib/api'
 import type { Viewing } from '../lib/api'
-import Alert from '../components/Alert'
-import { TrendingUp } from 'lucide-react'
+import { TrendingUp, Info } from 'lucide-react'
+import { useState } from 'react'
 
 function fmt(n: number) {
   return Math.round(n).toLocaleString('sv-SE')
@@ -22,6 +22,7 @@ function parsePrice(s: string): number | null {
 }
 
 export default function BidTracker() {
+  const [showInfo, setShowInfo] = useState(false)
   const { data: list = [], isLoading } = useQuery({
     queryKey: ['viewings'],
     queryFn: viewingsApi.list,
@@ -56,20 +57,26 @@ export default function BidTracker() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-black text-gray-900">Bid Tracker</h1>
-        <p className="text-sm text-gray-400 mt-0.5">All your bidding attempts in one place</p>
+        <div className="flex items-center gap-2 relative">
+          <h1 className="text-2xl font-black text-gray-900">Bid Tracker</h1>
+          <button onClick={() => setShowInfo(s => !s)} className="text-gray-300 hover:text-green-600 transition-colors mt-0.5">
+            <Info size={16} />
+          </button>
+          {showInfo && (
+            <div className="absolute left-7 top-6 z-10 bg-white border border-gray-100 shadow-card rounded-2xl px-4 py-3 text-xs text-gray-600 w-56">
+              Mark viewings as 'Bidding' to track them here.
+            </div>
+          )}
+        </div>
+        <p className="text-sm text-gray-400 mt-0.5">Track every bid you've placed.</p>
       </div>
 
-      {total === 0 ? (
-        <Alert kind="success">
-          No bidding data yet. Log viewings with "Went to bidding" in the Viewings page to see them here.
-        </Alert>
-      ) : (
+      {total > 0 && (
         <>
           {/* Summary cards */}
           <div className="flex justify-end">
             <div className="card inline-block">
-              <div className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Bids Placed</div>
+              <div className="text-[11px] font-bold text-green-600 uppercase tracking-widest mb-1">Bids Placed</div>
               <div className="text-3xl font-black text-teal-600">{total}</div>
             </div>
           </div>
@@ -80,7 +87,7 @@ export default function BidTracker() {
               <thead>
                 <tr className="border-b border-gray-100">
                   {['Address', 'Date', 'Asking', 'Bid Rounds', 'Highest Bid', 'My Bid'].map(h => (
-                    <th key={h} className="text-left py-3 px-5 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                    <th key={h} className="text-left py-3 px-5 text-[11px] font-bold text-green-600 uppercase tracking-wider">
                       {h}
                     </th>
                   ))}

@@ -9,7 +9,7 @@ interface Props {
 export default function MetricCard({ label, value, sub, progress, accent }: Props) {
   return (
     <div className="card-hover group animate-slide-up">
-      <div className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">{label}</div>
+      <div className="text-[11px] font-bold text-green-600 uppercase tracking-widest mb-2">{label}</div>
       <div className={`text-2xl font-black tracking-tight animate-count ${
         accent ? 'text-teal-600' : 'text-gray-900'
       }`}>

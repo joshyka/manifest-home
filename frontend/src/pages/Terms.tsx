@@ -10,8 +10,8 @@ export default function Terms() {
         <section className="space-y-2">
           <h2 className="text-sm font-bold text-gray-700">Use of the service</h2>
           <p className="text-sm text-gray-500 leading-relaxed">
-            KeyJourney is a private home-buying tracker intended for personal use. Access is restricted
-            to authorised users only. You may not share your login credentials or attempt to access
+            KeyJourney is a private home-buying tracker for personal use. Access is restricted to
+            authorised users only. You may not share your login credentials or attempt to access
             another user's data.
           </p>
         </section>
@@ -19,18 +19,19 @@ export default function Terms() {
         <section className="space-y-2">
           <h2 className="text-sm font-bold text-gray-700">Your data</h2>
           <p className="text-sm text-gray-500 leading-relaxed">
-            All data you enter belongs to you. We do not use your data for any purpose other than
-            displaying it back to you within the app. We do not sell, share, or monetise your data.
+            All data you enter belongs to you. It is used solely to power your experience within the
+            app — savings tracking, viewings, bid history, checklists, comparisons, and mortgage
+            snapshots. We do not sell, share, or monetise your data.
           </p>
         </section>
 
         <section className="space-y-2">
           <h2 className="text-sm font-bold text-gray-700">No financial advice</h2>
           <p className="text-sm text-gray-500 leading-relaxed">
-            The mortgage calculator, savings projections, and BRF health scores in KeyJourney are for
-            informational purposes only. BRF scores are based on general market benchmarks and do not
-            constitute financial, legal, or mortgage advice. Always consult a qualified adviser before
-            making financial decisions.
+            The mortgage calculator, savings projections, stress test figures, and BRF health scores
+            in KeyJourney are for informational purposes only. They do not constitute financial,
+            legal, or mortgage advice. Always consult a qualified adviser before making financial
+            decisions.
           </p>
         </section>
 
@@ -38,7 +39,7 @@ export default function Terms() {
           <h2 className="text-sm font-bold text-gray-700">Availability</h2>
           <p className="text-sm text-gray-500 leading-relaxed">
             We aim to keep the service available but cannot guarantee uninterrupted access.
-            The service may be updated, changed, or discontinued at any time.
+            The service may be updated, changed, or discontinued at any time without notice.
           </p>
         </section>
 

@@ -170,9 +170,6 @@ export default function Layout({ children }: Props) {
       <main className="flex-1 min-w-0 flex flex-col overflow-auto pt-14 md:pt-0">
         <div className="flex-1 max-w-5xl w-full mx-auto px-4 md:px-10 py-8 md:py-10 animate-fade-in">
           <div className="flex items-center justify-end gap-3 -mt-2 mb-6">
-            <p className="text-sm text-gray-400">
-              Welcome back{p1 ? <>, <span className="font-semibold text-gray-600">{p1}{p2 ? ` & ${p2}` : ''}</span></> : ''}
-            </p>
             <button
               onClick={() => { qc.clear(); supabase.auth.signOut() }}
               className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-red-400 transition-colors"

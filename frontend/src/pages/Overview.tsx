@@ -184,10 +184,34 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
+      <input ref={fileRef} type="file" accept=".xlsx" className="hidden" onChange={handleImport} />
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-black text-gray-900">Overview</h1>
-        <p className="text-sm text-gray-400 mt-0.5">Your journey at a glance</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-black text-gray-900">Overview</h1>
+          <p className="text-sm text-green-600 font-medium mt-0.5">
+            Welcome back{settings.p1_name ? <>, <span className="font-semibold">{settings.p1_name}{settings.p2_name ? ` & ${settings.p2_name}` : ''}</span></> : ''} — your journey at a glance!
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button className="btn-secondary !px-3" onClick={handleExport} title="Export data">
+            <Download size={14} />
+          </button>
+          <button className="btn-secondary !px-3" onClick={() => fileRef.current?.click()} disabled={importing} title={importing ? 'Importing…' : 'Import data'}>
+            {importing ? <span className="text-xs">…</span> : <Upload size={14} />}
+          </button>
+          {!confirmClear ? (
+            <button className="btn-danger !px-3" onClick={() => setConfirmClear(true)} title="Delete all data">
+              <Trash2 size={14} />
+            </button>
+          ) : (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-red-600 font-medium">Delete all data?</span>
+              <button className="btn-danger" onClick={handleClear}>Yes</button>
+              <button className="btn-secondary" onClick={() => setConfirmClear(false)}>No</button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Alerts */}
@@ -255,13 +279,13 @@ export default function Dashboard() {
       <div className="grid grid-cols-5 gap-4">
         {/* Savings chart */}
         <div className="col-span-3 card">
-          <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-4">Forecast</h3>
+          <h3 className="section-label">Forecast</h3>
           <SavingsChart data={projection} />
         </div>
 
         {/* Upcoming viewings */}
         <div className="col-span-2 card">
-          <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-4">Upcoming Viewings</h3>
+          <h3 className="section-label">Upcoming Viewings</h3>
           {upcoming.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-40 gap-2">
               <Clock size={28} className="text-gray-200" />
@@ -292,46 +316,9 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Data management */}
-      <div className="card space-y-3">
-        {importMsg && (
-          <Alert kind={importMsg.includes('failed') ? 'danger' : 'success'}>{importMsg}</Alert>
-        )}
-        <div className="flex flex-wrap gap-2 items-center">
-          {/* Export */}
-          <button className="btn-secondary" onClick={handleExport}>
-            <Download size={14} /> Download
-          </button>
-
-          {/* Import */}
-          <button className="btn-secondary" onClick={() => fileRef.current?.click()} disabled={importing}>
-            <Upload size={14} /> {importing ? 'Importing…' : 'Import'}
-          </button>
-          <input
-            ref={fileRef}
-            type="file"
-            accept=".xlsx"
-            className="hidden"
-            onChange={handleImport}
-          />
-
-          {/* Clear */}
-          <div className="ml-auto">
-            {!confirmClear ? (
-              <button className="btn-danger" onClick={() => setConfirmClear(true)}>
-                <Trash2 size={14} /> Delete
-              </button>
-            ) : (
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-red-600 font-medium">Delete all data?</span>
-                <button className="btn-danger" onClick={handleClear}>Yes, delete</button>
-                <button className="btn-secondary" onClick={() => setConfirmClear(false)}>Cancel</button>
-              </div>
-            )}
-          </div>
-        </div>
-        <p className="text-[11px] text-gray-400">Export your data as a backup. Import overwrites all existing data.</p>
-      </div>
+      {importMsg && (
+        <Alert kind={importMsg.includes('failed') ? 'danger' : 'success'}>{importMsg}</Alert>
+      )}
     </div>
   )
 }
