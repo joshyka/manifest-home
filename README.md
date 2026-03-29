@@ -1,6 +1,6 @@
 # KeyJourney
 
-Your personal home-buying command centre — track savings progress, log viewings, compare listings, calculate mortgage costs, and stay on top of every step in your journey.
+Your personal home-buying command centre — track savings progress, log viewings, compare listings, calculate mortgage costs, check BRF financial health, and stay on top of every step in your journey.
 
 ---
 
