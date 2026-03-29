@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { settings as settingsApi } from '../lib/api'
+import { settings as settingsApi, dashboard as dashboardApi } from '../lib/api'
 import type { Settings, ProjectionRow } from '../lib/api'
 import Alert from '../components/Alert'
 import { Pencil, X, Check } from 'lucide-react'
@@ -53,7 +53,7 @@ export default function Savings() {
   const [saved, setSaved] = useState(false)
 
   const { data: s, isLoading } = useQuery({ queryKey: ['settings'], queryFn: settingsApi.get })
-  const { data: projData } = useQuery({ queryKey: ['projection'], queryFn: settingsApi.projection })
+  const { data: dashData } = useQuery({ queryKey: ['dashboard'], queryFn: dashboardApi.get })
 
   const mutation = useMutation({
     mutationFn: settingsApi.update,
@@ -80,7 +80,7 @@ export default function Savings() {
   }
 
   const currentMonth = new Date().getMonth() + 1
-  const projDisplay = (projData ?? []).filter(r => r.month_num >= currentMonth)
+  const projDisplay = (dashData?.projection ?? []).filter(r => r.month_num >= currentMonth)
 
   if (isLoading || !s) return (
     <div className="flex items-center justify-center h-64">

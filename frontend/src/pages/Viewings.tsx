@@ -192,8 +192,7 @@ function ListingsTab({ autoOpen }: { autoOpen: boolean }) {
             {active.length} active listing{active.length !== 1 ? 's' : ''}
           </div>
           {active.map(v => {
-            const link = v.hemnet_url && v.hemnet_url !== 'nan' ? v.hemnet_url
-              : v.booli_url && v.booli_url !== 'nan' ? v.booli_url : ''
+            const link = v.hemnet_url && v.hemnet_url !== 'nan' ? v.hemnet_url : ''
             const bidsFormatted = formatBids(v)
             const highest = v.final_price && v.final_price !== 'nan' && v.final_price !== '0' && v.final_price !== ''
               ? parseInt(v.final_price).toLocaleString('sv-SE')

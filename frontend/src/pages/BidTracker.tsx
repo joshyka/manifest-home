@@ -34,7 +34,7 @@ export default function BidTracker() {
         ...v,
         rounds:    parseBids(v.notes || ''),
         highest:   parsePrice(v.final_price),
-        asking:    parsePrice(v.listed_price),
+        asking:    null,
         myBidAmt:  parsePrice(v.my_bid),
       }))
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
@@ -93,9 +93,6 @@ export default function BidTracker() {
                       {/* Address */}
                       <td className="py-3.5 px-5">
                         <div className="font-semibold text-gray-900">{b.address}</div>
-                        {b.area && b.area !== 'nan' && (
-                          <div className="text-xs text-gray-400 mt-0.5">{b.area}</div>
-                        )}
                       </td>
 
                       {/* Date */}
