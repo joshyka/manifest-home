@@ -77,7 +77,6 @@ export default function Areas() {
               <div className="flex items-center justify-between">
                 <div className={`text-[11px] font-black uppercase tracking-widest ${col.headingStyle}`}>
                   {col.heading}
-                  <span className="ml-2 text-gray-300 font-bold">{group.length}</span>
                 </div>
                 <button
                   onClick={() => { setAddingCol(col.priority); setNewName('') }}

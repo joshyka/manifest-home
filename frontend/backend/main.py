@@ -430,7 +430,7 @@ def fetch_listing(body: FetchListingBody, payload: dict = Depends(require_auth))
 
 
 # ── User blobs ────────────────────────────────────────────────────────────────
-_ALLOWED_BLOB_KEYS = {'checklist', 'comparison_items', 'saved_comparisons', 'calc_snapshots'}
+_ALLOWED_BLOB_KEYS = {'checklist', 'comparison_items', 'saved_comparisons', 'calc_snapshots', 'brf_checks'}
 
 
 class BlobBody(BaseModel):

@@ -12,7 +12,8 @@ export default function Privacy() {
           <p className="text-sm text-gray-500 leading-relaxed">
             KeyJourney collects only the data you enter yourself: your name, savings amounts, monthly contributions,
             apartment price targets, mortgage details, viewed apartments, bid history, checklist tasks,
-            and notes. We also store your email address to identify your account.
+            target areas, BRF financial details (debt, monthly fee, land ownership), and notes.
+            We also store your email address to identify your account.
           </p>
         </section>
 
@@ -36,7 +37,7 @@ export default function Privacy() {
           <h2 className="text-sm font-bold text-gray-700">How to delete your data</h2>
           <p className="text-sm text-gray-500 leading-relaxed">
             You can delete all your data at any time from the Dashboard page using the
-            "Clear all data" option. This permanently removes all records associated with your account.
+            "Delete" option. This permanently removes all records associated with your account.
             To fully delete your account, contact us at the email below.
           </p>
         </section>

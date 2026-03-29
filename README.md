@@ -28,6 +28,7 @@ Your personal home-buying command centre — track savings progress, log viewing
 | Comparison | Compare up to 4 listings side by side |
 | Calculator | Swedish mortgage calculator with stress test |
 | Areas | Target areas grouped by priority |
+| BRF Checker | Evaluate a BRF's financial health — debt/sqm, fee/sqm, land ownership |
 | Maps | Directions and nearby amenities |
 
 ## Features
@@ -37,7 +38,7 @@ Your personal home-buying command centre — track savings progress, log viewing
 - Per-user data isolation via Supabase RLS — each user sees only their own data
 - PIN login or Google OAuth with email allowlist
 - All data stored in Supabase — synced across devices, nothing in localStorage
-- Export / import full backup as Excel (settings, viewings, checklist, comparisons, snapshots, target areas)
+- Export / import full backup as Excel (settings, viewings, checklist, comparisons, snapshots, target areas, BRF checks)
 - Drag-and-drop kanban checklist with cross-column support
 - Swedish mortgage rules applied: 10% minimum down payment, amortisation tiers, stress test at 7%
 - Delete confirmations on all destructive actions
@@ -125,4 +126,4 @@ All data is stored in **Supabase PostgreSQL**, isolated per user via Row Level S
 | `viewings` | Viewed apartments and bid history |
 | `upcoming_viewings` | Scheduled viewings |
 | `target_areas` | Areas of interest with priority |
-| `user_blobs` | Checklist, comparison boards, calculator snapshots |
+| `user_blobs` | Checklist, comparison boards, calculator snapshots, BRF checks |

@@ -37,18 +37,12 @@ CREATE TABLE viewings (
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   address TEXT DEFAULT '',
   date TEXT DEFAULT '',
-  area TEXT DEFAULT '',
-  listed_price TEXT DEFAULT '',
-  size_sqm TEXT DEFAULT '',
-  avgift TEXT DEFAULT '',
   outcome TEXT DEFAULT 'Viewed — no bid',
   num_bid_rounds INTEGER DEFAULT 0,
   final_price TEXT DEFAULT '',
   my_bid TEXT DEFAULT '',
-  rating TEXT DEFAULT '',
   notes TEXT DEFAULT '',
   hemnet_url TEXT DEFAULT '',
-  booli_url TEXT DEFAULT '',
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -95,7 +89,7 @@ CREATE POLICY "Users manage own target areas" ON target_areas
   WITH CHECK (user_id = auth.uid());
 
 
--- User blobs: generic per-user JSON storage (checklist, comparison, calc snapshots)
+-- User blobs: generic per-user JSON storage (checklist, comparison, calc snapshots, brf checks)
 CREATE TABLE user_blobs (
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
   key TEXT NOT NULL,

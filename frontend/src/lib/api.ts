@@ -88,15 +88,12 @@ export interface Viewing {
   id: string
   address: string
   date: string
-  area: string
-  listed_price: string
   outcome: string
   num_bid_rounds: number
   final_price: string
   my_bid: string
   notes: string
   hemnet_url: string
-  booli_url: string
 }
 
 // ── Dashboard ──────────────────────────────────────────────────────────────────
@@ -112,7 +109,6 @@ export const settings = {
       method: 'PUT',
       body: JSON.stringify(data),
     }),
-  projection: () => request<ProjectionRow[]>('/settings/projection'),
 }
 
 // ── Viewings ───────────────────────────────────────────────────────────────────

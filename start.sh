@@ -5,8 +5,7 @@ set -e
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 
 echo ""
-echo "  🏡  KeyJourney — React + FastAPI"
-echo "  ─────────────────────────────────────────────"
+echo "  KeyJourney — React + FastAPI"
 echo ""
 
 # ── Clear ports ────────────────────────────────────────────────────────────
@@ -27,12 +26,14 @@ pip install -q -r "$ROOT/frontend/backend/requirements.txt"
 # Load .env from project root if it exists
 if [ -f "$ROOT/.env" ]; then
   export $(grep -v '^#' "$ROOT/.env" | xargs)
+else
+  echo "  WARNING: .env not found — app will not connect to Supabase"
 fi
 
 cd "$ROOT/frontend/backend"
 uvicorn main:app --reload --port 8000 &
 BACKEND_PID=$!
-echo "  ✓ Backend PID: $BACKEND_PID"
+echo "  Backend PID: $BACKEND_PID"
 
 # ── Frontend ───────────────────────────────────────────────────────────────
 echo ""
@@ -47,11 +48,10 @@ fi
 
 npm run dev &
 FRONTEND_PID=$!
-echo "  ✓ Frontend PID: $FRONTEND_PID"
+echo "  Frontend PID: $FRONTEND_PID"
 
 echo ""
-echo "  ✅  App running at: http://localhost:5173"
-echo "  📋  API docs at:    http://localhost:8000/docs"
+echo "  App running at: http://localhost:5173"
 echo ""
 echo "  Press Ctrl+C to stop both servers."
 

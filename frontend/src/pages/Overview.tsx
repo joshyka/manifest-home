@@ -34,7 +34,7 @@ export default function Dashboard() {
   }
 
   async function handleExport() {
-    const [vs, us, s, targetAreas, checklist, comparison, savedComps, calcSnaps] = await Promise.all([
+    const [vs, us, s, targetAreas, checklist, comparison, savedComps, calcSnaps, brfChecks] = await Promise.all([
       viewingsApi.list(),
       upcomingApi.list(),
       settingsApi.get(),
@@ -43,6 +43,7 @@ export default function Dashboard() {
       blobs.get<any[]>('comparison_items'),
       blobs.get<any[]>('saved_comparisons'),
       blobs.get<any[]>('calc_snapshots'),
+      blobs.get<any[]>('brf_checks'),
     ])
 
     const wb = XLSX.utils.book_new()
@@ -53,7 +54,8 @@ export default function Dashboard() {
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(comparison  ?? []), 'Comparison')
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(savedComps  ?? []), 'Saved Comparisons')
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(calcSnaps   ?? []), 'Calculator')
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(targetAreas), 'Target Areas')
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(targetAreas),   'Target Areas')
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(brfChecks ?? []), 'BRF Checks')
     XLSX.writeFile(wb, `keyjourney-${new Date().toISOString().slice(0,10)}.xlsx`)
   }
 
@@ -125,6 +127,9 @@ export default function Dashboard() {
         await blobs.set('saved_comparisons',   XLSX.utils.sheet_to_json(savedCompSheet))
       if (calcSheet)
         await blobs.set('calc_snapshots',      XLSX.utils.sheet_to_json(calcSheet))
+      const brfSheet = wb.Sheets['BRF Checks']
+      if (brfSheet)
+        await blobs.set('brf_checks',          XLSX.utils.sheet_to_json(brfSheet))
 
       // Import target areas via API
       const areasSheet = wb.Sheets['Target Areas']

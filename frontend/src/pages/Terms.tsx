@@ -27,9 +27,10 @@ export default function Terms() {
         <section className="space-y-2">
           <h2 className="text-sm font-bold text-gray-700">No financial advice</h2>
           <p className="text-sm text-gray-500 leading-relaxed">
-            The mortgage calculator and savings projections in KeyJourney are for informational purposes
-            only. They do not constitute financial, legal, or mortgage advice. Always consult a qualified
-            adviser before making financial decisions.
+            The mortgage calculator, savings projections, and BRF health scores in KeyJourney are for
+            informational purposes only. BRF scores are based on general market benchmarks and do not
+            constitute financial, legal, or mortgage advice. Always consult a qualified adviser before
+            making financial decisions.
           </p>
         </section>
 

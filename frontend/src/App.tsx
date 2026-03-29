@@ -15,6 +15,7 @@ import Calculator from './pages/Calculator'
 import Comparison from './pages/Comparison'
 import Checklist from './pages/Checklist'
 import BidTracker from './pages/BidTracker'
+import BrfChecker from './pages/BrfChecker'
 import Privacy from './pages/Privacy'
 import Terms from './pages/Terms'
 
@@ -90,6 +91,7 @@ function App() {
         <Route path="/comparison" element={<Comparison />} />
         <Route path="/checklist" element={<Checklist />} />
         <Route path="/bid-tracker" element={<BidTracker />} />
+        <Route path="/brf-checker" element={<BrfChecker />} />
       </Routes>
     </Layout>
   )
