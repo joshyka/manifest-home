@@ -20,14 +20,15 @@ Your personal home-buying command centre — track savings progress, log viewing
 
 | Page | Purpose |
 | --- | --- |
-| Dashboard | KPIs, savings progress, loan status, upcoming viewings |
+| Overview | KPIs, savings progress, loan status, upcoming viewings |
 | Savings | Monthly contributions and projection chart |
 | Checklist | Kanban board with custom categories |
 | Viewings | Log viewed apartments and upcoming reminders |
 | Bid Tracker | Bidding history — rounds, highest bid, your bid |
-| Comparison | Compare listings side by side |
+| Comparison | Compare up to 4 listings side by side |
 | Calculator | Swedish mortgage calculator with stress test |
-| Maps | Directions, nearby amenities, and target areas |
+| Areas | Target areas grouped by priority |
+| Maps | Directions and nearby amenities |
 
 ## Features
 
