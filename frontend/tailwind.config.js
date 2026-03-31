@@ -32,7 +32,7 @@ export default {
         surface: '#F5F5F7',
       },
       fontFamily: {
-        sans: ['"Manrope"', 'system-ui', 'sans-serif'],
+        sans: ['"Manrope Variable"', 'Manrope', 'system-ui', 'sans-serif'],
       },
       boxShadow: {
         card:        '0 1px 2px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.06)',

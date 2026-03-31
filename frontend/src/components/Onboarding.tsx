@@ -6,11 +6,12 @@ interface Props {
   onComplete: () => void
 }
 
-const STEPS = ['Welcome', "Who's buying?", 'Your savings', 'Your target']
+const STEPS = ['Consent', 'Welcome', "Who's buying?", 'Your savings', 'Your target']
 
 export default function Onboarding({ onComplete }: Props) {
   const qc = useQueryClient()
   const [step, setStep] = useState(0)
+  const [consented, setConsented] = useState(false)
   const [saving, setSaving] = useState(false)
 
   const [p1Name,        setP1Name]        = useState('')
@@ -57,20 +58,64 @@ export default function Onboarding({ onComplete }: Props) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-surface">
       <div className="bg-white rounded-3xl shadow-card w-full max-w-md p-8 space-y-6">
 
-        {/* Step indicator */}
-        <div className="flex items-center justify-center gap-2">
-          {STEPS.map((_, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <div className={`w-2.5 h-2.5 rounded-full transition-all ${
-                i <= step ? 'bg-teal-600' : 'bg-gray-200'
-              }`} />
-              {i < STEPS.length - 1 && <div className="w-8 h-px bg-gray-200" />}
-            </div>
-          ))}
-        </div>
+        {/* Step indicator — hidden on consent step */}
+        {step > 0 && (
+          <div className="flex items-center justify-center gap-2">
+            {STEPS.slice(1).map((_, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <div className={`w-2.5 h-2.5 rounded-full transition-all ${
+                  i <= step - 1 ? 'bg-teal-600' : 'bg-gray-200'
+                }`} />
+                {i < STEPS.length - 2 && <div className="w-8 h-px bg-gray-200" />}
+              </div>
+            ))}
+          </div>
+        )}
 
-        {/* Step 0 — Welcome */}
+        {/* Step 0 — Consent */}
         {step === 0 && (
+          <div className="space-y-5">
+            <div>
+              <h2 className="text-xl font-black text-gray-900">Before you start</h2>
+              <p className="text-sm text-gray-500 mt-1">KeyJourney stores personal and financial data to power your home-buying tracker.</p>
+            </div>
+            <div className="bg-gray-50 rounded-2xl p-4 space-y-2 text-xs text-gray-600 leading-relaxed">
+              <p>We collect and store:</p>
+              <ul className="list-disc list-inside space-y-1 text-gray-500">
+                <li>Your name(s) and email address</li>
+                <li>Savings amounts and monthly contributions</li>
+                <li>Loan promise details and apartment price targets</li>
+                <li>Viewed apartments, bid history, and reminders</li>
+                <li>Checklist tasks, BRF checks, and listing comparisons</li>
+              </ul>
+              <p className="pt-1">All data is stored securely in Supabase (EU) and is only visible to you. You can export or delete your data at any time from the Overview page.</p>
+            </div>
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={consented}
+                onChange={e => setConsented(e.target.checked)}
+                className="mt-0.5 w-4 h-4 accent-teal-600 rounded shrink-0"
+              />
+              <span className="text-sm text-gray-700">
+                I understand and agree that KeyJourney will store my personal and financial data as described above. I have read the{' '}
+                <a href="/privacy" target="_blank" className="text-teal-600 hover:underline">Privacy Policy</a>
+                {' '}and{' '}
+                <a href="/terms" target="_blank" className="text-teal-600 hover:underline">Terms of Service</a>.
+              </span>
+            </label>
+            <button
+              onClick={() => { localStorage.setItem('kj_consented', '1'); setStep(1) }}
+              disabled={!consented}
+              className="w-full py-3 rounded-full text-sm font-semibold text-white bg-teal-600 hover:bg-teal-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-95"
+            >
+              I agree — continue
+            </button>
+          </div>
+        )}
+
+        {/* Step 1 — Welcome */}
+        {step === 1 && (
           <div className="text-center space-y-4">
             <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto"
                  style={{ background: '#F0FAF4', border: '1px solid #D1EAD8' }}>
@@ -91,7 +136,7 @@ export default function Onboarding({ onComplete }: Props) {
             <p className="text-xs text-gray-400">Takes about 2 minutes to set up. You can skip any step.</p>
             <button onClick={next}
               className="w-full py-3 rounded-full text-sm font-semibold text-white bg-teal-600 hover:bg-teal-700 transition-all active:scale-95">
-              Get started →
+              Get started
             </button>
             <button onClick={onComplete}
               className="w-full py-2 text-sm font-semibold text-gray-400 hover:text-gray-600 transition-colors">
@@ -100,8 +145,8 @@ export default function Onboarding({ onComplete }: Props) {
           </div>
         )}
 
-        {/* Step 1 — Names */}
-        {step === 1 && (
+        {/* Step 2 — Names */}
+        {step === 2 && (
           <div className="space-y-4">
             <div>
               <h2 className="text-xl font-black text-gray-900">Who's buying?</h2>
@@ -122,7 +167,7 @@ export default function Onboarding({ onComplete }: Props) {
             <div className="flex gap-3 pt-2">
               <button onClick={next} disabled={!p1Name.trim()}
                 className="flex-1 py-3 rounded-full text-sm font-semibold text-white bg-teal-600 hover:bg-teal-700 disabled:opacity-40 transition-all active:scale-95">
-                Next →
+                Next
               </button>
               <button onClick={skip} className="px-5 py-3 rounded-2xl text-sm font-semibold text-gray-400 hover:text-gray-600 transition-colors">
                 Skip
@@ -131,8 +176,8 @@ export default function Onboarding({ onComplete }: Props) {
           </div>
         )}
 
-        {/* Step 2 — Savings */}
-        {step === 2 && (
+        {/* Step 3 — Savings */}
+        {step === 3 && (
           <div className="space-y-4">
             <div>
               <h2 className="text-xl font-black text-gray-900">Your savings</h2>
@@ -169,7 +214,7 @@ export default function Onboarding({ onComplete }: Props) {
             <div className="flex gap-3 pt-2">
               <button onClick={next}
                 className="flex-1 py-3 rounded-full text-sm font-semibold text-white bg-teal-600 hover:bg-teal-700 transition-all active:scale-95">
-                Next →
+                Next
               </button>
               <button onClick={skip} className="px-5 py-3 rounded-2xl text-sm font-semibold text-gray-400 hover:text-gray-600 transition-colors">
                 Skip
@@ -178,8 +223,8 @@ export default function Onboarding({ onComplete }: Props) {
           </div>
         )}
 
-        {/* Step 3 — Target */}
-        {step === 3 && (
+        {/* Step 4 — Target */}
+        {step === 4 && (
           <div className="space-y-4">
             <div>
               <h2 className="text-xl font-black text-gray-900">Your target</h2>
@@ -219,7 +264,7 @@ export default function Onboarding({ onComplete }: Props) {
             <div className="flex gap-3 pt-2">
               <button onClick={finish} disabled={saving}
                 className="flex-1 py-3 rounded-full text-sm font-semibold text-white bg-teal-600 hover:bg-teal-700 disabled:opacity-50 transition-all active:scale-95">
-                {saving ? 'Saving…' : 'Done — go to dashboard →'}
+                {saving ? 'Saving…' : 'Done'}
               </button>
               <button onClick={skip} disabled={saving}
                 className="px-5 py-3 rounded-2xl text-sm font-semibold text-gray-400 hover:text-gray-600 transition-colors">

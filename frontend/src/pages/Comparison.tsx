@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useBlob } from '../lib/useBlob'
 import { useRiksbankRate } from '../lib/useRiksbankRate'
-import { X, ArrowUpDown, Star, Save, Trash2, ChevronDown, ChevronUp, RotateCcw } from 'lucide-react'
+import { X, ArrowUpDown, Star, Save, Trash2, ChevronDown, ChevronUp, RotateCcw, Plus, Check } from 'lucide-react'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface CompItem {
@@ -218,8 +218,11 @@ function AddForm({ onAdd }: { onAdd: (item: Omit<CompItem, 'id'>) => void }) {
         </div>
       </div>
       <div className="flex justify-end">
-        <button className={`btn-primary transition-all ${added ? '!bg-teal-50 !text-teal-600 !border-teal-200 !border' : ''}`} onClick={handleAdd}>
-          {added ? '✓ Added' : '+ Add'}
+        <button
+          className={`btn-primary transition-all ${added ? '!bg-teal-50 !text-teal-600 !border !border-teal-200 !shadow-none' : ''}`}
+          onClick={handleAdd}
+        >
+          {added ? <><Check size={13} /> Added</> : 'Compare'}
         </button>
       </div>
     </div>
@@ -308,52 +311,65 @@ const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
             <h1 className="text-2xl font-black text-gray-900">Comparison</h1>
             <p className="text-sm text-gray-400 mt-0.5">Compare up to 4 listings side by side</p>
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            {items.length > 0 && !showSaveBox && (
-              <>
-                <button className="btn-secondary" onClick={() => setShowSaveBox(true)}>
-                  <Save size={14} /> Save
-                </button>
-                {!confirmClear ? (
-                  <button className="btn-danger" onClick={() => setConfirmClear(true)}>
-                    <Trash2 size={14} /> Clear
-                  </button>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-red-600 font-medium">Clear current?</span>
-                    <button className="btn-danger" onClick={() => { saveItems([]); setConfirmClear(false) }}>Yes</button>
-                    <button className="btn-secondary" onClick={() => setConfirmClear(false)}>No</button>
+          {items.length > 0 && (
+            <div className="flex items-center gap-1.5">
+              {/* Save — icon opens inline input */}
+              <div className="relative flex items-center">
+                {showSaveBox ? (
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      className="input !py-1.5 !text-xs w-44"
+                      placeholder="Name this comparison…"
+                      value={saveName}
+                      onChange={e => setSaveName(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') saveComparison()
+                        if (e.key === 'Escape') { setShowSaveBox(false); setSaveName('') }
+                      }}
+                      autoFocus
+                    />
+                    <button
+                      className="btn-primary !px-3 !py-1.5"
+                      onClick={saveComparison}
+                      disabled={!saveName.trim()}
+                      title="Save"
+                    >
+                      <Save size={13} />
+                    </button>
+                    <button
+                      className="btn-secondary !px-3 !py-1.5"
+                      onClick={() => { setShowSaveBox(false); setSaveName('') }}
+                      title="Cancel"
+                    >
+                      <X size={13} />
+                    </button>
                   </div>
+                ) : (
+                  <button
+                    className="p-2 rounded-xl text-gray-400 hover:text-teal-600 hover:bg-teal-50 transition-all"
+                    onClick={() => setShowSaveBox(true)}
+                    title="Save comparison"
+                  >
+                    <Save size={16} />
+                  </button>
                 )}
-              </>
-            )}
-          </div>
+              </div>
+
+              {/* Clear — icon turns red on second click */}
+              <button
+                className={`p-2 rounded-xl transition-all ${confirmClear ? 'text-red-500 bg-red-50' : 'text-gray-400 hover:text-red-400 hover:bg-red-50'}`}
+                onClick={() => {
+                  if (confirmClear) { saveItems([]); setConfirmClear(false) }
+                  else { setConfirmClear(true); setTimeout(() => setConfirmClear(false), 2000) }
+                }}
+                title={confirmClear ? 'Click again to clear' : 'Clear all listings'}
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
+          )}
         </div>
       </div>
-
-      {/* Save box */}
-      {showSaveBox && (
-        <div className="card border-teal-100 space-y-3">
-          <div className="section-label">Save this comparison</div>
-          <div className="flex gap-2">
-            <input
-              className="input flex-1"
-              placeholder="e.g. March shortlist, Round 2…"
-              value={saveName}
-              onChange={e => setSaveName(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && saveComparison()}
-              autoFocus
-            />
-            <button className="btn-primary shrink-0" onClick={saveComparison} disabled={!saveName.trim()}>
-              <Save size={14} /> Save
-            </button>
-            <button className="btn-secondary shrink-0" onClick={() => { setShowSaveBox(false); setSaveName('') }}>
-              Cancel
-            </button>
-          </div>
-          <p className="text-[11px] text-gray-400">Current listings will be saved and the board cleared.</p>
-        </div>
-      )}
 
       {items.length < 4 && <AddForm onAdd={addItem} />}
 

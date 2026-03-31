@@ -186,5 +186,6 @@ export const targetAreas = {
 
 // ── Data management ────────────────────────────────────────────────────────────
 export const data = {
-  clear: () => request<{ ok: boolean }>('/data', { method: 'DELETE' }),
+  clear:   () => request<{ ok: boolean }>('/data', { method: 'DELETE' }),
+  cleanup: () => request<{ ok: boolean; deleted_upcoming_older_than_1y: number; deleted_archived_viewings_older_than_1y: number }>('/cleanup', { method: 'POST' }),
 }

@@ -1,10 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { viewings as viewingsApi, upcoming as upcomingApi } from '../lib/api'
+import { viewings as viewingsApi } from '../lib/api'
 import type { Viewing } from '../lib/api'
 import Alert from '../components/Alert'
-import { Plus, X, Archive, ChevronDown, ChevronUp, Clock, Pencil, Check, TrendingUp, Info, BellPlus } from 'lucide-react'
+import { Plus, X, Archive, ChevronDown, ChevronUp, Pencil, Check, TrendingUp, Info } from 'lucide-react'
 
 // ── Listings tab ─────────────────────────────────────────────────────────────
 function ListingsTab({ autoOpen }: { autoOpen: boolean }) {
@@ -154,9 +154,14 @@ function ListingsTab({ autoOpen }: { autoOpen: boolean }) {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-end">
-        <button className="btn-primary" onClick={() => setOpen(o => !o)}>
-          {open ? <><X size={14} /> Cancel</> : <><Plus size={14} /> Add</>}
+      <div className="flex items-center justify-between">
+        <h3 className="section-label !mb-0">Listings</h3>
+        <button
+          className={`p-1.5 rounded-xl transition-all ${open ? 'text-gray-400 hover:text-gray-600 hover:bg-gray-50' : 'text-gray-400 hover:text-teal-600 hover:bg-teal-50'}`}
+          onClick={() => setOpen(o => !o)}
+          title={open ? 'Cancel' : 'Add listing'}
+        >
+          {open ? <X size={15} /> : <Plus size={15} />}
         </button>
       </div>
 
@@ -396,187 +401,6 @@ function ListingsTab({ autoOpen }: { autoOpen: boolean }) {
   )
 }
 
-// ── Upcoming tab ─────────────────────────────────────────────────────────────
-function UpcomingTab() {
-  const qc = useQueryClient()
-  const [open, setOpen] = useState(false)
-  const [address, setAddress] = useState('')
-  const [date, setDate] = useState(() => new Date().toISOString().split('T')[0])
-  const [time, setTime] = useState('10:00')
-  const [saved, setSaved] = useState(false)
-  const [err, setErr] = useState('')
-  const [showPast, setShowPast] = useState(false)
-  const [confirmRemoveId, setConfirmRemoveId] = useState<string | null>(null)
-
-  const { data: list = [] } = useQuery({ queryKey: ['upcoming'], queryFn: upcomingApi.list })
-
-  const addMutation = useMutation({
-    mutationFn: upcomingApi.add,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['upcoming'] })
-      qc.invalidateQueries({ queryKey: ['dashboard'] })
-      setOpen(false); setAddress(''); setSaved(true)
-      setTimeout(() => setSaved(false), 3000)
-    },
-  })
-
-  const removeMutation = useMutation({
-    mutationFn: upcomingApi.remove,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['upcoming'] })
-      qc.invalidateQueries({ queryKey: ['dashboard'] })
-    },
-  })
-
-  function handleAdd(e: React.FormEvent) {
-    e.preventDefault()
-    setErr('')
-    if (!address.trim()) { setErr('Please enter an address.'); return }
-    addMutation.mutate({ address: address.trim(), datetime: `${date}T${time}:00` })
-  }
-
-  const now = new Date()
-  const sorted = [...list].sort((a, b) => new Date(a.datetime).getTime() - new Date(b.datetime).getTime())
-  const future = sorted.filter(u => new Date(u.datetime) >= now)
-  const past   = sorted.filter(u => new Date(u.datetime) < now)
-
-  function daysAway(dt: string) {
-    const d = new Date(dt)
-    const days = Math.round((d.getTime() - now.getTime()) / 86_400_000)
-    if (days < 0) return ''
-    if (days === 0) return 'Today'
-    if (days === 1) return 'Tomorrow'
-    return `${days} days away`
-  }
-
-  function formatDt(dt: string) {
-    const d = new Date(dt)
-    return d.toLocaleDateString('en-SE', { weekday: 'long', day: 'numeric', month: 'long' })
-      + ' — ' + d.toLocaleTimeString('en-SE', { hour: '2-digit', minute: '2-digit' })
-  }
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-end">
-        <button
-          className={open ? 'btn-secondary !px-3' : 'btn-primary !px-3'}
-          onClick={() => setOpen(o => !o)}
-          title={open ? 'Cancel' : 'Add reminder'}
-        >
-          {open ? <X size={16} /> : <BellPlus size={16} />}
-        </button>
-      </div>
-
-      {saved && <Alert kind="success">Reminder saved.</Alert>}
-
-      {open && (
-        <div className="card border-teal-100">
-          <form onSubmit={handleAdd} className="space-y-4">
-            <div className="grid grid-cols-3 gap-4">
-              <div className="col-span-1">
-                <label className="label !text-green-600">Address</label>
-                <input className="input" placeholder="e.g. Folkungagatan 45, Södermalm" value={address}
-                  onChange={e => setAddress(e.target.value)} />
-              </div>
-              <div>
-                <label className="label !text-green-600">Date</label>
-                <input type="date" className="input" value={date} onChange={e => setDate(e.target.value)} />
-              </div>
-              <div>
-                <label className="label !text-green-600">Time</label>
-                <input type="time" className="input" value={time} onChange={e => setTime(e.target.value)} />
-              </div>
-            </div>
-            {err && <Alert kind="danger">{err}</Alert>}
-            <button type="submit" disabled={addMutation.isPending} className="btn-primary">
-              {addMutation.isPending ? 'Saving…' : 'Save'}
-            </button>
-          </form>
-        </div>
-      )}
-
-      {future.length === 0 ? null : (
-        <div className="space-y-3">
-          {future.map(u => (
-            <div key={u.id} className="card flex items-start gap-3 py-4">
-              <Clock size={16} className="text-gray-300 mt-0.5 shrink-0" />
-              <div className="flex-1 min-w-0">
-                <div className="font-semibold text-gray-900">{u.address}</div>
-                <div className="text-sm text-gray-400 mt-0.5">{formatDt(u.datetime)}</div>
-                {daysAway(u.datetime) && (
-                  <div className="text-xs font-bold text-teal-700 mt-1">{daysAway(u.datetime)}</div>
-                )}
-              </div>
-              {confirmRemoveId === u.id ? (
-                <div className="flex items-center gap-1 shrink-0">
-                  <span className="text-[11px] text-red-500 font-medium">Remove?</span>
-                  <button onClick={() => { removeMutation.mutate(u.id); setConfirmRemoveId(null) }}
-                    className="text-[11px] font-bold text-red-500 hover:text-red-600">Yes</button>
-                  <button onClick={() => setConfirmRemoveId(null)}
-                    className="text-[11px] font-bold text-gray-400 hover:text-gray-600">No</button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => setConfirmRemoveId(u.id)}
-                  className="text-gray-300 hover:text-red-400 transition-colors"
-                  title="Remove reminder"
-                >
-                  <X size={16} />
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {past.length > 0 && (
-        <div className="card">
-          <button
-            onClick={() => setShowPast(s => !s)}
-            className="w-full flex items-center justify-between text-sm font-semibold text-gray-500 hover:text-gray-700"
-          >
-            <span>Past reminders ({past.length})</span>
-            {showPast ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
-          </button>
-          {showPast && (
-            <div className="mt-4 divide-y divide-gray-50">
-              {past.map(u => {
-                const d = new Date(u.datetime)
-                const dtStr = d.toLocaleDateString('en-SE', { day: 'numeric', month: 'short', year: 'numeric' })
-                  + ', ' + d.toLocaleTimeString('en-SE', { hour: '2-digit', minute: '2-digit' })
-                return (
-                  <div key={u.id} className="flex items-center justify-between py-3 text-sm">
-                    <div>
-                      <span className="font-medium text-gray-700">{u.address}</span>
-                      <span className="text-gray-400 ml-2">— {dtStr}</span>
-                    </div>
-                    {confirmRemoveId === u.id ? (
-                      <div className="flex items-center gap-1">
-                        <span className="text-[11px] text-red-500 font-medium">Remove?</span>
-                        <button onClick={() => { removeMutation.mutate(u.id); setConfirmRemoveId(null) }}
-                          className="text-[11px] font-bold text-red-500 hover:text-red-600">Yes</button>
-                        <button onClick={() => setConfirmRemoveId(null)}
-                          className="text-[11px] font-bold text-gray-400 hover:text-gray-600">No</button>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => setConfirmRemoveId(u.id)}
-                        className="text-gray-300 hover:text-red-400 transition-colors"
-                      >
-                        <X size={14} />
-                      </button>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
-
 // ── Bids tab ──────────────────────────────────────────────────────────────────
 function fmt(n: number) { return Math.round(n).toLocaleString('sv-SE') }
 
@@ -680,7 +504,7 @@ function BidsTab() {
 
 // ── Main component ────────────────────────────────────────────────────────────
 export default function Viewings() {
-  const [tab, setTab] = useState<'listings' | 'upcoming' | 'bids'>('listings')
+  const [tab, setTab] = useState<'listings' | 'bids'>('listings')
   const [searchParams, setSearchParams] = useSearchParams()
   const [autoOpen, setAutoOpen] = useState(false)
 
@@ -701,7 +525,7 @@ export default function Viewings() {
 
       {/* Tabs */}
       <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit">
-        {(['listings', 'bids', 'upcoming'] as const).map(t => (
+        {(['listings', 'bids'] as const).map(t => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -711,12 +535,12 @@ export default function Viewings() {
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >
-            {t === 'listings' ? 'Listings' : t === 'upcoming' ? 'Reminders' : 'Bids'}
+            {t === 'listings' ? 'Listings' : 'Bids'}
           </button>
         ))}
       </div>
 
-      {tab === 'listings' ? <ListingsTab autoOpen={autoOpen} /> : tab === 'bids' ? <BidsTab /> : <UpcomingTab />}
+      {tab === 'listings' ? <ListingsTab autoOpen={autoOpen} /> : <BidsTab />}
     </div>
   )
 }

@@ -39,7 +39,7 @@ function SidebarContents({ pct, current, target, p1, p2, onNav }: {
               <path d="M19 20.5L21 18.5" stroke="#2E7D52" strokeWidth="2" strokeLinecap="round"/>
             </svg>
           </div>
-          <div className="font-black text-lg tracking-tight">
+          <div className="font-black text-xl tracking-tight">
             <span style={{ color: '#2E7D52' }}>Key</span><span className="text-gray-800">Journey</span>
           </div>
         </div>
@@ -47,8 +47,8 @@ function SidebarContents({ pct, current, target, p1, p2, onNav }: {
 
       {/* Progress widget */}
       {(p1 || p2) && (
-        <div className="mx-4 mt-5 p-4 rounded-2xl border border-gray-100" style={{ background: '#F9FAFB' }}>
-          <div className="text-[10px] font-bold uppercase tracking-widest mb-1.5 text-gray-400">Buyers</div>
+        <div className="mx-4 mt-5 p-4 rounded-2xl border border-teal-100" style={{ background: '#F0FAF4' }}>
+          <div className="text-[10px] font-bold uppercase tracking-widest mb-1.5 text-teal-600">Buyers</div>
           <div className="text-gray-800 font-semibold text-sm mb-3 truncate">
             {p1 || '—'}{p1 && p2 ? ' & ' : ''}{p2 || ''}
           </div>
@@ -56,7 +56,7 @@ function SidebarContents({ pct, current, target, p1, p2, onNav }: {
             <span className="text-gray-700 font-bold text-sm">{current.toLocaleString('sv-SE')} kr</span>
             <span className="text-xs font-bold text-teal-600">{pct}%</span>
           </div>
-          <div className="h-1.5 rounded-full overflow-hidden bg-gray-100">
+          <div className="h-1.5 rounded-full overflow-hidden bg-teal-100">
             <div
               className="h-full rounded-full transition-all duration-700"
               style={{ width: `${pct}%`, background: 'linear-gradient(90deg, #2E7D52, #3DAA6E)' }}
@@ -133,7 +133,7 @@ export default function Layout({ children }: Props) {
         >
           <Menu size={22} />
         </button>
-        <div className="flex-1 text-center font-black text-base tracking-tight">
+        <div className="flex-1 text-center font-black text-xl tracking-tight">
           <span style={{ color: '#2E7D52' }}>Key</span><span className="text-gray-800">Journey</span>
         </div>
         {/* spacer to center the title */}

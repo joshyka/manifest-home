@@ -5,7 +5,7 @@ import { dashboard, data as dataApi, viewings as viewingsApi, upcoming as upcomi
 import MetricCard from '../components/MetricCard'
 import Alert from '../components/Alert'
 import SavingsChart from '../components/SavingsChart'
-import { Clock, Trash2, Download, Upload, MoreHorizontal } from 'lucide-react'
+import { Clock, Trash2, Download, Upload, MoreHorizontal, BellPlus, X } from 'lucide-react'
 
 function formatDaysAway(dt: string): string {
   const d = new Date(dt)
@@ -25,6 +25,25 @@ export default function Dashboard() {
   const [importMsg, setImportMsg] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
+  const [showReminderForm, setShowReminderForm] = useState(false)
+  const [reminderAddress, setReminderAddress] = useState('')
+  const [reminderDate, setReminderDate] = useState(() => new Date().toISOString().split('T')[0])
+  const [reminderTime, setReminderTime] = useState(() => {
+    const d = new Date()
+    d.setHours(d.getHours() + 1, 0, 0, 0)
+    return `${String(d.getHours()).padStart(2, '0')}:00`
+  })
+  const [reminderErr, setReminderErr] = useState('')
+
+  async function handleAddReminder(e: React.FormEvent) {
+    e.preventDefault()
+    setReminderErr('')
+    if (!reminderAddress.trim()) { setReminderErr('Address is required'); return }
+    await upcomingApi.add({ address: reminderAddress.trim(), datetime: `${reminderDate}T${reminderTime}:00` })
+    qc.invalidateQueries({ queryKey: ['upcoming'] })
+    qc.invalidateQueries({ queryKey: ['dashboard'] })
+    setReminderAddress(''); setShowReminderForm(false)
+  }
 
   async function handleClear() {
     await dataApi.clear()
@@ -219,10 +238,22 @@ export default function Dashboard() {
                   </button>
                   <div className="border-t border-gray-50 my-1" />
                   <button
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    onClick={async () => {
+                      setMenuOpen(false)
+                      const res = await dataApi.cleanup()
+                      setImportMsg(`Cleanup done — removed ${res.deleted_upcoming_older_than_1y} old reminders and ${res.deleted_archived_viewings_older_than_1y} archived viewings older than 1 year.`)
+                      qc.invalidateQueries()
+                    }}
+                  >
+                    <Trash2 size={14} className="text-gray-400" /> Clean up old data
+                  </button>
+                  <div className="border-t border-gray-50 my-1" />
+                  <button
                     className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
                     onClick={() => { setConfirmClear(true); setMenuOpen(false) }}
                   >
-                    <Trash2 size={14} /> Delete
+                    <Trash2 size={14} /> Delete all
                   </button>
                 </div>
               )}
@@ -302,7 +333,35 @@ export default function Dashboard() {
 
         {/* Upcoming viewings */}
         <div className="col-span-2 card">
-          <h3 className="section-label">Upcoming Viewings</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="section-label !mb-0">Upcoming Viewings</h3>
+            <button
+              className={showReminderForm ? 'p-1.5 rounded-xl text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-all' : 'p-1.5 rounded-xl text-gray-400 hover:text-teal-600 hover:bg-teal-50 transition-all'}
+              onClick={() => setShowReminderForm(o => !o)}
+              title={showReminderForm ? 'Cancel' : 'Add reminder'}
+            >
+              {showReminderForm ? <X size={15} /> : <BellPlus size={15} />}
+            </button>
+          </div>
+
+          {showReminderForm && (
+            <form onSubmit={handleAddReminder} className="mb-4 space-y-2 p-3 bg-teal-50 rounded-2xl border border-teal-100">
+              <input
+                className="input !text-sm"
+                placeholder="Address…"
+                value={reminderAddress}
+                onChange={e => setReminderAddress(e.target.value)}
+                autoFocus
+              />
+              <div className="grid grid-cols-2 gap-2">
+                <input type="date" className="input !text-sm" value={reminderDate} min={new Date().toISOString().split('T')[0]} onChange={e => setReminderDate(e.target.value)} />
+                <input type="time" className="input !text-sm" value={reminderTime} onChange={e => setReminderTime(e.target.value)} />
+              </div>
+              {reminderErr && <p className="text-xs text-red-400">{reminderErr}</p>}
+              <button type="submit" className="btn-primary w-full justify-center">Save</button>
+            </form>
+          )}
+
           {upcoming.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-40 gap-2">
               <Clock size={28} className="text-gray-200" />

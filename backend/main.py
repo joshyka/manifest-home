@@ -20,7 +20,7 @@ from utils.data import (
     load_upcoming, save_upcoming, delete_upcoming,
     get_blob, set_blob,
     load_target_areas, save_target_area, patch_target_area, delete_target_area,
-    clear_all_data,
+    clear_all_data, cleanup_old_data,
 )
 from utils.savings import get_projection, get_target, get_loan_status
 
@@ -371,3 +371,11 @@ def clear_data(payload: dict = Depends(require_auth)):
     user_id = payload.get("sub", "dev-user")
     clear_all_data(user_id)
     return {"ok": True}
+
+
+# ── Data retention cleanup (manual, triggered from Overview) ─────────────────
+@app.post("/api/cleanup")
+def run_cleanup(payload: dict = Depends(require_auth)):
+    result = cleanup_old_data()
+    print(f"[cleanup] {result}", flush=True)
+    return {"ok": True, **result}

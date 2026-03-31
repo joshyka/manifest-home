@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Plus, X, Pencil, Check, GripVertical } from 'lucide-react'
+import { Plus, X, Pencil, Check } from 'lucide-react'
 import { useBlob } from '../lib/useBlob'
 import {
   DndContext,
@@ -81,16 +81,10 @@ function TaskCard({
     <div
       ref={setNodeRef}
       style={style}
-      className="bg-white rounded-2xl border border-gray-100 shadow-sm px-3 py-2.5 flex items-start gap-2 group hover:shadow-md transition-shadow"
+      {...attributes}
+      {...listeners}
+      className="bg-white rounded-2xl border border-gray-100 shadow-sm px-3 py-2.5 flex items-start gap-2 group hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing touch-none"
     >
-      <button
-        {...attributes}
-        {...listeners}
-        className="mt-0.5 shrink-0 text-gray-200 hover:text-gray-400 cursor-grab active:cursor-grabbing transition-colors touch-none"
-      >
-        <GripVertical size={14} />
-      </button>
-
       <div className="w-0.5 self-stretch rounded-full shrink-0 mt-0.5" style={{ background: task.categoryColor }} />
 
       <div className="flex-1 min-w-0">
@@ -138,7 +132,6 @@ function TaskCard({
 function DragCard({ task }: { task: Task }) {
   return (
     <div className="bg-white rounded-2xl border border-teal-300 shadow-lg px-3 py-2.5 flex items-start gap-2 rotate-1 opacity-95">
-      <GripVertical size={14} className="mt-0.5 shrink-0 text-gray-300" />
       <div className="w-0.5 self-stretch rounded-full shrink-0 mt-0.5" style={{ background: task.categoryColor }} />
       <div className="flex-1 min-w-0">
         <p className="text-sm leading-snug text-gray-800">{task.label}</p>
@@ -310,9 +303,18 @@ export default function Checklist() {
           <h1 className="text-2xl font-black text-gray-900">Checklist</h1>
           <p className="text-sm text-gray-400 mt-0.5">Your home buying checklist, drag to reorder.</p>
         </div>
-        <div className="text-right">
-          <div className="text-2xl font-black text-teal-600">{pct}%</div>
-          <div className="text-xs text-gray-400">{done} of {total} done</div>
+        <div className="flex items-center gap-3">
+          <div className="text-right">
+            <div className="text-2xl font-black text-teal-600">{pct}%</div>
+            <div className="text-xs text-gray-400">{done} of {total} done</div>
+          </div>
+          <button
+            className={`p-1.5 rounded-xl transition-all ${showAdd ? 'text-gray-400 hover:text-gray-600 hover:bg-gray-50' : 'text-gray-400 hover:text-teal-600 hover:bg-teal-50'}`}
+            onClick={() => setShowAdd(o => !o)}
+            title={showAdd ? 'Cancel' : 'Add task'}
+          >
+            {showAdd ? <X size={15} /> : <Plus size={15} />}
+          </button>
         </div>
       </div>
 
@@ -349,14 +351,6 @@ export default function Checklist() {
               Cancel
             </button>
           </div>
-        </div>
-      )}
-
-      {!showAdd && (
-        <div className="flex justify-end">
-          <button className="btn-primary" onClick={() => setShowAdd(true)}>
-            <Plus size={14} /> Add
-          </button>
         </div>
       )}
 

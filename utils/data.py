@@ -132,6 +132,31 @@ def delete_target_area(area_id: str, user_id: str):
     supa.table("target_areas").delete().eq("id", area_id).eq("user_id", user_id).execute()
 
 
+# ── Data retention cleanup ────────────────────────────────────────────────────
+def cleanup_old_data():
+    """
+    Deletes:
+    - upcoming_viewings older than 30 days (past reminders, all users)
+    - archived viewings older than 180 days (all users)
+    Returns counts of deleted rows.
+    """
+    import datetime
+    supa = get_client()
+
+    cutoff_1y = (datetime.datetime.utcnow() - datetime.timedelta(days=365)).isoformat()
+
+    # Delete past reminders older than 1 year
+    r1 = supa.table("upcoming_viewings").delete().lt("datetime", cutoff_1y).execute()
+
+    # Delete archived viewings older than 1 year
+    r2 = supa.table("viewings").delete().lt("created_at", cutoff_1y).like("notes", "%[archived]%").execute()
+
+    return {
+        "deleted_upcoming_older_than_1y": len(r1.data or []),
+        "deleted_archived_viewings_older_than_1y": len(r2.data or []),
+    }
+
+
 # ── Data management ───────────────────────────────────────────────────────────
 def clear_all_data(user_id: str):
     supa = get_client()

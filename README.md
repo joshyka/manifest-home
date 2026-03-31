@@ -27,21 +27,22 @@ Your personal home-buying command centre — track savings progress, log viewing
 | Comparison | Compare up to 4 listings side by side with adjustable interest rate |
 | Calculator | Swedish mortgage calculator with stress test and net household cash flow |
 | BRF Checker | Evaluate a BRF's financial health — debt/sqm, fee/sqm, land ownership |
-| Maps | Explore areas, nearby amenities, and manage target areas via Google Maps |
+| Maps | Side-by-side map and target areas — explore neighbourhoods, filter nearby amenities, manage priority areas |
 
 ---
 
 ## Features
 
 - PIN login or Google OAuth with email allowlist
+- Secure login (PIN or Google OAuth) with GDPR consent on first use
 - Per-user data isolation via Supabase RLS — nothing in localStorage
-- Export / import full backup as Excel, or delete all data from the Overview menu
-- Swedish mortgage rules: 10% down, amortisation tiers, 7% stress test, ränteavdrag
-- Drag-to-reorder checklist with category autocomplete
-- Bid tracking and viewing reminders inside Viewings
-- BRF and Comparison forms always visible — no toggling
-- Target areas grouped by priority, click to search on map
-- Calculator snapshots saved per session with interest rate label
+- Live Riksbank mortgage rate auto-fills Calculator and Comparison
+- Swedish mortgage rules: amortisation tiers, 7% stress test, ränteavdrag
+- Drag-to-reorder checklist, bid tracking, viewing reminders from Overview
+- BRF health checker and side-by-side listing comparison
+- Maps page: target areas by priority, nearby amenity search, directions — side-by-side with live map
+- Calculator snapshots, Excel export/import
+- Self-hosted fonts — no external tracking
 
 ---
 

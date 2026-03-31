@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowUpDown, Car, Train, Footprints, Bike, ChevronDown, ChevronUp, Plus, X, Pencil, Check } from 'lucide-react'
+import { ArrowUpDown, Car, Train, Footprints, Bike, Plus, X, Pencil, Check, ChevronDown, ChevronRight } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { targetAreas as areasApi } from '../lib/api'
 import AddressInput from '../components/AddressInput'
@@ -41,8 +41,15 @@ export default function Maps() {
   const [radius, setRadius]   = useState(5)
 
   // Target areas state
-  const [areasOpen, setAreasOpen]   = useState(true)
   const [activeArea, setActiveArea] = useState<string | null>(null)
+  const [expandedPriorities, setExpandedPriorities] = useState<Set<Priority>>(new Set(['High', 'Medium', 'Low']))
+  function togglePriority(p: Priority) {
+    setExpandedPriorities(prev => {
+      const next = new Set(prev)
+      next.has(p) ? next.delete(p) : next.add(p)
+      return next
+    })
+  }
   const [addingPriority, setAddingPriority] = useState<Priority | null>(null)
   const [newName, setNewName]       = useState('')
   const [editId, setEditId]         = useState<string | null>(null)
@@ -99,186 +106,190 @@ export default function Maps() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <div>
         <h1 className="text-2xl font-black text-gray-900">Maps</h1>
         <p className="text-sm text-gray-400 mt-0.5">Explore areas and plan your search</p>
       </div>
 
-      <div className="card space-y-4">
-        {/* From / To */}
-        <div className="flex items-end gap-2">
-          <div className="flex-1 grid grid-cols-[1fr_auto_1fr] items-end gap-3">
-            <AddressInput label="From" value={from} onChange={setFrom} placeholder="e.g. Drottninggatan 1, Stockholm" />
-            <button
-              onClick={swap}
-              className="mb-0.5 w-9 h-9 rounded-lg border border-gray-200 bg-white hover:bg-gray-50
-                         flex items-center justify-center text-gray-400 hover:text-gray-700 transition-colors"
-              title="Swap"
-            >
-              <ArrowUpDown size={15} />
-            </button>
-            <AddressInput label="To" value={to} onChange={v => { setTo(v); setAmenity(null) }} placeholder="e.g. Kungsgatan 10, Stockholm" />
-          </div>
-        </div>
+      <div className="grid grid-cols-[320px_1fr] gap-4 items-start">
 
-        {/* Amenity filters */}
-        <div>
-          <div className="text-xs font-semibold text-green-600 uppercase tracking-wider mb-2">
-            Nearby
-          </div>
-          <div className="flex gap-2 flex-wrap">
-            {AMENITIES.map(a => (
-              <button
-                key={a.label}
-                onClick={() => toggleAmenity(a.query)}
-                className={`px-3 py-1.5 rounded-full text-sm font-semibold border transition-all ${
-                  amenity === a.query
-                    ? 'bg-teal-600 text-white border-teal-600'
-                    : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
-                }`}
-              >
-                {a.label}
-              </button>
-            ))}
-          </div>
-          {amenity && (
-            <div className="flex items-center gap-2 mt-3">
-              <span className="text-xs text-gray-400 font-medium">Search radius:</span>
-              {[2, 5, 10].map(r => (
+        {/* Left column: controls + target areas */}
+        <div className="space-y-4">
+
+          {/* From / To + Amenities */}
+          <div className="card space-y-4">
+            <div className="space-y-1">
+              <AddressInput label="From" value={from} onChange={setFrom} placeholder="e.g. Drottninggatan 1" />
+              <div className="flex justify-center py-0.5">
                 <button
-                  key={r}
-                  onClick={() => setRadius(r)}
-                  className={`px-3 py-1 rounded-full text-xs font-bold border transition-all ${
-                    radius === r
-                      ? 'bg-teal-600 text-white border-teal-600'
-                      : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'
-                  }`}
+                  onClick={swap}
+                  className="w-7 h-7 rounded-lg border border-gray-200 bg-white hover:bg-gray-50
+                             flex items-center justify-center text-gray-400 hover:text-gray-700 transition-colors shadow-sm"
+                  title="Swap"
                 >
-                  {r}km
+                  <ArrowUpDown size={13} />
                 </button>
-              ))}
+              </div>
+              <AddressInput label="To" value={to} onChange={v => { setTo(v); setAmenity(null) }} placeholder="e.g. Kungsgatan 10" />
             </div>
-          )}
-          {amenity && dest && <p className="text-xs text-gray-400 mt-2">Tap the highlighted filter again to go back to directions.</p>}
-        </div>
 
-        {/* Target Areas — collapsible */}
-        <div className="border-t border-gray-100 pt-3">
-          <button
-            onClick={() => setAreasOpen(o => !o)}
-            className="flex items-center justify-between w-full text-xs font-bold text-green-600 uppercase tracking-wider"
-          >
-            <span>Target Areas {areas.length > 0 && <span className="ml-1 text-gray-400 normal-case font-normal">({areas.length})</span>}</span>
-            {areasOpen ? <ChevronUp size={14} className="text-gray-400" /> : <ChevronDown size={14} className="text-gray-400" />}
-          </button>
+            <div>
+              <div className="text-xs font-semibold text-green-600 uppercase tracking-wider mb-2">Nearby</div>
+              <div className="flex gap-1.5 flex-wrap">
+                {AMENITIES.map(a => (
+                  <button
+                    key={a.label}
+                    onClick={() => toggleAmenity(a.query)}
+                    className={`px-2.5 py-1 rounded-full text-xs font-semibold border transition-all ${
+                      amenity === a.query
+                        ? 'bg-teal-600 text-white border-teal-600'
+                        : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    {a.label}
+                  </button>
+                ))}
+              </div>
+              {amenity && (
+                <div className="flex items-center gap-2 mt-3">
+                  <span className="text-xs text-gray-400 font-medium">Radius:</span>
+                  {[2, 5, 10].map(r => (
+                    <button
+                      key={r}
+                      onClick={() => setRadius(r)}
+                      className={`px-2.5 py-1 rounded-full text-xs font-bold border transition-all ${
+                        radius === r
+                          ? 'bg-teal-600 text-white border-teal-600'
+                          : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      {r}km
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
 
-          {areasOpen && (
-            <div className="mt-3 space-y-4">
-              {PRIORITIES.map(p => {
-                const group = areas.filter(a => a.priority === p.value)
-                return (
-                  <div key={p.value}>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className={`text-[11px] font-black uppercase tracking-widest ${p.color}`}>{p.label}</span>
-                      <button
-                        onClick={() => { setAddingPriority(p.value); setNewName('') }}
-                        className="p-1 rounded-lg text-gray-300 hover:text-gray-600 hover:bg-gray-100 transition-colors"
-                        title={`Add ${p.label} area`}
-                      >
-                        <Plus size={12} />
-                      </button>
-                    </div>
+          {/* Target Areas */}
+          <div className="card space-y-4">
+            <div className="text-xs font-bold text-green-600 uppercase tracking-wider">
+              Target Areas {areas.length > 0 && <span className="ml-1 text-gray-400 normal-case font-normal">({areas.length})</span>}
+            </div>
 
-                    <div className="space-y-1">
-                      {group.map(area => (
-                        <div key={area.id} className="group flex items-center gap-1.5 rounded-xl px-2 py-1.5 hover:bg-gray-50 transition-colors">
-                          {editId === area.id ? (
-                            <>
-                              <input
-                                className="flex-1 text-sm bg-transparent border-b border-teal-400 outline-none text-gray-800 pb-0.5"
-                                value={editName}
-                                onChange={e => setEditName(e.target.value)}
-                                onKeyDown={e => { if (e.key === 'Enter') commitEdit(area); if (e.key === 'Escape') setEditId(null) }}
-                                onBlur={() => commitEdit(area)}
-                                autoFocus
-                              />
-                              <select
-                                className="text-xs border border-gray-200 rounded-lg px-1 py-0.5 text-gray-600 bg-white"
-                                value={editPriority}
-                                onChange={e => setEditPriority(e.target.value as Priority)}
-                              >
-                                {PRIORITIES.map(pr => <option key={pr.value} value={pr.value}>{pr.label}</option>)}
-                              </select>
-                              <button onClick={() => commitEdit(area)} className="p-1 text-teal-500 hover:bg-teal-50 rounded-lg transition-colors">
-                                <Check size={12} />
-                              </button>
-                            </>
-                          ) : (
-                            <>
-                              <button
-                                className={`flex-1 text-sm font-medium truncate text-left transition-colors ${activeArea === area.id ? 'text-teal-600' : 'text-gray-800 hover:text-teal-700'}`}
-                                title={`Search ${area.name} on map`}
-                                onClick={() => { setTo(area.name); setAmenity(null); setActiveArea(area.id) }}
-                              >
-                                {area.name}
-                              </button>
-                              <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                                <button onClick={() => startEdit(area)} className="p-1 rounded-lg text-gray-300 hover:text-gray-600 hover:bg-gray-100 transition-all">
-                                  <Pencil size={11} />
-                                </button>
-                                <button onClick={() => deleteMutation.mutate(area.id)} className="p-1 rounded-lg text-gray-300 hover:text-red-400 hover:bg-red-50 transition-all">
-                                  <X size={11} />
-                                </button>
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      ))}
-
-                    </div>
-
-                    {addingPriority === p.value && (
-                      <div className="mt-2 space-y-2">
-                        <AddressInput
-                          value={newName}
-                          onChange={setNewName}
-                          placeholder="Search area or address…"
-                        />
-                        <div className="flex gap-1.5">
-                          <button
-                            onClick={() => addMutation.mutate({ name: newName.trim(), priority: p.value })}
-                            disabled={!newName.trim() || addMutation.isPending}
-                            className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold text-white bg-teal-600 hover:bg-teal-700 disabled:opacity-40 transition-all active:scale-95"
-                          >
-                            <Check size={11} /> {addMutation.isPending ? 'Saving…' : 'Save'}
-                          </button>
-                          <button onClick={() => { setAddingPriority(null); setNewName('') }} className="px-3 py-1.5 rounded-full text-xs font-semibold text-gray-400 hover:text-gray-600 transition-colors">
-                            Cancel
-                          </button>
-                        </div>
-                      </div>
-                    )}
+            {PRIORITIES.map(p => {
+              const group = areas.filter(a => a.priority === p.value)
+              const isOpen = expandedPriorities.has(p.value)
+              return (
+                <div key={p.value}>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <button
+                      className="flex items-center gap-1 text-left"
+                      onClick={() => togglePriority(p.value)}
+                    >
+                      {isOpen ? <ChevronDown size={12} className="text-gray-400" /> : <ChevronRight size={12} className="text-gray-400" />}
+                      <span className={`text-[11px] font-black uppercase tracking-widest ${p.color}`}>
+                        {p.label} {group.length > 0 && <span className="text-gray-400 normal-case font-normal">({group.length})</span>}
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => { setAddingPriority(p.value); setNewName(''); if (!isOpen) togglePriority(p.value) }}
+                      className="p-1 rounded-lg text-gray-300 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                      title={`Add ${p.label} area`}
+                    >
+                      <Plus size={12} />
+                    </button>
                   </div>
-                )
-              })}
-            </div>
-          )}
-        </div>
-      </div>
 
-      {/* Embedded map */}
-      <div className="rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
-        <iframe
-          src={embedUrl}
-          width="100%"
-          height="520"
-          style={{ border: 0, display: 'block' }}
-          allowFullScreen
-          loading="lazy"
-          referrerPolicy="no-referrer-when-downgrade"
-          title="Google Maps"
-        />
+                  {isOpen && <div className="space-y-1">
+                    {group.map(area => (
+                      <div key={area.id} className="group flex items-center gap-1.5 rounded-xl px-2 py-1.5 hover:bg-gray-50 transition-colors">
+                        {editId === area.id ? (
+                          <>
+                            <input
+                              className="flex-1 text-sm bg-transparent border-b border-teal-400 outline-none text-gray-800 pb-0.5"
+                              value={editName}
+                              onChange={e => setEditName(e.target.value)}
+                              onKeyDown={e => { if (e.key === 'Enter') commitEdit(area); if (e.key === 'Escape') setEditId(null) }}
+                              onBlur={() => commitEdit(area)}
+                              autoFocus
+                            />
+                            <select
+                              className="text-xs border border-gray-200 rounded-lg px-1 py-0.5 text-gray-600 bg-white"
+                              value={editPriority}
+                              onChange={e => setEditPriority(e.target.value as Priority)}
+                            >
+                              {PRIORITIES.map(pr => <option key={pr.value} value={pr.value}>{pr.label}</option>)}
+                            </select>
+                            <button onClick={() => commitEdit(area)} className="p-1 text-teal-500 hover:bg-teal-50 rounded-lg transition-colors">
+                              <Check size={12} />
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              className={`flex-1 text-sm font-medium truncate text-left transition-colors ${activeArea === area.id ? 'text-teal-600' : 'text-gray-800 hover:text-teal-700'}`}
+                              title={`Search ${area.name} on map`}
+                              onClick={() => { setTo(area.name); setAmenity(null); setActiveArea(area.id) }}
+                            >
+                              {area.name}
+                            </button>
+                            <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                              <button onClick={() => startEdit(area)} className="p-1 rounded-lg text-gray-300 hover:text-gray-600 hover:bg-gray-100 transition-all">
+                                <Pencil size={11} />
+                              </button>
+                              <button onClick={() => deleteMutation.mutate(area.id)} className="p-1 rounded-lg text-gray-300 hover:text-red-400 hover:bg-red-50 transition-all">
+                                <X size={11} />
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    ))}
+                  </div>}
+
+                  {addingPriority === p.value && (
+                    <div className="mt-2 space-y-2">
+                      <AddressInput
+                        value={newName}
+                        onChange={setNewName}
+                        placeholder="Search area or address…"
+                      />
+                      <div className="flex gap-1.5">
+                        <button
+                          onClick={() => addMutation.mutate({ name: newName.trim(), priority: p.value })}
+                          disabled={!newName.trim() || addMutation.isPending}
+                          className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold text-white bg-teal-600 hover:bg-teal-700 disabled:opacity-40 transition-all active:scale-95"
+                        >
+                          <Check size={11} /> {addMutation.isPending ? 'Saving…' : 'Save'}
+                        </button>
+                        <button onClick={() => { setAddingPriority(null); setNewName('') }} className="px-3 py-1.5 rounded-full text-xs font-semibold text-gray-400 hover:text-gray-600 transition-colors">
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Right column: map — sticky so it stays in view while scrolling */}
+        <div className="sticky top-4 rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
+          <iframe
+            src={embedUrl}
+            width="100%"
+            height="520"
+            style={{ border: 0, display: 'block' }}
+            allowFullScreen
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            title="Google Maps"
+          />
+        </div>
+
       </div>
     </div>
   )

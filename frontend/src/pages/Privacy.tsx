@@ -44,8 +44,7 @@ export default function Privacy() {
             If you use the map, Google's standard privacy policy applies to that interaction.
             No data you enter into KeyJourney is sent to Google. Login via Google OAuth is
             optionally supported — if used, Google's authentication policy also applies.
-            The app also loads the Manrope font from Google Fonts, which may log your IP address
-            per Google's standard font CDN policy.
+            All fonts are self-hosted and bundled with the app — no external font requests are made.
           </p>
           <p className="text-sm text-gray-500 leading-relaxed">
             The Calculator and Comparison pages fetch the current Swedish mortgage bond rate

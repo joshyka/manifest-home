@@ -1,12 +1,21 @@
--- KeyJourney — run this in the Supabase SQL editor
--- Each user gets their own isolated data via Row Level Security
+-- KeyJourney — run this in the Supabase SQL editor to set up or reset the database
+-- Each user gets their own isolated data via Row Level Security (RLS)
+-- Last updated: March 2026
 --
 -- Tables:
 --   settings          — savings plan, loan promise, buyer names
 --   viewings          — viewed apartments with bid tracking (rounds, bids, outcome)
---   upcoming_viewings — scheduled viewing reminders
+--                       archived viewings are flagged via notes containing "[archived]"
+--   upcoming_viewings — scheduled viewing reminders (added from the Overview page)
 --   target_areas      — areas of interest grouped by High / Medium / Low priority
 --   user_blobs        — generic JSON storage: checklist, comparison boards, calculator snapshots, BRF checks
+--
+-- Blob keys used by the app:
+--   checklist         — kanban tasks array
+--   comparison_items  — active comparison board listings
+--   saved_comparisons — named saved comparison snapshots
+--   calc_snapshots    — calculator result snapshots
+--   brf_checks        — BRF financial health checks
 
 -- Drop existing tables and policies cleanly
 DROP TABLE IF EXISTS user_blobs CASCADE;

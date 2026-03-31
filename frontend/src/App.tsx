@@ -19,7 +19,7 @@ import Terms from './pages/Terms'
 
 function App() {
   const [session, setSession]       = useState<Session | null | undefined>(undefined)
-  const [onboarded, setOnboarded]   = useState(() => localStorage.getItem('kj_onboarded') === '1')
+  const [onboarded, setOnboarded] = useState(() => localStorage.getItem('kj_onboarded') === '1')
   const [authorized, setAuthorized] = useState(false)
   const [denied, setDenied]         = useState(false)
 
@@ -49,8 +49,14 @@ function App() {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-surface">
         <div className="bg-white rounded-3xl shadow-card p-8 w-full max-w-xs text-center space-y-3">
-          <div className="text-3xl">🚫</div>
-          <h2 className="text-lg font-black text-gray-900">403 — Access Denied</h2>
+          <div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-50 mx-auto">
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <circle cx="12" cy="12" r="9" />
+              <path strokeLinecap="round" d="M15 9l-6 6M9 9l6 6" />
+            </svg>
+          </div>
+          <h2 className="text-lg font-black text-gray-900">Access Denied</h2>
+          <p className="text-xs text-gray-400">Your account is not on the allowed list.</p>
           <p className="text-xs text-gray-300">Redirecting to login…</p>
         </div>
       </div>
