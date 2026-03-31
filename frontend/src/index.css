@@ -2,12 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+
 @layer base {
   * { box-sizing: border-box; }
 
   body {
     @apply bg-surface text-gray-900 font-sans antialiased;
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    font-feature-settings: "ss02";
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
