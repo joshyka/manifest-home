@@ -373,7 +373,7 @@ const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
 
       {items.length < 4 && <AddForm onAdd={addItem} />}
 
-      {items.length > 0 && (
+{items.length > 0 && (
         <>
           {/* Sort bar */}
           <div className="flex items-center gap-2 flex-wrap">

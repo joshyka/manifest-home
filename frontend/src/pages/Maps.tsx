@@ -56,7 +56,7 @@ export default function Maps() {
   const [editName, setEditName]     = useState('')
   const [editPriority, setEditPriority] = useState<Priority>('Medium')
 
-  const { data: areas = [] } = useQuery({ queryKey: ['target-areas'], queryFn: areasApi.list })
+  const { data: areas = [], isLoading: areasLoading } = useQuery({ queryKey: ['target-areas'], queryFn: areasApi.list })
 
   const addMutation = useMutation({
     mutationFn: (d: { name: string; priority: string }) => areasApi.add(d),
@@ -174,6 +174,11 @@ export default function Maps() {
 
           {/* Target Areas */}
           <div className="card space-y-4">
+            {areasLoading && (
+              <div className="space-y-2 animate-pulse">
+                {[...Array(3)].map((_, i) => <div key={i} className="skeleton h-6 rounded-xl" />)}
+              </div>
+            )}
             <div className="text-xs font-bold text-green-600 uppercase tracking-wider">
               Target Areas {areas.length > 0 && <span className="ml-1 text-gray-400 normal-case font-normal">({areas.length})</span>}
             </div>
@@ -203,6 +208,9 @@ export default function Maps() {
                   </div>
 
                   {isOpen && <div className="space-y-1">
+                    {group.length === 0 && (
+                      <p className="text-xs text-gray-300 px-2 py-1">No areas added yet</p>
+                    )}
                     {group.map(area => (
                       <div key={area.id} className="group flex items-center gap-1.5 rounded-xl px-2 py-1.5 hover:bg-gray-50 transition-colors">
                         {editId === area.id ? (

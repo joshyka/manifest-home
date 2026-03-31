@@ -332,16 +332,18 @@ export default function Dashboard() {
         </div>
 
         {/* Upcoming viewings */}
-        <div className="md:col-span-2 card">
+        <div className="md:col-span-2 card flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <h3 className="section-label !mb-0">Upcoming Viewings</h3>
-            <button
-              className={showReminderForm ? 'p-1.5 rounded-xl text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-all' : 'p-1.5 rounded-xl text-gray-400 hover:text-teal-600 hover:bg-teal-50 transition-all'}
-              onClick={() => setShowReminderForm(o => !o)}
-              title={showReminderForm ? 'Cancel' : 'Add reminder'}
-            >
-              {showReminderForm ? <X size={15} /> : <BellPlus size={15} />}
-            </button>
+            {showReminderForm && (
+              <button
+                className="p-1.5 rounded-xl text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-all"
+                onClick={() => setShowReminderForm(false)}
+                title="Cancel"
+              >
+                <X size={15} />
+              </button>
+            )}
           </div>
 
           {showReminderForm && (
@@ -362,10 +364,15 @@ export default function Dashboard() {
             </form>
           )}
 
-          {upcoming.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-40 gap-2">
-              <Clock size={28} className="text-gray-200" />
-              <p className="text-sm text-gray-300">No upcoming viewings</p>
+          {upcoming.length === 0 && !showReminderForm ? (
+            <div className="flex flex-col items-center justify-center flex-1 py-6 text-center space-y-3">
+              <button
+                onClick={() => setShowReminderForm(true)}
+                className="w-9 h-9 rounded-xl bg-teal-600 hover:bg-teal-700 flex items-center justify-center shadow-sm transition-all active:scale-95"
+              >
+                <BellPlus size={16} className="text-white" />
+              </button>
+              <p className="text-xs text-gray-400 font-medium">No upcoming reminders</p>
             </div>
           ) : (
             <div className="space-y-3">

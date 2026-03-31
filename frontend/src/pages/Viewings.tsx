@@ -4,7 +4,8 @@ import { useSearchParams } from 'react-router-dom'
 import { viewings as viewingsApi } from '../lib/api'
 import type { Viewing } from '../lib/api'
 import Alert from '../components/Alert'
-import { Plus, X, Archive, ChevronDown, ChevronUp, Pencil, Check, TrendingUp, Info } from 'lucide-react'
+import { Plus, X, Archive, ChevronDown, ChevronUp, Pencil, Check, TrendingUp, Info, Calendar } from 'lucide-react'
+import EmptyState from '../components/EmptyState'
 
 // ── Listings tab ─────────────────────────────────────────────────────────────
 function ListingsTab({ autoOpen }: { autoOpen: boolean }) {
@@ -29,7 +30,7 @@ function ListingsTab({ autoOpen }: { autoOpen: boolean }) {
   const [editMyBid, setEditMyBid] = useState('')
   const [editErr,   setEditErr]   = useState('')
 
-  const { data: list = [] } = useQuery({ queryKey: ['viewings'], queryFn: viewingsApi.list })
+  const { data: list = [], isLoading } = useQuery({ queryKey: ['viewings'], queryFn: viewingsApi.list })
 
   const addMutation = useMutation({
     mutationFn: viewingsApi.add,
@@ -151,18 +152,26 @@ function ListingsTab({ autoOpen }: { autoOpen: boolean }) {
       .join(' → ')
   }
 
+  if (isLoading) return (
+    <div className="space-y-3 animate-pulse">
+      {[...Array(3)].map((_, i) => <div key={i} className="skeleton h-20 rounded-2xl" />)}
+    </div>
+  )
+
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-center gap-2">
-        <button
-          className={`p-1.5 rounded-xl transition-all ${open ? 'text-gray-500 bg-gray-100 hover:bg-gray-200' : 'text-white bg-teal-600 hover:bg-teal-700 shadow-sm'}`}
-          onClick={() => setOpen(o => !o)}
-          title={open ? 'Cancel' : 'Add listing'}
-        >
-          {open ? <X size={15} /> : <Plus size={15} />}
-        </button>
-      </div>
+      {/* Header — cancel button only shown when form is open */}
+      {open && (
+        <div className="flex items-center gap-2">
+          <button
+            className="p-1.5 rounded-xl transition-all text-gray-500 bg-gray-100 hover:bg-gray-200"
+            onClick={() => setOpen(false)}
+            title="Cancel"
+          >
+            <X size={15} />
+          </button>
+        </div>
+      )}
 
       {saved && <Alert kind="success">Listing saved.</Alert>}
 
@@ -220,6 +229,20 @@ function ListingsTab({ autoOpen }: { autoOpen: boolean }) {
       )}
 
       {/* Active listings */}
+      {active.length === 0 && !open && (
+        <div className="flex flex-col items-center justify-center py-14 text-center space-y-3">
+          <button
+            onClick={() => setOpen(true)}
+            className="w-9 h-9 rounded-xl bg-teal-600 hover:bg-teal-700 flex items-center justify-center shadow-sm transition-all active:scale-95"
+          >
+            <Plus size={16} className="text-white" />
+          </button>
+          <div>
+            <p className="text-sm font-semibold text-gray-500">No viewings logged yet</p>
+            <p className="text-xs text-gray-300 mt-0.5">Tap the button above to log your first viewing</p>
+          </div>
+        </div>
+      )}
       {active.length === 0 ? null : (
         <div className="card divide-y divide-gray-50">
           <div className="pb-3 text-xs font-semibold text-green-600 uppercase tracking-wider">
@@ -433,6 +456,9 @@ function BidsTab() {
         <Info size={13} className="text-teal-500 shrink-0" />
         <p className="text-xs text-teal-700">Mark a listing as "Bidding" in the Listings tab to track it here.</p>
       </div>
+      {bids.length === 0 && (
+        <EmptyState icon={TrendingUp} title="No bids tracked yet" message="Mark a listing as Bidding in the Listings tab" />
+      )}
       {bids.length > 0 && <>
       <div className="flex justify-between items-center">
         <span className="text-xs font-bold text-green-600 uppercase tracking-widest">Bids Placed</span>

@@ -302,19 +302,20 @@ export default function Checklist() {
         <div>
           <h1 className="text-2xl font-black text-gray-900">Checklist</h1>
           <p className="text-sm text-gray-400 mt-0.5">Your home buying checklist, drag to reorder.</p>
-        </div>
-        <div className="flex flex-col items-end gap-1.5">
-          <div className="text-right">
-            <div className="text-2xl font-black text-teal-600">{pct}%</div>
-            <div className="text-xs text-gray-400">{done} of {total} done</div>
+          <div className="flex items-center gap-2 mt-3">
+            <button
+              className={`p-1.5 rounded-xl transition-all ${showAdd ? 'text-gray-500 bg-gray-100 hover:bg-gray-200' : 'text-white bg-teal-600 hover:bg-teal-700 shadow-sm'}`}
+              onClick={() => setShowAdd(o => !o)}
+              title={showAdd ? 'Cancel' : 'Add task'}
+            >
+              {showAdd ? <X size={15} /> : <Plus size={15} />}
+            </button>
+            {!showAdd && <span className="text-xs text-gray-400">Add task</span>}
           </div>
-          <button
-            className={`p-1.5 rounded-xl transition-all ${showAdd ? 'text-gray-500 bg-gray-100 hover:bg-gray-200' : 'text-white bg-teal-600 hover:bg-teal-700 shadow-sm'}`}
-            onClick={() => setShowAdd(o => !o)}
-            title={showAdd ? 'Cancel' : 'Add task'}
-          >
-            {showAdd ? <X size={15} /> : <Plus size={15} />}
-          </button>
+        </div>
+        <div className="text-right">
+          <div className="text-2xl font-black text-teal-600">{pct}%</div>
+          <div className="text-xs text-gray-400">{done} of {total} done</div>
         </div>
       </div>
 

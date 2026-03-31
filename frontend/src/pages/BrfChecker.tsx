@@ -277,7 +277,7 @@ export default function BrfChecker() {
       }
 
       <div className="space-y-4">
-        {entries.map(e => (
+{entries.map(e => (
           <BrfCard key={e.id} entry={e} onDelete={id => saveEntries(entries.filter(e => e.id !== id))} onEdit={setEditing} />
         ))}
       </div>
