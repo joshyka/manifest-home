@@ -21,8 +21,8 @@ interface Props {
   children: React.ReactNode
 }
 
-function SidebarContents({ pct, current, target, p1, p2, onNav }: {
-  pct: number; current: number; target: number; p1: string; p2: string; onNav?: () => void
+function SidebarContents({ pct, current, target, p1, p2, onNav, onSignOut }: {
+  pct: number; current: number; target: number; p1: string; p2: string; onNav?: () => void; onSignOut: () => void
 }) {
   return (
     <>
@@ -95,9 +95,14 @@ function SidebarContents({ pct, current, target, p1, p2, onNav }: {
       </nav>
 
       {/* Footer links */}
-      <div className="px-6 py-4 border-t border-gray-100 flex gap-3">
-        <NavLink to="/terms" className="text-[11px] text-gray-400 hover:text-gray-600 transition-colors">Terms</NavLink>
-        <NavLink to="/privacy" className="text-[11px] text-gray-400 hover:text-gray-600 transition-colors">Privacy</NavLink>
+      <div className="px-4 py-4 border-t border-gray-100 space-y-2">
+        <button onClick={onSignOut} className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-gray-500 hover:text-red-500 hover:bg-red-50 transition-all">
+          <LogOut size={15} /> Sign out
+        </button>
+        <div className="flex gap-3 px-3">
+          <NavLink to="/terms" className="text-[11px] text-gray-400 hover:text-gray-600 transition-colors">Terms</NavLink>
+          <NavLink to="/privacy" className="text-[11px] text-gray-400 hover:text-gray-600 transition-colors">Privacy</NavLink>
+        </div>
       </div>
 
     </>
@@ -120,7 +125,7 @@ export default function Layout({ children }: Props) {
 
       {/* Sidebar — desktop only */}
       <aside className="hidden md:flex w-60 shrink-0 flex-col border-r border-gray-100" style={{ background: '#FFFFFF' }}>
-        <SidebarContents pct={pct} current={current} target={target} p1={p1} p2={p2} />
+        <SidebarContents pct={pct} current={current} target={target} p1={p1} p2={p2} onSignOut={() => { qc.clear(); supabase.auth.signOut() }} />
       </aside>
 
       {/* Mobile top bar */}
@@ -164,6 +169,7 @@ export default function Layout({ children }: Props) {
             <SidebarContents
               pct={pct} current={current} target={target} p1={p1} p2={p2}
               onNav={() => setDrawerOpen(false)}
+              onSignOut={() => { qc.clear(); supabase.auth.signOut() }}
             />
           </aside>
         </div>
@@ -172,15 +178,6 @@ export default function Layout({ children }: Props) {
       {/* Main */}
       <main className="flex-1 min-w-0 flex flex-col overflow-auto pt-14 md:pt-0">
         <div className="flex-1 max-w-5xl w-full mx-auto px-4 md:px-10 py-8 md:py-10 animate-fade-in">
-          <div className="flex items-center justify-end gap-3 -mt-2 mb-6">
-            <button
-              onClick={() => { qc.clear(); supabase.auth.signOut() }}
-              className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-red-400 transition-colors"
-            >
-              <LogOut size={13} />
-              Sign out
-            </button>
-          </div>
           {children}
         </div>
         <div className="text-center text-xs text-gray-300 py-4 border-t border-gray-100">
