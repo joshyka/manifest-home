@@ -31,17 +31,12 @@ Your personal home-buying command centre — track savings progress, log viewing
 
 ---
 
-## Features
+## Technical Highlights
 
-- PIN login or Google OAuth with email allowlist
-- Secure login (PIN or Google OAuth) with GDPR consent on first use
 - Per-user data isolation via Supabase RLS — nothing in localStorage
-- Live Riksbank mortgage rate auto-fills Calculator and Comparison
+- GDPR consent on first use, email allowlist, PIN or Google OAuth
+- Live Riksbank mortgage bond rate (SE MB 5Y) auto-fills Calculator and Comparison
 - Swedish mortgage rules: amortisation tiers, 7% stress test, ränteavdrag
-- Drag-to-reorder checklist, bid tracking, viewing reminders from Overview
-- BRF health checker and side-by-side listing comparison
-- Maps page: target areas by priority, nearby amenity search, directions — side-by-side with live map
-- Calculator snapshots, Excel export/import
 - Self-hosted fonts — no external tracking
 
 ---
