@@ -102,6 +102,23 @@ CREATE POLICY "Users manage own target areas" ON target_areas
   WITH CHECK (user_id = auth.uid());
 
 
+-- Households: optional shared access between two users
+CREATE TABLE households (
+  id TEXT PRIMARY KEY,
+  owner_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  partner_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  invite_code TEXT UNIQUE,
+  invite_expires_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE households ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users manage own household" ON households
+  USING (owner_id = auth.uid() OR partner_id = auth.uid())
+  WITH CHECK (owner_id = auth.uid());
+
+
 -- User blobs: generic per-user JSON storage (checklist, comparison, calc snapshots, brf checks)
 CREATE TABLE user_blobs (
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,

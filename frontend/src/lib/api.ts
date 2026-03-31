@@ -127,7 +127,7 @@ export const viewings = {
       method: 'POST',
       body: JSON.stringify(data),
     }),
-  update: (id: string, data: { outcome: string; num_bid_rounds: number; final_price: string; my_bid: string; notes: string; asking_price: string }) =>
+  update: (id: string, data: { outcome: string; num_bid_rounds: number; final_price: string; my_bid: string; notes: string; asking_price: string; date?: string; hemnet_url?: string; address?: string }) =>
     request<{ ok: boolean }>(`/viewings/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
@@ -184,6 +184,26 @@ export const targetAreas = {
     }),
   remove: (id: string) =>
     request<{ ok: boolean }>(`/target-areas/${id}`, { method: 'DELETE' }),
+}
+
+// ── Household ─────────────────────────────────────────────────────────────────
+export interface HouseholdStatus {
+  role: 'none' | 'owner' | 'partner'
+  id?: string
+  owner_id?: string
+  partner_id?: string
+  invite_code?: string
+  invite_expires_at?: string
+}
+
+export const household = {
+  status:          () => request<HouseholdStatus>('/household/status'),
+  create:          () => request<HouseholdStatus>('/household/create', { method: 'POST' }),
+  join:    (code: string) => request<{ ok: boolean }>('/household/join', { method: 'POST', body: JSON.stringify({ code }) }),
+  leave:           () => request<{ ok: boolean }>('/household/leave', { method: 'POST' }),
+  removePartner:   () => request<{ ok: boolean }>('/household/remove-partner', { method: 'POST' }),
+  regenerate:      () => request<HouseholdStatus>('/household/regenerate', { method: 'POST' }),
+  delete:          () => request<{ ok: boolean }>('/household', { method: 'DELETE' }),
 }
 
 // ── Data management ────────────────────────────────────────────────────────────

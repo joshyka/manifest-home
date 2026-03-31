@@ -23,12 +23,12 @@ Your personal home-buying command centre — track savings progress, log viewing
 | Overview | KPIs, savings progress, loan status, upcoming viewings |
 | Savings | Monthly contributions, loan promise status, savings target tracker |
 | Checklist | Drag-to-reorder kanban board with custom categories |
-| Viewings | Log viewed apartments (with asking price), track bids, and view bid escalation trends |
+| Viewings | Log viewings with asking price, track bid auctions, edit address/date/URL inline, tap row to expand bid escalation chart |
 | Comparison | Compare up to 4 listings side by side with adjustable interest rate |
 | Calculator | Swedish mortgage calculator with stress test and net household cash flow |
 | BRF Checker | Evaluate a BRF's financial health — debt/sqm, fee/sqm, land ownership |
 | Maps | Side-by-side map and target areas — explore neighbourhoods, filter nearby amenities, manage priority areas |
-| Settings | Export/import data as Excel, client-side encryption, delete all data |
+| Settings | Export/import data as Excel, client-side encryption, household sharing, delete all data |
 
 ---
 
@@ -40,6 +40,7 @@ Your personal home-buying command centre — track savings progress, log viewing
 - Swedish mortgage rules: amortisation tiers, 7% stress test, ränteavdrag
 - Self-hosted fonts — no external tracking
 - Optional client-side AES-256-GCM encryption — blob data encrypted in-browser before storage, passphrase never leaves the device
+- Household sharing — owner generates a single-use invite code (48h expiry), partner joins via their own Google login and transparently accesses shared data
 
 ---
 
@@ -130,10 +131,11 @@ All data is stored in **Supabase PostgreSQL**, isolated per user via Row Level S
 | Table | Data |
 | --- | --- |
 | `settings` | Savings targets, loan details, buyer names |
-| `viewings` | Viewed apartments and bid history |
+| `viewings` | Viewed apartments, asking price, bid rounds, highest bid, my bid, listing URL |
 | `upcoming_viewings` | Scheduled viewings |
 | `target_areas` | Areas of interest with priority |
 | `user_blobs` | Checklist, comparison boards, calculator snapshots, BRF checks |
+| `households` | Household membership — owner, partner, invite code, expiry |
 
 ---
 

@@ -14,6 +14,7 @@ from pydantic import BaseModel
 from typing import Optional, Union
 import datetime
 
+from utils.supabase_client import get_client
 from utils.data import (
     load_settings, save_settings,
     load_viewings, save_viewing, get_viewing, patch_viewing, delete_viewing,
@@ -65,10 +66,23 @@ def require_auth(authorization: Optional[str] = Header(None)) -> dict:
         raise HTTPException(status_code=401, detail="Invalid token")
 
 
+# ── Household: resolve user_id for shared access ─────────────────────────────
+def resolve_user_id(user_id: str) -> str:
+    """If this user is a partner in a household, return the owner's id instead."""
+    try:
+        supa = get_client()
+        row = supa.table("households").select("owner_id").eq("partner_id", user_id).execute()
+        if row.data:
+            return row.data[0]["owner_id"]
+    except Exception:
+        pass
+    return user_id
+
+
 # ── Dashboard ─────────────────────────────────────────────────────────────────
 @app.get("/api/dashboard")
 def get_dashboard(payload: dict = Depends(require_auth)):
-    user_id = payload.get("sub", "dev-user")
+    user_id = resolve_user_id(payload.get("sub", "dev-user"))
     settings = load_settings(user_id)
     viewings = load_viewings(user_id)
     upcoming_rows = load_upcoming(user_id)
@@ -78,8 +92,9 @@ def get_dashboard(payload: dict = Depends(require_auth)):
     savings_pct = (current_savings / target * 100) if target > 0 else 0
     loan_status = get_loan_status(settings)
 
-    total_viewings = len(viewings)
-    bids_gone = sum(1 for v in viewings if v.get("outcome") == "Went to bidding")
+    active_viewings = [v for v in viewings if "[archived]" not in (v.get("notes") or "")]
+    total_viewings = len(active_viewings)
+    bids_gone = sum(1 for v in active_viewings if v.get("outcome") == "Went to bidding")
 
     # Projection
     import pandas as pd
@@ -124,7 +139,7 @@ def get_dashboard(payload: dict = Depends(require_auth)):
 # ── Settings ──────────────────────────────────────────────────────────────────
 @app.get("/api/settings")
 def get_settings(payload: dict = Depends(require_auth)):
-    user_id = payload.get("sub", "dev-user")
+    user_id = resolve_user_id(payload.get("sub", "dev-user"))
     return load_settings(user_id)
 
 
@@ -144,7 +159,7 @@ class SettingsBody(BaseModel):
 
 @app.put("/api/settings")
 def update_settings(body: SettingsBody, payload: dict = Depends(require_auth)):
-    user_id = payload.get("sub", "dev-user")
+    user_id = resolve_user_id(payload.get("sub", "dev-user"))
     save_settings(body.model_dump(), user_id)
     settings = load_settings(user_id)
     proj = get_projection(settings)
@@ -156,7 +171,7 @@ def update_settings(body: SettingsBody, payload: dict = Depends(require_auth)):
 
 @app.get("/api/settings/projection")
 def get_projection_data(payload: dict = Depends(require_auth)):
-    user_id = payload.get("sub", "dev-user")
+    user_id = resolve_user_id(payload.get("sub", "dev-user"))
     settings = load_settings(user_id)
     proj = get_projection(settings)
     return proj.to_dict(orient="records")
@@ -165,7 +180,7 @@ def get_projection_data(payload: dict = Depends(require_auth)):
 # ── Viewings ──────────────────────────────────────────────────────────────────
 @app.get("/api/viewings")
 def get_viewings(payload: dict = Depends(require_auth)):
-    user_id = payload.get("sub", "dev-user")
+    user_id = resolve_user_id(payload.get("sub", "dev-user"))
     return load_viewings(user_id)
 
 
@@ -184,7 +199,7 @@ class ViewingBody(BaseModel):
 @app.post("/api/viewings")
 def add_viewing(body: ViewingBody, payload: dict = Depends(require_auth)):
     import uuid
-    user_id = payload.get("sub", "dev-user")
+    user_id = resolve_user_id(payload.get("sub", "dev-user"))
     vid = str(uuid.uuid4())[:8]
     save_viewing({
         "id": vid,
@@ -208,11 +223,14 @@ class ViewingUpdateBody(BaseModel):
     my_bid: str = ""
     notes: str = ""
     asking_price: str = ""
+    date: Optional[str] = None
+    hemnet_url: Optional[str] = None
+    address: Optional[str] = None
 
 
 @app.put("/api/viewings/{vid}")
 def update_viewing(vid: str, body: ViewingUpdateBody, payload: dict = Depends(require_auth)):
-    user_id = payload.get("sub", "dev-user")
+    user_id = resolve_user_id(payload.get("sub", "dev-user"))
     existing = get_viewing(vid, user_id)
     if not existing:
         raise HTTPException(status_code=404, detail="Viewing not found")
@@ -221,20 +239,27 @@ def update_viewing(vid: str, body: ViewingUpdateBody, payload: dict = Depends(re
         final = str(int(body.final_price)) if body.final_price else ""
     except (ValueError, TypeError):
         final = ""
-    patch_viewing(vid, {
+    update = {
         "outcome": body.outcome,
         "num_bid_rounds": body.num_bid_rounds,
         "final_price": final,
         "my_bid": body.my_bid,
         "notes": body.notes + archived_tag,
         "asking_price": body.asking_price,
-    }, user_id)
+    }
+    if body.date:
+        update["date"] = body.date
+    if body.hemnet_url is not None:
+        update["hemnet_url"] = body.hemnet_url
+    if body.address:
+        update["address"] = body.address
+    patch_viewing(vid, update, user_id)
     return {"ok": True}
 
 
 @app.put("/api/viewings/{vid}/archive")
 def archive_viewing(vid: str, payload: dict = Depends(require_auth)):
-    user_id = payload.get("sub", "dev-user")
+    user_id = resolve_user_id(payload.get("sub", "dev-user"))
     existing = get_viewing(vid, user_id)
     if not existing:
         raise HTTPException(status_code=404, detail="Viewing not found")
@@ -249,14 +274,14 @@ def archive_viewing(vid: str, payload: dict = Depends(require_auth)):
 
 @app.delete("/api/viewings/{vid}")
 def remove_viewing(vid: str, payload: dict = Depends(require_auth)):
-    user_id = payload.get("sub", "dev-user")
+    user_id = resolve_user_id(payload.get("sub", "dev-user"))
     delete_viewing(vid, user_id)
     return {"ok": True}
 
 
 @app.put("/api/viewings/{vid}/unarchive")
 def unarchive_viewing(vid: str, payload: dict = Depends(require_auth)):
-    user_id = payload.get("sub", "dev-user")
+    user_id = resolve_user_id(payload.get("sub", "dev-user"))
     existing = get_viewing(vid, user_id)
     if not existing:
         raise HTTPException(status_code=404, detail="Viewing not found")
@@ -268,7 +293,7 @@ def unarchive_viewing(vid: str, payload: dict = Depends(require_auth)):
 # ── Upcoming viewings ─────────────────────────────────────────────────────────
 @app.get("/api/upcoming")
 def get_upcoming(payload: dict = Depends(require_auth)):
-    user_id = payload.get("sub", "dev-user")
+    user_id = resolve_user_id(payload.get("sub", "dev-user"))
     return load_upcoming(user_id)
 
 
@@ -280,7 +305,7 @@ class UpcomingBody(BaseModel):
 @app.post("/api/upcoming")
 def add_upcoming(body: UpcomingBody, payload: dict = Depends(require_auth)):
     import uuid
-    user_id = payload.get("sub", "dev-user")
+    user_id = resolve_user_id(payload.get("sub", "dev-user"))
     uid = str(uuid.uuid4())[:8]
     save_upcoming({
         "id": uid,
@@ -292,7 +317,7 @@ def add_upcoming(body: UpcomingBody, payload: dict = Depends(require_auth)):
 
 @app.delete("/api/upcoming/{uid}")
 def remove_upcoming(uid: str, payload: dict = Depends(require_auth)):
-    user_id = payload.get("sub", "dev-user")
+    user_id = resolve_user_id(payload.get("sub", "dev-user"))
     delete_upcoming(uid, user_id)
     return {"ok": True}
 
@@ -309,7 +334,7 @@ class BlobBody(BaseModel):
 def get_blob_endpoint(key: str, payload: dict = Depends(require_auth)):
     if key not in _ALLOWED_BLOB_KEYS:
         raise HTTPException(status_code=400, detail="Unknown blob key")
-    user_id = payload.get("sub", "dev-user")
+    user_id = resolve_user_id(payload.get("sub", "dev-user"))
     return get_blob(key, user_id)
 
 
@@ -317,7 +342,7 @@ def get_blob_endpoint(key: str, payload: dict = Depends(require_auth)):
 def set_blob_endpoint(key: str, body: BlobBody, payload: dict = Depends(require_auth)):
     if key not in _ALLOWED_BLOB_KEYS:
         raise HTTPException(status_code=400, detail="Unknown blob key")
-    user_id = payload.get("sub", "dev-user")
+    user_id = resolve_user_id(payload.get("sub", "dev-user"))
     set_blob(key, body.data, user_id)
     return {"ok": True}
 
@@ -325,7 +350,7 @@ def set_blob_endpoint(key: str, body: BlobBody, payload: dict = Depends(require_
 # ── Target areas ──────────────────────────────────────────────────────────────
 @app.get("/api/target-areas")
 def get_target_areas(payload: dict = Depends(require_auth)):
-    user_id = payload.get("sub", "dev-user")
+    user_id = resolve_user_id(payload.get("sub", "dev-user"))
     return load_target_areas(user_id)
 
 
@@ -337,7 +362,7 @@ class TargetAreaBody(BaseModel):
 @app.post("/api/target-areas")
 def add_target_area(body: TargetAreaBody, payload: dict = Depends(require_auth)):
     import uuid
-    user_id = payload.get("sub", "dev-user")
+    user_id = resolve_user_id(payload.get("sub", "dev-user"))
     area_id = str(uuid.uuid4())[:8]
     save_target_area({
         "id": area_id,
@@ -354,7 +379,7 @@ class TargetAreaUpdateBody(BaseModel):
 
 @app.put("/api/target-areas/{area_id}")
 def update_target_area(area_id: str, body: TargetAreaUpdateBody, payload: dict = Depends(require_auth)):
-    user_id = payload.get("sub", "dev-user")
+    user_id = resolve_user_id(payload.get("sub", "dev-user"))
     patch_target_area(area_id, {
         "name": body.name,
         "priority": body.priority,
@@ -364,15 +389,119 @@ def update_target_area(area_id: str, body: TargetAreaUpdateBody, payload: dict =
 
 @app.delete("/api/target-areas/{area_id}")
 def remove_target_area(area_id: str, payload: dict = Depends(require_auth)):
-    user_id = payload.get("sub", "dev-user")
+    user_id = resolve_user_id(payload.get("sub", "dev-user"))
     delete_target_area(area_id, user_id)
     return {"ok": True}
+
+
+# ── Households ───────────────────────────────────────────────────────────────
+import secrets, string as _string
+
+def _gen_code() -> str:
+    chars = _string.ascii_uppercase + _string.digits
+    raw = ''.join(secrets.choice(chars) for _ in range(8))
+    return f"{raw[:4]}-{raw[4:]}"
+
+@app.post("/api/household/create")
+def create_household(payload: dict = Depends(require_auth)):
+    user_id = payload.get("sub", "dev-user")
+    supa = get_client()
+    # Only one household per owner
+    existing = supa.table("households").select("id").eq("owner_id", user_id).execute()
+    if existing.data:
+        hid = existing.data[0]["id"]
+    else:
+        import uuid as _uuid
+        hid = str(_uuid.uuid4())[:8]
+        code = _gen_code()
+        expires = (datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=48)).isoformat()
+        supa.table("households").insert({
+            "id": hid, "owner_id": user_id,
+            "invite_code": code, "invite_expires_at": expires,
+        }).execute()
+    row = supa.table("households").select("*").eq("id", hid).single().execute()
+    return row.data
+
+@app.get("/api/household/status")
+def household_status(payload: dict = Depends(require_auth)):
+    user_id = payload.get("sub", "dev-user")
+    supa = get_client()
+    # Owner?
+    own = supa.table("households").select("*").eq("owner_id", user_id).execute()
+    if own.data:
+        return {"role": "owner", **own.data[0]}
+    # Partner?
+    part = supa.table("households").select("*").eq("partner_id", user_id).execute()
+    if part.data:
+        return {"role": "partner", **part.data[0]}
+    return {"role": "none"}
+
+class JoinBody(BaseModel):
+    code: str
+
+@app.post("/api/household/join")
+def join_household(body: JoinBody, payload: dict = Depends(require_auth)):
+    user_id = payload.get("sub", "dev-user")
+    supa = get_client()
+    code = body.code.upper().replace(" ", "")
+    row = supa.table("households").select("*").eq("invite_code", code).execute()
+    if not row.data:
+        raise HTTPException(status_code=404, detail="Invalid invite code")
+    h = row.data[0]
+    if h["owner_id"] == user_id:
+        raise HTTPException(status_code=400, detail="You are the owner of this household")
+    if h["partner_id"]:
+        raise HTTPException(status_code=400, detail="Household already has a partner")
+    expires = datetime.datetime.fromisoformat(h["invite_expires_at"])
+    if datetime.datetime.now(datetime.timezone.utc) > expires:
+        raise HTTPException(status_code=400, detail="Invite code has expired")
+    supa.table("households").update({
+        "partner_id": user_id, "invite_code": None, "invite_expires_at": None,
+    }).eq("id", h["id"]).execute()
+    return {"ok": True}
+
+@app.delete("/api/household")
+def delete_household(payload: dict = Depends(require_auth)):
+    user_id = payload.get("sub", "dev-user")
+    supa = get_client()
+    supa.table("households").delete().eq("owner_id", user_id).execute()
+    return {"ok": True}
+
+@app.post("/api/household/leave")
+def leave_household(payload: dict = Depends(require_auth)):
+    user_id = payload.get("sub", "dev-user")
+    supa = get_client()
+    supa.table("households").update({
+        "partner_id": None,
+    }).eq("partner_id", user_id).execute()
+    return {"ok": True}
+
+@app.post("/api/household/remove-partner")
+def remove_partner(payload: dict = Depends(require_auth)):
+    user_id = payload.get("sub", "dev-user")
+    supa = get_client()
+    supa.table("households").update({
+        "partner_id": None,
+    }).eq("owner_id", user_id).execute()
+    return {"ok": True}
+
+@app.post("/api/household/regenerate")
+def regenerate_code(payload: dict = Depends(require_auth)):
+    user_id = payload.get("sub", "dev-user")
+    supa = get_client()
+    code = _gen_code()
+    expires = (datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=48)).isoformat()
+    supa.table("households").update({
+        "invite_code": code, "invite_expires_at": expires,
+    }).eq("owner_id", user_id).execute()
+    row = supa.table("households").select("*").eq("owner_id", user_id).single().execute()
+    return row.data
 
 
 # ── Data management ───────────────────────────────────────────────────────────
 @app.delete("/api/data")
 def clear_data(payload: dict = Depends(require_auth)):
-    user_id = payload.get("sub", "dev-user")
+    user_id = resolve_user_id(payload.get("sub", "dev-user"))
     clear_all_data(user_id)
     return {"ok": True}
 

@@ -1,37 +1,58 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { viewings as viewingsApi } from '../lib/api'
 import type { Viewing } from '../lib/api'
 import Alert from '../components/Alert'
-import { Plus, X, Archive, ChevronDown, ChevronUp, Pencil, Check, TrendingUp, Info, Calendar } from 'lucide-react'
+import { Plus, X, Archive, ChevronDown, ChevronUp, Pencil, Check, TrendingUp } from 'lucide-react'
 import EmptyState from '../components/EmptyState'
 
-// ── Listings tab ─────────────────────────────────────────────────────────────
-function ListingsTab({ autoOpen }: { autoOpen: boolean }) {
+// ── helpers ───────────────────────────────────────────────────────────────────
+function fmt(n: number) { return Math.round(n).toLocaleString('sv-SE') }
+
+function parseBids(notes: string): number[] {
+  return notes.replace('[archived]', '').split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n) && n > 0)
+}
+
+function parsePrice(s: string): number | null {
+  const n = parseInt(String(s).replace(/\s/g, ''))
+  return isNaN(n) || n === 0 ? null : n
+}
+
+function isArchived(v: Viewing) { return v.notes?.includes('[archived]') }
+
+// ── Bids tab ──────────────────────────────────────────────────────────────────
+function BidsTab({ autoOpen }: { autoOpen: boolean }) {
   const qc = useQueryClient()
-  const [open, setOpen] = useState(autoOpen)
-  const [showArchived, setShowArchived] = useState(false)
-  const [label, setLabel] = useState('')
-  const [url, setUrl] = useState('')
-  const [date, setDate] = useState(() => new Date().toISOString().split('T')[0])
-  const [went, setWent]           = useState(false)
-  const [bids, setBids]           = useState('')
-  const [myBid, setMyBid]         = useState('')
+
+  // add form
+  const [open, setOpen]               = useState(autoOpen)
+  const [label, setLabel]             = useState('')
+  const [url, setUrl]                 = useState('')
+  const [date, setDate]               = useState(() => new Date().toISOString().split('T')[0])
+  const [went, setWent]               = useState(false)
+  const [bids, setBids]               = useState('')
+  const [myBid, setMyBid]             = useState('')
   const [askingPrice, setAskingPrice] = useState('')
-  const [saved, setSaved]         = useState(false)
-  const [err, setErr]             = useState('')
+  const [err, setErr]                 = useState('')
+  const [saved, setSaved]             = useState(false)
+
+  // inline edit
+  const [editId,           setEditId]           = useState<string | null>(null)
+  const [editWent,         setEditWent]         = useState(false)
+  const [editAddress,      setEditAddress]      = useState('')
+  const [editDate,         setEditDate]         = useState('')
+  const [editUrl,          setEditUrl]          = useState('')
+  const [editBids,         setEditBids]         = useState('')
+  const [editMyBid,        setEditMyBid]        = useState('')
+  const [editAskingPrice,  setEditAskingPrice]  = useState('')
+  const [editErr,          setEditErr]          = useState('')
 
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
-
-  // Inline edit state
-  const [editId,          setEditId]          = useState<string | null>(null)
-  const [editWent,        setEditWent]        = useState(false)
-  const [editBids,        setEditBids]        = useState('')
-  const [editMyBid,       setEditMyBid]       = useState('')
-  const [editAskingPrice, setEditAskingPrice] = useState('')
-  const [editErr,         setEditErr]         = useState('')
+  const [showArchived, setShowArchived]       = useState(false)
+  const [trendSelected, setTrendSelected]     = useState<string | null>(null)
+  const [mobileExpanded, setMobileExpanded]   = useState<string | null>(null)
 
   const { data: list = [], isLoading } = useQuery({ queryKey: ['viewings'], queryFn: viewingsApi.list })
 
@@ -40,8 +61,10 @@ function ListingsTab({ autoOpen }: { autoOpen: boolean }) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['viewings'] })
       qc.invalidateQueries({ queryKey: ['dashboard'] })
-      setOpen(false); setLabel(''); setUrl(''); setDate(new Date().toISOString().split('T')[0])
-      setWent(false); setBids(''); setMyBid(''); setAskingPrice(''); setSaved(true); setTimeout(() => setSaved(false), 3000)
+      setOpen(false); setLabel(''); setUrl('')
+      setDate(new Date().toISOString().split('T')[0])
+      setWent(false); setBids(''); setMyBid(''); setAskingPrice('')
+      setSaved(true); setTimeout(() => setSaved(false), 3000)
     },
   })
 
@@ -70,13 +93,12 @@ function ListingsTab({ autoOpen }: { autoOpen: boolean }) {
   })
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, ...data }: { id: string; outcome: string; num_bid_rounds: number; final_price: string; my_bid: string; notes: string }) =>
+    mutationFn: ({ id, ...data }: { id: string; outcome: string; num_bid_rounds: number; final_price: string; my_bid: string; notes: string; asking_price: string; date?: string; hemnet_url?: string; address?: string }) =>
       viewingsApi.update(id, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['viewings'] })
       qc.invalidateQueries({ queryKey: ['dashboard'] })
-      setEditId(null)
-      setEditErr('')
+      setEditId(null); setEditErr('')
     },
     onError: (e: any) => setEditErr(e.message ?? 'Save failed'),
   })
@@ -84,8 +106,10 @@ function ListingsTab({ autoOpen }: { autoOpen: boolean }) {
   function openEdit(v: Viewing) {
     setEditId(v.id)
     setEditWent(v.outcome === 'Went to bidding')
-    const notesClean = v.notes.replace('[archived]', '').trim()
-    setEditBids(notesClean)
+    setEditAddress(v.address || '')
+    setEditDate(v.date || '')
+    setEditUrl(v.hemnet_url && v.hemnet_url !== 'nan' ? v.hemnet_url : '')
+    setEditBids(v.notes.replace('[archived]', '').trim())
     setEditMyBid(v.my_bid && v.my_bid !== 'nan' ? v.my_bid : '')
     setEditAskingPrice(v.asking_price && v.asking_price !== 'nan' ? v.asking_price : '')
   }
@@ -96,10 +120,7 @@ function ListingsTab({ autoOpen }: { autoOpen: boolean }) {
       : []
     if (editMyBid.trim() && bidArr.length > 0) {
       const myBidNum = parseInt(editMyBid.trim().replace(/\s/g, ''))
-      if (!bidArr.includes(myBidNum)) {
-        setEditErr('My Bid must be one of the bid rounds entered above.')
-        return
-      }
+      if (!bidArr.includes(myBidNum)) { setEditErr('My Bid must be one of the bid rounds.'); return }
     }
     const highest = bidArr.length > 0 ? String(Math.max(...bidArr)) : ''
     updateMutation.mutate({
@@ -110,25 +131,21 @@ function ListingsTab({ autoOpen }: { autoOpen: boolean }) {
       my_bid: editMyBid.trim(),
       notes: bidArr.join(', '),
       asking_price: editAskingPrice.trim(),
+      date: editDate || undefined,
+      hemnet_url: editUrl || undefined,
+      address: editAddress.trim() || undefined,
     })
   }
 
   function handleAdd(e: React.FormEvent) {
-    e.preventDefault()
-    setErr('')
-    if (!label.trim() && !url.trim()) {
-      setErr('Please enter at least a label or a URL.')
-      return
-    }
+    e.preventDefault(); setErr('')
+    if (!label.trim() && !url.trim()) { setErr('Please enter at least a label or a URL.'); return }
     const bidArr = went && bids.trim()
       ? bids.split(',').map(b => parseInt(b.trim().replace(/\s/g, ''))).filter(n => !isNaN(n))
       : []
     if (myBid.trim() && bidArr.length > 0) {
       const myBidNum = parseInt(myBid.trim().replace(/\s/g, ''))
-      if (!bidArr.includes(myBidNum)) {
-        setErr('My Bid must be one of the bid rounds entered above.')
-        return
-      }
+      if (!bidArr.includes(myBidNum)) { setErr('My Bid must be one of the bid rounds.'); return }
     }
     const highest = bidArr.length > 0 ? String(Math.max(...bidArr)) : ''
     addMutation.mutate({
@@ -144,19 +161,24 @@ function ListingsTab({ autoOpen }: { autoOpen: boolean }) {
     })
   }
 
-  const isArchived = (v: Viewing) => v.notes?.includes('[archived]')
-  const active = list.filter(v => !isArchived(v)).reverse()
+  const active   = list.filter(v => !isArchived(v))
   const archived = list.filter(isArchived).reverse()
 
-  function formatBids(v: Viewing) {
-    const notesClean = v.notes.replace('[archived]', '').trim()
-    const rounds = notesClean.split(',').map(r => r.trim()).filter(Boolean)
-    if (rounds.length === 0) return null
-    return rounds
-      .filter(r => /^\d+(\.\d+)?$/.test(r))
-      .map(r => `${parseInt(r).toLocaleString('sv-SE')}`)
-      .join(' → ')
-  }
+  const biddingRows = active
+    .filter(v => v.outcome === 'Went to bidding')
+    .map(v => ({
+      ...v,
+      rounds:   parseBids(v.notes || ''),
+      highest:  parsePrice(v.final_price),
+      myBidAmt: parsePrice(v.my_bid),
+      askingAmt: parsePrice(v.asking_price),
+    }))
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+
+  const viewedOnly = active
+    .filter(v => v.outcome !== 'Went to bidding')
+    .reverse()
+
 
   if (isLoading) return (
     <div className="space-y-3 animate-pulse">
@@ -166,24 +188,17 @@ function ListingsTab({ autoOpen }: { autoOpen: boolean }) {
 
   return (
     <div className="space-y-4">
-      {/* Header */}
+      {/* Top bar */}
       <div className="flex items-center justify-between">
-        {!open && active.length > 0 && (
-          <button
-            onClick={() => setOpen(true)}
-            className="w-8 h-8 rounded-xl bg-teal-600 hover:bg-teal-700 flex items-center justify-center shadow-sm transition-all active:scale-95"
-          >
-            <Plus size={15} className="text-white" />
-          </button>
-        )}
-        {open && (
-          <button className="p-1.5 rounded-xl text-gray-500 bg-gray-100 hover:bg-gray-200 transition-all" onClick={() => setOpen(false)}>
-            <X size={15} />
-          </button>
-        )}
+        <button
+          onClick={() => setOpen(o => !o)}
+          className="w-11 h-11 rounded-xl bg-teal-600 hover:bg-teal-700 flex items-center justify-center shadow-sm transition-all active:scale-95"
+        >
+          {open ? <X size={18} className="text-white" /> : <Plus size={18} className="text-white" />}
+        </button>
       </div>
 
-      {saved && <Alert kind="success">Listing saved.</Alert>}
+      {saved && <Alert kind="success">Viewing saved.</Alert>}
 
       {/* Add form */}
       {open && (
@@ -203,7 +218,7 @@ function ListingsTab({ autoOpen }: { autoOpen: boolean }) {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="label !text-green-600">Date Added</label>
+                <label className="label !text-green-600">Date</label>
                 <input type="date" className="input" value={date} onChange={e => setDate(e.target.value)} />
               </div>
               <div>
@@ -225,13 +240,11 @@ function ListingsTab({ autoOpen }: { autoOpen: boolean }) {
                   <label className="label !text-green-600">All Bid Rounds (SEK, comma-separated)</label>
                   <input className="input" placeholder="e.g. 3200000, 3350000, 3500000" value={bids}
                     onChange={e => setBids(e.target.value)} />
-                  <p className="text-xs text-gray-400 mt-1">All bids in the auction, highest last</p>
                 </div>
                 <div>
                   <label className="label !text-green-600">My Bid (SEK) — optional</label>
                   <input type="number" className="input" placeholder="e.g. 3350000" value={myBid}
                     onChange={e => setMyBid(e.target.value)} />
-                  <p className="text-xs text-gray-400 mt-1">The amount you personally bid</p>
                 </div>
               </div>
             )}
@@ -243,125 +256,269 @@ function ListingsTab({ autoOpen }: { autoOpen: boolean }) {
         </div>
       )}
 
-      {/* Active listings */}
+      {/* Empty state */}
       {active.length === 0 && !open && (
-        <div className="flex flex-col items-center justify-center py-14 text-center space-y-3">
-          <button
-            onClick={() => setOpen(true)}
-            className="w-9 h-9 rounded-xl bg-teal-600 hover:bg-teal-700 flex items-center justify-center shadow-sm transition-all active:scale-95"
-          >
-            <Plus size={16} className="text-white" />
-          </button>
-          <div>
-            <p className="text-sm font-semibold text-gray-500">No viewings logged yet</p>
-            <p className="text-xs text-gray-300 mt-0.5">Tap the button above to log your first viewing</p>
-          </div>
-        </div>
+        <EmptyState icon={TrendingUp} title="No viewings logged yet" message="Tap + to log your first viewing" />
       )}
-      {active.length === 0 ? null : (
-        <div className="card divide-y divide-gray-50">
-          <div className="pb-3 text-xs font-semibold text-green-600 uppercase tracking-wider">
-            {active.length} active listing{active.length !== 1 ? 's' : ''}
+
+      {/* ── Bidding auctions table ── */}
+      {biddingRows.length > 0 && (
+        <>
+          <div className="card overflow-x-auto p-0">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-100">
+                  <th className="text-left py-3 px-3 sm:px-5 text-[11px] font-bold text-green-600 uppercase tracking-wider">Address</th>
+                  <th className="text-left py-3 px-3 sm:px-5 text-[11px] font-bold text-green-600 uppercase tracking-wider hidden sm:table-cell">Date</th>
+                  <th className="text-left py-3 px-3 sm:px-5 text-[11px] font-bold text-green-600 uppercase tracking-wider hidden sm:table-cell">Asking</th>
+                  <th className="text-left py-3 px-3 sm:px-5 text-[11px] font-bold text-green-600 uppercase tracking-wider hidden md:table-cell">Bid Rounds</th>
+                  <th className="text-left py-3 px-3 sm:px-5 text-[11px] font-bold text-green-600 uppercase tracking-wider">Highest Bid</th>
+                  <th className="text-left py-3 px-3 sm:px-5 text-[11px] font-bold text-green-600 uppercase tracking-wider hidden sm:table-cell">My Bid</th>
+                  <th className="py-3 px-3 sm:px-5" />
+                </tr>
+              </thead>
+              <tbody>
+                {biddingRows.map(b => (
+                  <>
+                    <tr key={b.id} onClick={() => b.rounds.length > 0 && setTrendSelected(s => s === b.id ? null : b.id)}
+                      className={`border-b border-gray-50 transition-colors ${b.rounds.length > 0 ? 'cursor-pointer hover:bg-teal-50/40' : ''} ${trendSelected === b.id ? 'bg-teal-50' : ''}`}>
+                      <td className="py-3.5 px-3 sm:px-5 font-semibold text-gray-900 max-w-[120px] sm:max-w-none">
+                        <div className="truncate">
+                          {b.hemnet_url && b.hemnet_url !== 'nan'
+                            ? <a href={b.hemnet_url} target="_blank" rel="noreferrer" className="hover:text-teal-700">{b.address}</a>
+                            : b.address}
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-3 sm:px-5 text-gray-500 whitespace-nowrap hidden sm:table-cell">{b.date}</td>
+                      <td className="py-3.5 px-3 sm:px-5 tabular-nums text-gray-500 hidden sm:table-cell">
+                        {b.askingAmt ? `${fmt(b.askingAmt)} kr` : <span className="text-gray-300">—</span>}
+                      </td>
+                      <td className="py-3.5 px-3 sm:px-5 hidden md:table-cell">
+                        {b.rounds.length > 0 ? (
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            {b.rounds.map((r, i) => (
+                              <span key={i} className="flex items-center gap-1">
+                                <span className={`text-xs tabular-nums px-2 py-0.5 rounded-lg font-semibold ${
+                                  i === b.rounds.length - 1 ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500'
+                                }`}>{fmt(r)}</span>
+                                {i < b.rounds.length - 1 && <TrendingUp size={10} className="text-gray-300" />}
+                              </span>
+                            ))}
+                          </div>
+                        ) : <span className="text-gray-300">—</span>}
+                      </td>
+                      <td className="py-3.5 px-3 sm:px-5 font-bold text-gray-900 tabular-nums">
+                        {b.highest ? `${fmt(b.highest)} kr` : '—'}
+                      </td>
+                      <td className="py-3.5 px-3 sm:px-5 tabular-nums hidden sm:table-cell">
+                        {b.myBidAmt ? <span className="font-bold text-teal-700">{fmt(b.myBidAmt)} kr</span> : <span className="text-gray-300">—</span>}
+                      </td>
+                      <td className="py-3.5 px-3 sm:px-5">
+                        <div className="flex items-center gap-2 justify-end">
+                          <button
+                            onClick={e => { e.stopPropagation(); setMobileExpanded(s => s === b.id ? null : b.id) }}
+                            className="sm:hidden text-gray-400 hover:text-teal-600 transition-colors"
+                          >
+                            {mobileExpanded === b.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                          </button>
+                          <button onClick={e => { e.stopPropagation(); editId === b.id ? setEditId(null) : openEdit(b) }}
+                            className="text-gray-400 hover:text-teal-600 transition-colors" title="Edit">
+                            <Pencil size={13} />
+                          </button>
+                          <button onClick={e => { e.stopPropagation(); archiveMutation.mutate(b.id) }}
+                            className="text-gray-300 hover:text-amber-400 transition-colors" title="Archive">
+                            <Archive size={13} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                    {mobileExpanded === b.id && (
+                      <tr key={`${b.id}-mobile`} className="sm:hidden bg-gray-50 border-b border-gray-100">
+                        <td colSpan={7} className="px-4 py-3">
+                          <div className="space-y-1.5 text-xs">
+                            <div className="font-semibold text-gray-800">{b.address}</div>
+                            {b.date && <div className="text-gray-400">{b.date}</div>}
+                            {b.askingAmt && <div className="text-gray-500">Asking: <span className="font-semibold">{fmt(b.askingAmt)} kr</span></div>}
+                            {b.myBidAmt && <div className="text-teal-700 font-semibold">My bid: {fmt(b.myBidAmt)} kr</div>}
+                            {b.rounds.length > 0 && (
+                              <div className="flex items-center gap-1 flex-wrap pt-0.5">
+                                {b.rounds.map((r, i) => (
+                                  <span key={i} className="flex items-center gap-1">
+                                    <span className={`tabular-nums px-2 py-0.5 rounded-lg font-semibold ${
+                                      i === b.rounds.length - 1 ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500'
+                                    }`}>{fmt(r)}</span>
+                                    {i < b.rounds.length - 1 && <TrendingUp size={9} className="text-gray-300" />}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                    {editId === b.id && (
+                      <tr key={`${b.id}-edit`} className="bg-gray-50">
+                        <td colSpan={7} className="px-5 py-4">
+                          <div className="space-y-3">
+                            <div>
+                              <label className="label !text-green-600">Address</label>
+                              <input className="input" placeholder="e.g. Folkungagatan 45" value={editAddress} onChange={e => setEditAddress(e.target.value)} />
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                              <div>
+                                <label className="label !text-green-600">Date</label>
+                                <input type="date" className="input" value={editDate} onChange={e => setEditDate(e.target.value)} />
+                              </div>
+                              <div>
+                                <label className="label !text-green-600">Asking Price (SEK)</label>
+                                <input type="number" className="input" placeholder="e.g. 3200000"
+                                  value={editAskingPrice} onChange={e => setEditAskingPrice(e.target.value)} />
+                              </div>
+                              <div>
+                                <label className="label !text-green-600">Listing URL</label>
+                                <input className="input" placeholder="https://www.hemnet.se/..." value={editUrl} onChange={e => setEditUrl(e.target.value)} />
+                              </div>
+                            </div>
+                            <label className="flex items-center gap-2 cursor-pointer select-none">
+                              <input type="checkbox" checked={editWent} onChange={e => setEditWent(e.target.checked)}
+                                className="w-4 h-4 accent-teal-500 rounded" />
+                              <span className="text-sm font-medium text-gray-700">Bidding</span>
+                            </label>
+                            {editWent && (
+                              <div className="space-y-3">
+                                <div>
+                                  <label className="label !text-green-600">All Bid Rounds (SEK, comma-separated)</label>
+                                  <input className="input" placeholder="e.g. 3200000, 3350000, 3500000"
+                                    value={editBids} onChange={e => setEditBids(e.target.value)} autoFocus />
+                                                </div>
+                                <div>
+                                  <label className="label !text-green-600">My Bid (SEK) — optional</label>
+                                  <input type="number" className="input" placeholder="e.g. 3350000"
+                                    value={editMyBid} onChange={e => setEditMyBid(e.target.value)} />
+                                </div>
+                              </div>
+                            )}
+                            {editErr && <p className="text-xs text-red-500">{editErr}</p>}
+                            <div className="flex gap-2">
+                              <button className="btn-primary" onClick={() => submitEdit(b)} disabled={updateMutation.isPending}>
+                                <Check size={13} /> {updateMutation.isPending ? 'Saving…' : 'Save'}
+                              </button>
+                              <button className="btn-secondary" onClick={() => { setEditId(null); setEditErr('') }}>Cancel</button>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                    {trendSelected === b.id && b.rounds.length > 0 && (() => {
+                      const COLORS = ['#2E7D52', '#f59e0b', '#6366f1', '#ef4444', '#06b6d4', '#ec4899']
+                      const colorIdx = biddingRows.findIndex(r => r.id === b.id)
+                      const chartData = b.rounds.map((r, i) => ({ round: `R${i + 1}`, value: parseFloat((r / 1_000_000).toFixed(3)) }))
+                      const minVal = Math.min(...b.rounds) / 1_000_000
+                      const maxVal = Math.max(...b.rounds) / 1_000_000
+                      const pad = (maxVal - minVal) * 0.15 || 0.1
+                      const yDomain: [number, number] = [parseFloat((minVal - pad).toFixed(3)), parseFloat((maxVal + pad).toFixed(3))]
+                      const xTicks = chartData.map(d => d.round)
+                      const step = (yDomain[1] - yDomain[0]) / 4
+                      const yTicks = Array.from({ length: 5 }, (_, i) => parseFloat((yDomain[0] + step * i).toFixed(3)))
+                      return (
+                        <tr key={`${b.id}-chart`} className="bg-teal-50/40">
+                          <td colSpan={7} className="px-5 py-3">
+                            <div className="w-52 mx-auto">
+                              <ResponsiveContainer width="100%" aspect={1}>
+                                <LineChart data={chartData} margin={{ top: 6, right: 6, left: 0, bottom: 4 }}>
+                                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                                  <XAxis dataKey="round" ticks={xTicks} tick={{ fontSize: 9, fill: '#9ca3af' }} height={16} interval={0} />
+                                  <YAxis tick={{ fontSize: 9, fill: '#9ca3af' }} unit="M" domain={yDomain} ticks={yTicks} width={36} />
+                                  <Tooltip contentStyle={{ fontSize: 11, borderRadius: 10, border: '1px solid #e5e7eb' }}
+                                    formatter={(v: any) => [Math.round(v * 1_000_000).toLocaleString('sv-SE') + ' kr']} />
+                                  <Line dataKey="value" stroke={COLORS[colorIdx % COLORS.length]}
+                                    strokeWidth={2} dot={{ r: 3 }} type="monotone" />
+                                </LineChart>
+                              </ResponsiveContainer>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })()}
+                  </>
+                ))}
+              </tbody>
+            </table>
           </div>
-          {active.map(v => {
+
+        </>
+      )}
+
+      {/* ── Viewed only (no bid) ── */}
+      {viewedOnly.length > 0 && (
+        <div className="card divide-y divide-gray-50">
+          <div className="pb-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+            Viewed — no bid ({viewedOnly.length})
+          </div>
+          {viewedOnly.map(v => {
             const link = v.hemnet_url && v.hemnet_url !== 'nan' ? v.hemnet_url : ''
-            const bidsFormatted = formatBids(v)
-            const highest = v.final_price && v.final_price !== 'nan' && v.final_price !== '0' && v.final_price !== ''
-              ? parseInt(v.final_price).toLocaleString('sv-SE')
-              : null
-            const myBidDisplay = v.my_bid && v.my_bid !== 'nan' && v.my_bid !== '0' && v.my_bid !== ''
-              ? parseInt(v.my_bid).toLocaleString('sv-SE')
-              : null
             const isEditing = editId === v.id
             return (
               <div key={v.id} className="py-4 first:pt-3">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
                     <div className="font-semibold text-gray-900 text-sm">{v.address}</div>
-                    <div className="flex items-center gap-2 mt-1 flex-wrap">
-                      <span className="text-xs text-gray-400">Added {v.date}</span>
-                      {v.outcome === 'Went to bidding' && (
-                        <span className="text-xs font-bold bg-amber-50 text-amber-600 border border-amber-100 px-2 py-0.5 rounded-full">
-                          {highest ? `Highest: ${highest} kr` : 'Went to bidding'}
-                        </span>
-                      )}
-                    </div>
-                    {bidsFormatted && v.outcome === 'Went to bidding' && (
-                      <div className="text-xs text-amber-700 mt-1">Rounds: {bidsFormatted} kr</div>
-                    )}
-                    {myBidDisplay && v.outcome === 'Went to bidding' && (
-                      <div className="text-xs font-semibold text-teal-700 mt-0.5">My bid: {myBidDisplay} kr</div>
-                    )}
+                    <div className="text-xs text-gray-400 mt-0.5">Added {v.date}</div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     {link && (
                       <a href={link} target="_blank" rel="noreferrer"
-                        className="inline-flex items-center gap-1 text-xs font-semibold text-teal-700 hover:text-teal-800">
-                        View ↗
-                      </a>
+                        className="text-xs font-semibold text-teal-700 hover:text-teal-800">View ↗</a>
                     )}
-                    <button
-                      onClick={() => isEditing ? setEditId(null) : openEdit(v)}
-                      className="text-xs text-gray-400 hover:text-teal-600 transition-colors"
-                      title="Edit bidding info"
-                    >
+                    <button onClick={() => isEditing ? setEditId(null) : openEdit(v)}
+                      className="text-xs text-gray-400 hover:text-teal-600 transition-colors" title="Edit">
                       <Pencil size={13} />
                     </button>
-                    <button
-                      onClick={() => archiveMutation.mutate(v.id)}
-                      className="text-gray-300 hover:text-amber-400 transition-colors"
-                      title="Archive listing"
-                    >
+                    <button onClick={() => archiveMutation.mutate(v.id)}
+                      className="text-gray-300 hover:text-amber-400 transition-colors" title="Archive">
                       <Archive size={13} />
                     </button>
                   </div>
                 </div>
-
-                {/* Inline edit panel */}
                 {isEditing && (
                   <div className="mt-3 p-3 bg-gray-50 rounded-xl border border-gray-100 space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <label className="label !text-green-600">Date</label>
+                        <input type="date" className="input" value={editDate} onChange={e => setEditDate(e.target.value)} />
+                      </div>
+                      <div>
+                        <label className="label !text-green-600">Asking Price (SEK)</label>
+                        <input type="number" className="input" placeholder="e.g. 3200000"
+                          value={editAskingPrice} onChange={e => setEditAskingPrice(e.target.value)} />
+                      </div>
+                      <div>
+                        <label className="label !text-green-600">Listing URL</label>
+                        <input className="input" placeholder="https://www.hemnet.se/..." value={editUrl} onChange={e => setEditUrl(e.target.value)} />
+                      </div>
+                    </div>
                     <label className="flex items-center gap-2 cursor-pointer select-none">
                       <input type="checkbox" checked={editWent} onChange={e => setEditWent(e.target.checked)}
                         className="w-4 h-4 accent-teal-500 rounded" />
                       <span className="text-sm font-medium text-gray-700">Bidding</span>
                     </label>
-                    <div>
-                      <label className="label !text-green-600">Asking Price (SEK) — optional</label>
-                      <input type="number" className="input" placeholder="e.g. 3200000"
-                        value={editAskingPrice} onChange={e => setEditAskingPrice(e.target.value)} />
-                    </div>
                     {editWent && (
                       <div className="space-y-3">
                         <div>
                           <label className="label !text-green-600">All Bid Rounds (SEK, comma-separated)</label>
-                          <input
-                            className="input"
-                            placeholder="e.g. 3200000, 3350000, 3500000"
-                            value={editBids}
-                            onChange={e => setEditBids(e.target.value)}
-                            autoFocus
-                          />
-                          <p className="text-xs text-gray-400 mt-1">All bids in the auction, highest last</p>
-                        </div>
+                          <input className="input" placeholder="e.g. 3200000, 3350000, 3500000"
+                            value={editBids} onChange={e => setEditBids(e.target.value)} autoFocus />
+                                </div>
                         <div>
                           <label className="label !text-green-600">My Bid (SEK) — optional</label>
-                          <input
-                            type="number"
-                            className="input"
-                            placeholder="e.g. 3350000"
-                            value={editMyBid}
-                            onChange={e => setEditMyBid(e.target.value)}
-                          />
+                          <input type="number" className="input" placeholder="e.g. 3350000"
+                            value={editMyBid} onChange={e => setEditMyBid(e.target.value)} />
                         </div>
                       </div>
                     )}
                     {editErr && <p className="text-xs text-red-500">{editErr}</p>}
                     <div className="flex gap-2">
-                      <button
-                        className="btn-primary"
-                        onClick={() => submitEdit(v)}
-                        disabled={updateMutation.isPending}
-                      >
+                      <button className="btn-primary" onClick={() => submitEdit(v)} disabled={updateMutation.isPending}>
                         <Check size={13} /> {updateMutation.isPending ? 'Saving…' : 'Save'}
                       </button>
                       <button className="btn-secondary" onClick={() => { setEditId(null); setEditErr('') }}>Cancel</button>
@@ -374,23 +531,19 @@ function ListingsTab({ autoOpen }: { autoOpen: boolean }) {
         </div>
       )}
 
-      {/* Archived */}
+      {/* ── Archived ── */}
       {archived.length > 0 && (
         <div className="card">
-          <button
-            onClick={() => setShowArchived(s => !s)}
-            className="w-full flex items-center justify-between text-sm font-semibold text-gray-500 hover:text-gray-700"
-          >
-            <span>Bid history — archived ({archived.length})</span>
+          <button onClick={() => setShowArchived(s => !s)}
+            className="w-full flex items-center justify-between text-sm font-semibold text-gray-500 hover:text-gray-700">
+            <span>Archived ({archived.length})</span>
             {showArchived ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
           </button>
           {showArchived && (
             <div className="mt-4 space-y-3">
               {archived.map(v => {
-                const bidsFormatted = formatBids(v)
                 const highest = v.final_price && v.final_price !== 'nan' && v.final_price !== '0' && v.final_price !== ''
-                  ? parseInt(v.final_price).toLocaleString('sv-SE')
-                  : null
+                  ? parseInt(v.final_price).toLocaleString('sv-SE') : null
                 return (
                   <div key={v.id} className="bg-amber-50/60 border border-amber-100 rounded-xl px-4 py-3">
                     <div className="flex items-start justify-between gap-2">
@@ -403,31 +556,20 @@ function ListingsTab({ autoOpen }: { autoOpen: boolean }) {
                             </span>
                           )}
                         </div>
-                        {bidsFormatted && v.outcome === 'Went to bidding' && (
-                          <div className="text-xs text-amber-700 mt-1">Rounds: {bidsFormatted} kr</div>
-                        )}
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
-                        <button
-                          onClick={() => unarchiveMutation.mutate(v.id)}
+                        <button onClick={() => unarchiveMutation.mutate(v.id)}
                           className="p-1.5 rounded-lg text-gray-400 hover:text-teal-600 hover:bg-teal-50 transition-all"
-                          title="Make active"
-                        >
+                          title="Make active">
                           <Archive size={13} />
                         </button>
                         <button
                           onClick={() => {
-                            if (confirmDeleteId === v.id) {
-                              deleteMutation.mutate(v.id)
-                              setConfirmDeleteId(null)
-                            } else {
-                              setConfirmDeleteId(v.id)
-                              setTimeout(() => setConfirmDeleteId(null), 2000)
-                            }
+                            if (confirmDeleteId === v.id) { deleteMutation.mutate(v.id); setConfirmDeleteId(null) }
+                            else { setConfirmDeleteId(v.id); setTimeout(() => setConfirmDeleteId(null), 2000) }
                           }}
                           className={`p-1.5 rounded-lg transition-all ${confirmDeleteId === v.id ? 'text-red-500 bg-red-50' : 'text-gray-300 hover:text-red-400 hover:bg-red-50'}`}
-                          title={confirmDeleteId === v.id ? 'Click again to delete' : 'Delete'}
-                        >
+                          title={confirmDeleteId === v.id ? 'Click again to delete' : 'Delete'}>
                           <X size={13} />
                         </button>
                       </div>
@@ -443,175 +585,8 @@ function ListingsTab({ autoOpen }: { autoOpen: boolean }) {
   )
 }
 
-// ── Bids tab ──────────────────────────────────────────────────────────────────
-function fmt(n: number) { return Math.round(n).toLocaleString('sv-SE') }
-
-function parseBids(notes: string): number[] {
-  return notes.replace('[archived]', '').split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n) && n > 0)
-}
-
-function parsePrice(s: string): number | null {
-  const n = parseInt(String(s).replace(/\s/g, ''))
-  return isNaN(n) || n === 0 ? null : n
-}
-
-function BidsTab() {
-  const { data: list = [] } = useQuery({ queryKey: ['viewings'], queryFn: viewingsApi.list })
-
-  const bids = list
-    .filter(v => v.outcome === 'Went to bidding')
-    .map(v => ({
-      ...v,
-      rounds:      parseBids(v.notes || ''),
-      highest:     parsePrice(v.final_price),
-      myBidAmt:    parsePrice(v.my_bid),
-      askingAmt:   parsePrice(v.asking_price),
-    }))
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-
-  const mostRounds = bids.length ? Math.max(...bids.map(b => b.rounds.length)) : 0
-
-  return (
-    <div className="space-y-4">
-      {bids.length === 0 && (
-        <div className="flex items-center gap-2 px-3 py-2 bg-teal-50 border border-teal-100 rounded-xl">
-          <Info size={13} className="text-teal-500 shrink-0" />
-          <p className="text-xs text-teal-700">Mark a listing as "Bidding" in the Listings tab to track it here.</p>
-        </div>
-      )}
-      {bids.length === 0 && (
-        <EmptyState icon={TrendingUp} title="No bids tracked yet" message="Mark a listing as Bidding in the Listings tab" />
-      )}
-      {bids.length > 0 && <>
-      <div className="flex items-center justify-end gap-4">
-        <span className="text-sm font-semibold text-gray-500 text-right">auctions tracked so far</span>
-        <div className="w-16 h-16 rounded-full flex flex-col items-center justify-center shrink-0"
-          style={{ background: 'linear-gradient(135deg, #2E7D52, #3DAA6E)' }}>
-          <span className="text-2xl font-black text-white leading-none">{bids.length}</span>
-          <span className="text-[9px] text-white/70 font-semibold uppercase tracking-wide">bids</span>
-        </div>
-      </div>
-
-      <div className="card overflow-x-auto p-0">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-gray-100">
-              <th className="text-left py-3 px-5 text-[11px] font-bold text-green-600 uppercase tracking-wider">Address</th>
-              <th className="text-left py-3 px-5 text-[11px] font-bold text-green-600 uppercase tracking-wider hidden sm:table-cell">Date</th>
-              <th className="text-left py-3 px-5 text-[11px] font-bold text-green-600 uppercase tracking-wider">Asking</th>
-              <th className="text-left py-3 px-5 text-[11px] font-bold text-green-600 uppercase tracking-wider hidden md:table-cell">Bid Rounds</th>
-              <th className="text-left py-3 px-5 text-[11px] font-bold text-green-600 uppercase tracking-wider">Highest Bid</th>
-              <th className="text-left py-3 px-5 text-[11px] font-bold text-green-600 uppercase tracking-wider hidden sm:table-cell">My Bid</th>
-            </tr>
-          </thead>
-          <tbody>
-            {bids.map(b => (
-              <tr key={b.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                <td className="py-3.5 px-5 font-semibold text-gray-900">{b.address}</td>
-                <td className="py-3.5 px-5 text-gray-500 whitespace-nowrap hidden sm:table-cell">{b.date}</td>
-                <td className="py-3.5 px-5 tabular-nums text-gray-500">
-                  {b.askingAmt ? `${fmt(b.askingAmt)} kr` : <span className="text-gray-300">—</span>}
-                </td>
-                <td className="py-3.5 px-5 hidden md:table-cell">
-                  {b.rounds.length > 0 ? (
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      {b.rounds.map((r, i) => (
-                        <span key={i} className="flex items-center gap-1">
-                          <span className={`text-xs tabular-nums px-2 py-0.5 rounded-lg font-semibold ${
-                            i === b.rounds.length - 1 ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500'
-                          }`}>{fmt(r)}</span>
-                          {i < b.rounds.length - 1 && <TrendingUp size={10} className="text-gray-300" />}
-                        </span>
-                      ))}
-                    </div>
-                  ) : <span className="text-gray-300">—</span>}
-                </td>
-                <td className="py-3.5 px-5 font-bold text-gray-900 tabular-nums">
-                  {b.highest ? `${fmt(b.highest)} kr` : '—'}
-                </td>
-                <td className="py-3.5 px-5 tabular-nums hidden sm:table-cell">
-                  {b.myBidAmt ? <span className="font-bold text-teal-700">{fmt(b.myBidAmt)} kr</span> : <span className="text-gray-300">—</span>}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <div className="px-5 py-3 border-t border-gray-50 text-xs text-gray-400">
-          Bid rounds shown oldest → newest. My Bid is your personal bid amount.
-        </div>
-      </div>
-
-      {mostRounds > 1 && (() => {
-        const longest = bids.find(b => b.rounds.length === mostRounds)!
-        return (
-          <div className="card bg-amber-50 border-amber-100">
-            <div className="text-xs font-bold text-amber-700 uppercase tracking-wider mb-1">Longest auction</div>
-            <div className="text-sm text-amber-900">
-              <span className="font-bold">{longest.address}</span>
-              {' · '}{mostRounds} rounds
-              {longest.highest ? ` · ${fmt(longest.highest)} kr final` : ''}
-              {longest.myBidAmt ? ` · my bid ${fmt(longest.myBidAmt)} kr` : ''}
-            </div>
-          </div>
-        )
-      })()}
-      </>}
-    </div>
-  )
-}
-
-// ── Trends tab ────────────────────────────────────────────────────────────────
-function TrendTab() {
-  const { data: list = [] } = useQuery({ queryKey: ['viewings'], queryFn: viewingsApi.list })
-
-  const auctions = list
-    .filter(v => v.outcome === 'Went to bidding' && parseBids(v.notes || '').length > 0)
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-
-  // Build rows: one per max round index, each auction is a key
-  const maxRounds = Math.max(0, ...auctions.map(v => parseBids(v.notes || '').length))
-  const auctionKeys = auctions.map(v => v.address.split(' ').slice(0, 2).join(' '))
-
-  const chartData = Array.from({ length: maxRounds }, (_, i) => {
-    const row: Record<string, any> = { round: `Round ${i + 1}` }
-    auctions.forEach((v, ai) => {
-      const rounds = parseBids(v.notes || '')
-      row[auctionKeys[ai]] = rounds[i] ? parseFloat((rounds[i] / 1_000_000).toFixed(2)) : null
-    })
-    return row
-  })
-
-  const COLORS = ['#2E7D52', '#f59e0b', '#6366f1', '#ef4444', '#06b6d4', '#ec4899']
-
-  if (auctions.length === 0) return (
-    <EmptyState icon={TrendingUp} title="No trend data yet" message="Log bidding history in the Listings tab to see trends" />
-  )
-
-  return (
-    <div className="card space-y-2">
-      <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Bid Rounds per Auction</p>
-      <p className="text-xs text-gray-400">Each line = one auction — see how bids escalated</p>
-      <ResponsiveContainer width="100%" height={260}>
-        <LineChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 8 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-          <XAxis dataKey="round" tick={{ fontSize: 10, fill: '#9ca3af' }} label={{ value: 'Bid Round', position: 'insideBottom', offset: -2, fontSize: 10, fill: '#9ca3af' }} height={40} />
-          <YAxis tick={{ fontSize: 10, fill: '#9ca3af' }} unit="M" domain={['auto', 'auto']} label={{ value: 'Price (M kr)', angle: -90, position: 'insideLeft', fontSize: 10, fill: '#9ca3af' }} />
-          <Tooltip contentStyle={{ fontSize: 12, borderRadius: 12, border: '1px solid #e5e7eb' }}
-            formatter={(v: any, n: string) => [`${v}M kr`, n]} />
-          <Legend wrapperStyle={{ fontSize: 11 }} />
-          {auctionKeys.map((key, i) => (
-            <Line key={key} dataKey={key} stroke={COLORS[i % COLORS.length]} strokeWidth={2}
-              dot={{ r: 4 }} connectNulls type="monotone" />
-          ))}
-        </LineChart>
-      </ResponsiveContainer>
-    </div>
-  )
-}
-
 // ── Main component ────────────────────────────────────────────────────────────
 export default function Viewings() {
-  const [tab, setTab] = useState<'listings' | 'bids' | 'trends'>('listings')
   const [searchParams, setSearchParams] = useSearchParams()
   const [autoOpen, setAutoOpen] = useState(false)
 
@@ -624,28 +599,11 @@ export default function Viewings() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div>
         <h1 className="text-2xl font-black text-gray-900">Viewings</h1>
         <p className="text-sm text-gray-400 mt-0.5">Log viewings and track bidding history</p>
       </div>
-
-      {/* Tabs */}
-      <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit">
-        {([['listings', 'Listings'], ['bids', 'Bids'], ['trends', 'Trends']] as const).map(([t, label]) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all ${
-              tab === t ? 'bg-white text-teal-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {tab === 'listings' ? <ListingsTab autoOpen={autoOpen} /> : tab === 'bids' ? <BidsTab /> : <TrendTab />}
+      <BidsTab autoOpen={autoOpen} />
     </div>
   )
 }

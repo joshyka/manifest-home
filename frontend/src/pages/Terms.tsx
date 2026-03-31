@@ -12,7 +12,8 @@ export default function Terms() {
           <p className="text-sm text-gray-500 leading-relaxed">
             KeyJourney is a private home-buying tracker for personal use. Access is restricted to
             authorised users only. You may not share your login credentials or attempt to access
-            another user's data.
+            another user's data. You may optionally share data access with one partner via the
+            Household feature in Settings — both members are responsible for how that shared access is used.
           </p>
         </section>
 
@@ -23,7 +24,9 @@ export default function Terms() {
             app — savings tracking, viewings, bid tracking (asking price, bid rounds, trend analysis), checklists, BRF health checks,
             listing comparisons, mortgage snapshots, and target areas. We do not sell, share,
             or monetise your data. You can export a full backup at any time from the Overview page,
-            or permanently delete all your data from the Settings page.
+            or permanently delete all your data from the Settings page. If you are part of a
+            household, both members access the same data — leaving or removing a partner immediately
+            revokes shared access.
           </p>
         </section>
 

@@ -1,8 +1,9 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import * as XLSX from 'xlsx'
-import { Trash2, Lock, LockOpen, Eye, EyeOff, X, KeyRound } from 'lucide-react'
-import { dashboard, data as dataApi, viewings as viewingsApi, upcoming as upcomingApi, settings as settingsApi, targetAreas as targetAreasApi, blobs } from '../lib/api'
+import { Trash2, Lock, LockOpen, Eye, EyeOff, X, KeyRound, Users, Copy, Check } from 'lucide-react'
+import { dashboard, data as dataApi, viewings as viewingsApi, upcoming as upcomingApi, settings as settingsApi, targetAreas as targetAreasApi, blobs, household as householdApi } from '../lib/api'
+import type { HouseholdStatus } from '../lib/api'
 import Alert from '../components/Alert'
 import {
   isEncryptionEnabled, enableEncryption, disableEncryption,
@@ -36,6 +37,73 @@ export default function Settings() {
   const [newPassphrase, setNewPassphrase] = useState('')
   const [changeErr, setChangeErr] = useState('')
   const [changeBusy, setChangeBusy] = useState(false)
+
+  // Household state
+  const [hh, setHh] = useState<HouseholdStatus | null>(null)
+  const [hhBusy, setHhBusy] = useState(false)
+  const [hhErr, setHhErr] = useState('')
+  const [joinCode, setJoinCode] = useState('')
+  const [codeCopied, setCodeCopied] = useState(false)
+  const [timeLeft, setTimeLeft] = useState('')
+  const [hhMode, setHhMode] = useState<'none' | 'share' | 'join'>('none')
+
+  useEffect(() => {
+    householdApi.status().then(setHh).catch((e: any) => setHhErr(e.message ?? 'Failed to load household status'))
+  }, [])
+
+  useEffect(() => {
+    if (!hh?.invite_expires_at) return
+    const tick = () => {
+      const diff = new Date(hh.invite_expires_at!).getTime() - Date.now()
+      if (diff <= 0) { setTimeLeft('Expired'); return }
+      const h = Math.floor(diff / 3600000)
+      const m = Math.floor((diff % 3600000) / 60000)
+      setTimeLeft(`${h}h ${m}m`)
+    }
+    tick()
+    const id = setInterval(tick, 60000)
+    return () => clearInterval(id)
+  }, [hh?.invite_expires_at])
+
+  async function handleCreateHousehold() {
+    setHhBusy(true); setHhErr('')
+    try { setHh(await householdApi.create()) } catch (e: any) { setHhErr(e.message) }
+    setHhBusy(false)
+  }
+
+  async function handleJoin() {
+    if (!joinCode.trim()) return
+    setHhBusy(true); setHhErr('')
+    try {
+      await householdApi.join(joinCode.trim())
+      setHh(await householdApi.status())
+      setJoinCode('')
+    } catch (e: any) { setHhErr(e.message) }
+    setHhBusy(false)
+  }
+
+  async function handleLeave() {
+    setHhBusy(true); setHhErr('')
+    try { await householdApi.leave(); setHh(await householdApi.status()) } catch (e: any) { setHhErr(e.message) }
+    setHhBusy(false)
+  }
+
+  async function handleRemovePartner() {
+    setHhBusy(true); setHhErr('')
+    try { await householdApi.removePartner(); setHh(await householdApi.status()) } catch (e: any) { setHhErr(e.message) }
+    setHhBusy(false)
+  }
+
+  async function handleRegenerate() {
+    setHhBusy(true); setHhErr('')
+    try { setHh(await householdApi.regenerate()) } catch (e: any) { setHhErr(e.message) }
+    setHhBusy(false)
+  }
+
+  function copyCode(code: string) {
+    navigator.clipboard.writeText(code)
+    setCodeCopied(true); setTimeout(() => setCodeCopied(false), 2000)
+  }
 
   function notify(text: string, kind: 'success' | 'danger' = 'success') {
     setMsg(text); setMsgKind(kind)
@@ -303,6 +371,100 @@ export default function Settings() {
                 </div>
               )}
             </>
+          )}
+        </div>
+
+        {/* Household */}
+        <div className="p-5 space-y-3">
+          <div className="flex items-center gap-2">
+            <Users size={15} className="text-gray-400" />
+            <p className="text-sm font-bold text-gray-700">Household</p>
+          </div>
+          {hhErr && <p className="text-xs text-red-500">{hhErr}</p>}
+          {hh === null && !hhErr && <p className="text-xs text-gray-400">Loading…</p>}
+
+          {hh?.role === 'none' && hhMode === 'none' && (
+            <div className="flex gap-2">
+              <button className="btn-primary" onClick={() => setHhMode('share')}>Share House</button>
+              <button className="btn-secondary" onClick={() => setHhMode('join')}>Join House</button>
+            </div>
+          )}
+
+          {hh?.role === 'none' && hhMode === 'share' && (
+            <div className="space-y-3">
+              <p className="text-xs text-gray-400">Create a household and share the invite code with your partner.</p>
+              <div className="flex gap-2">
+                <button className="btn-primary" onClick={async () => { await handleCreateHousehold(); setHhMode('none') }} disabled={hhBusy}>
+                  {hhBusy ? 'Creating…' : 'Create & get code'}
+                </button>
+                <button className="btn-secondary" onClick={() => setHhMode('none')}>Cancel</button>
+              </div>
+            </div>
+          )}
+
+          {hh?.role === 'none' && hhMode === 'join' && (
+            <div className="space-y-3">
+              <p className="text-xs text-gray-400">Enter the invite code shared by your partner.</p>
+              <div className="flex gap-2">
+                <input className="input flex-1" placeholder="e.g. X7K2-9QAB" value={joinCode}
+                  onChange={e => setJoinCode(e.target.value.toUpperCase())} />
+                <button className="btn-primary" onClick={handleJoin} disabled={hhBusy || !joinCode.trim()}>
+                  {hhBusy ? 'Joining…' : 'Join'}
+                </button>
+              </div>
+              <button className="text-xs text-gray-400 hover:text-gray-600" onClick={() => { setHhMode('none'); setJoinCode('') }}>Cancel</button>
+            </div>
+          )}
+
+          {hh?.role === 'owner' && !hh.partner_id && hh.invite_code && (
+            <div className="space-y-2">
+              <p className="text-xs text-gray-400">Share this code with your partner. Expires in <span className="font-semibold text-gray-600">{timeLeft}</span>.</p>
+              <div className="flex items-center gap-2 bg-gray-50 border border-gray-100 rounded-xl px-3 py-2">
+                <span className="font-mono font-bold text-gray-800 tracking-widest flex-1">{hh.invite_code}</span>
+                <button onClick={() => copyCode(hh.invite_code!)} className="text-gray-400 hover:text-teal-600 transition-colors">
+                  {codeCopied ? <Check size={14} className="text-teal-500" /> : <Copy size={14} />}
+                </button>
+              </div>
+              <div className="flex gap-3">
+                <button className="text-xs text-gray-400 hover:text-gray-600" onClick={handleRegenerate} disabled={hhBusy}>
+                  Generate new code
+                </button>
+                <span className="text-gray-200">·</span>
+                <button className="text-xs text-teal-600 hover:text-teal-700 font-semibold" disabled={hhBusy}
+                  onClick={async () => {
+                    setHhBusy(true); setHhErr('')
+                    try { await householdApi.delete(); setHh({ role: 'none' }); setHhMode('join') }
+                    catch (e: any) { setHhErr(e.message) }
+                    setHhBusy(false)
+                  }}>
+                  Join House instead
+                </button>
+              </div>
+            </div>
+          )}
+
+          {hh?.role === 'owner' && hh.partner_id && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-xs bg-teal-50 border border-teal-100 rounded-xl px-3 py-2">
+                <Users size={13} className="text-teal-500" />
+                <span className="text-teal-700 font-semibold">Household active · 2 members</span>
+              </div>
+              <button className="text-xs text-red-400 hover:text-red-600" onClick={handleRemovePartner} disabled={hhBusy}>
+                Remove partner
+              </button>
+            </div>
+          )}
+
+          {hh?.role === 'partner' && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-xs bg-teal-50 border border-teal-100 rounded-xl px-3 py-2">
+                <Users size={13} className="text-teal-500" />
+                <span className="text-teal-700 font-semibold">You're sharing a household</span>
+              </div>
+              <button className="text-xs text-red-400 hover:text-red-600" onClick={handleLeave} disabled={hhBusy}>
+                Leave household
+              </button>
+            </div>
           )}
         </div>
 
