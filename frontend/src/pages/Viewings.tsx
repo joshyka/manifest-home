@@ -154,10 +154,9 @@ function ListingsTab({ autoOpen }: { autoOpen: boolean }) {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h3 className="section-label !mb-0">Listings</h3>
+      <div className="flex items-center gap-2">
         <button
-          className={`p-1.5 rounded-xl transition-all ${open ? 'text-gray-400 hover:text-gray-600 hover:bg-gray-50' : 'text-gray-400 hover:text-teal-600 hover:bg-teal-50'}`}
+          className={`p-1.5 rounded-xl transition-all ${open ? 'text-gray-500 bg-gray-100 hover:bg-gray-200' : 'text-white bg-teal-600 hover:bg-teal-700 shadow-sm'}`}
           onClick={() => setOpen(o => !o)}
           title={open ? 'Cancel' : 'Add listing'}
         >
