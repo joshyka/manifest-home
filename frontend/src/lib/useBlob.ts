@@ -1,28 +1,36 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { blobs } from './api'
+import { isEncryptionEnabled, getSessionPassphrase, encryptData, decryptData, isEncryptedBlob } from './crypto'
 
-/**
- * Syncs a JSON array to Supabase user_blobs.
- * Returns [data, save] — save() updates the cache optimistically then persists.
- * If no data exists yet (null from API), falls back to the provided default.
- */
 export function useBlob<T>(key: string, fallback: T): [T, (data: T) => void] {
   const qc = useQueryClient()
 
   const { data } = useQuery({
     queryKey: ['blob', key],
-    queryFn: () => blobs.get<T>(key),
+    queryFn: async () => {
+      const raw = await blobs.get<any>(key)
+      if (raw === null || raw === undefined) return null
+      if (isEncryptionEnabled() && getSessionPassphrase() && isEncryptedBlob(raw)) {
+        try { return await decryptData(raw as string, getSessionPassphrase()!) }
+        catch { return null }
+      }
+      return raw
+    },
   })
 
-  // null = never saved (new user) → show fallback
-  // undefined = still loading → show fallback
-  const value = (data === null || data === undefined) ? fallback : data
+  const value = (data === null || data === undefined) ? fallback : data as T
 
   function save(newData: T) {
-    qc.setQueryData(['blob', key], newData)  // optimistic — instant UI
-    blobs.set(key, newData).catch(() => {
-      qc.invalidateQueries({ queryKey: ['blob', key] })
-    })
+    qc.setQueryData(['blob', key], newData)
+    const persist = async () => {
+      if (isEncryptionEnabled() && getSessionPassphrase()) {
+        const encrypted = await encryptData(newData, getSessionPassphrase()!)
+        await blobs.set(key, encrypted as any)
+      } else {
+        await blobs.set(key, newData)
+      }
+    }
+    persist().catch(() => qc.invalidateQueries({ queryKey: ['blob', key] }))
   }
 
   return [value, save]

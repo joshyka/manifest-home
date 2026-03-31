@@ -1,11 +1,10 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState, useRef } from 'react'
-import * as XLSX from 'xlsx'
-import { dashboard, data as dataApi, viewings as viewingsApi, upcoming as upcomingApi, settings as settingsApi, targetAreas as targetAreasApi, blobs } from '../lib/api'
+import { useState } from 'react'
+import { dashboard, upcoming as upcomingApi } from '../lib/api'
 import MetricCard from '../components/MetricCard'
 import Alert from '../components/Alert'
 import SavingsChart from '../components/SavingsChart'
-import { Clock, Trash2, Download, Upload, MoreHorizontal, BellPlus, X } from 'lucide-react'
+import { BellPlus, X } from 'lucide-react'
 
 function formatDaysAway(dt: string): string {
   const d = new Date(dt)
@@ -20,11 +19,6 @@ function formatDaysAway(dt: string): string {
 export default function Dashboard() {
   const qc = useQueryClient()
   const { data, isLoading, error } = useQuery({ queryKey: ['dashboard'], queryFn: dashboard.get })
-  const [confirmClear, setConfirmClear] = useState(false)
-  const [importing, setImporting] = useState(false)
-  const [importMsg, setImportMsg] = useState('')
-  const [menuOpen, setMenuOpen] = useState(false)
-  const fileRef = useRef<HTMLInputElement>(null)
   const [showReminderForm, setShowReminderForm] = useState(false)
   const [reminderAddress, setReminderAddress] = useState('')
   const [reminderDate, setReminderDate] = useState(() => new Date().toISOString().split('T')[0])
@@ -43,131 +37,6 @@ export default function Dashboard() {
     qc.invalidateQueries({ queryKey: ['upcoming'] })
     qc.invalidateQueries({ queryKey: ['dashboard'] })
     setReminderAddress(''); setShowReminderForm(false)
-  }
-
-  async function handleClear() {
-    await dataApi.clear()
-    // Invalidate all blob caches so pages reload with empty/default state
-    qc.removeQueries({ queryKey: ['blob'] })
-    qc.invalidateQueries()
-    setConfirmClear(false)
-  }
-
-  async function handleExport() {
-    const [vs, us, s, targetAreas, checklist, comparison, savedComps, calcSnaps, brfChecks] = await Promise.all([
-      viewingsApi.list(),
-      upcomingApi.list(),
-      settingsApi.get(),
-      targetAreasApi.list(),
-      blobs.get<any[]>('checklist'),
-      blobs.get<any[]>('comparison_items'),
-      blobs.get<any[]>('saved_comparisons'),
-      blobs.get<any[]>('calc_snapshots'),
-      blobs.get<any[]>('brf_checks'),
-    ])
-
-    const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([s]),         'Settings')
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(vs),          'Viewings')
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(us),          'Upcoming')
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(checklist   ?? []), 'Checklist')
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(comparison  ?? []), 'Comparison')
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(savedComps  ?? []), 'Saved Comparisons')
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(calcSnaps   ?? []), 'Calculator')
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(targetAreas),   'Target Areas')
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(brfChecks ?? []), 'BRF Checks')
-    XLSX.writeFile(wb, `keyjourney-${new Date().toISOString().slice(0,10)}.xlsx`)
-  }
-
-  async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setImporting(true)
-    setImportMsg('')
-    try {
-      const buf = await file.arrayBuffer()
-      const wb  = XLSX.read(buf, { type: 'array' })
-
-      const settingsSheet   = wb.Sheets['Settings']
-      const viewingsSheet   = wb.Sheets['Viewings']
-      const upcomingSheet   = wb.Sheets['Upcoming']
-      const checklistSheet  = wb.Sheets['Checklist']
-      const compSheet       = wb.Sheets['Comparison']
-      const savedCompSheet  = wb.Sheets['Saved Comparisons']
-
-      // Clear all existing data first
-      await dataApi.clear()
-      qc.removeQueries({ queryKey: ['blob'] })
-
-      // Import settings
-      if (settingsSheet) {
-        const rows = XLSX.utils.sheet_to_json<any>(settingsSheet)
-        if (rows[0]) await settingsApi.update(rows[0])
-      }
-
-      // Import viewings
-      if (viewingsSheet) {
-        const rows = XLSX.utils.sheet_to_json<any>(viewingsSheet)
-        for (const r of rows) {
-          await viewingsApi.add({
-            address:        r.address  || '',
-            date:           r.date     || '',
-            hemnet_url:     r.hemnet_url || '',
-            outcome:        r.outcome  || 'Viewed — no bid',
-            num_bid_rounds: r.num_bid_rounds || 0,
-            final_price:    r.final_price ? String(r.final_price) : '',
-            my_bid:         r.my_bid   ? String(r.my_bid) : '',
-            notes:          r.notes    || '',
-          })
-        }
-      }
-
-      // Import upcoming
-      if (upcomingSheet) {
-        const rows = XLSX.utils.sheet_to_json<any>(upcomingSheet)
-        for (const r of rows) {
-          await upcomingApi.add({
-            address:  r.address  || '',
-            datetime: r.datetime || '',
-          })
-        }
-      }
-
-      const calcSheet = wb.Sheets['Calculator']
-
-      // Restore blob data via API
-      if (checklistSheet)
-        await blobs.set('checklist',           XLSX.utils.sheet_to_json(checklistSheet))
-      if (compSheet)
-        await blobs.set('comparison_items',    XLSX.utils.sheet_to_json(compSheet))
-      if (savedCompSheet)
-        await blobs.set('saved_comparisons',   XLSX.utils.sheet_to_json(savedCompSheet))
-      if (calcSheet)
-        await blobs.set('calc_snapshots',      XLSX.utils.sheet_to_json(calcSheet))
-      const brfSheet = wb.Sheets['BRF Checks']
-      if (brfSheet)
-        await blobs.set('brf_checks',          XLSX.utils.sheet_to_json(brfSheet))
-
-      // Import target areas via API
-      const areasSheet = wb.Sheets['Target Areas']
-      if (areasSheet) {
-        const rows = XLSX.utils.sheet_to_json<any>(areasSheet)
-        for (const r of rows) {
-          await targetAreasApi.add({
-            name:     r.name     || '',
-            priority: r.priority || 'Medium',
-          })
-        }
-      }
-
-      qc.invalidateQueries()
-      setImportMsg('Import successful.')
-    } catch {
-      setImportMsg('Import failed — check the file format.')
-    } finally {
-      setImporting(false)
-      if (fileRef.current) fileRef.current.value = ''
-    }
   }
 
   if (isLoading) return (
@@ -200,66 +69,12 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <input ref={fileRef} type="file" accept=".xlsx" className="hidden" onChange={handleImport} />
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-black text-gray-900">Overview</h1>
-          <p className="text-sm text-green-600 font-medium mt-0.5">
-            Welcome back{settings.p1_name ? <>, <span className="font-semibold">{settings.p1_name}{settings.p2_name ? ` & ${settings.p2_name}` : ''}</span></> : ''} — your journey at a glance!
-          </p>
-        </div>
-        <div className="relative">
-          {confirmClear ? (
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-red-600 font-medium">Delete all data?</span>
-              <button className="btn-danger" onClick={handleClear}>Yes</button>
-              <button className="btn-secondary" onClick={() => setConfirmClear(false)}>No</button>
-            </div>
-          ) : (
-            <>
-              <button className="btn-secondary !px-3" onClick={() => setMenuOpen(o => !o)} title="Options">
-                <MoreHorizontal size={14} />
-              </button>
-              {menuOpen && (
-                <div className="absolute right-0 top-10 z-20 bg-white border border-gray-100 shadow-card rounded-2xl py-1 w-44">
-                  <button
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                    onClick={() => { handleExport(); setMenuOpen(false) }}
-                  >
-                    <Download size={14} className="text-gray-400" /> Export
-                  </button>
-                  <button
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                    onClick={() => { fileRef.current?.click(); setMenuOpen(false) }}
-                    disabled={importing}
-                  >
-                    <Upload size={14} className="text-gray-400" /> {importing ? 'Importing…' : 'Import'}
-                  </button>
-                  <div className="border-t border-gray-50 my-1" />
-                  <button
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                    onClick={async () => {
-                      setMenuOpen(false)
-                      const res = await dataApi.cleanup()
-                      setImportMsg(`Cleanup done — removed ${res.deleted_upcoming_older_than_1y} old reminders and ${res.deleted_archived_viewings_older_than_1y} archived viewings older than 1 year.`)
-                      qc.invalidateQueries()
-                    }}
-                  >
-                    <Trash2 size={14} className="text-gray-400" /> Clean up old data
-                  </button>
-                  <div className="border-t border-gray-50 my-1" />
-                  <button
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                    onClick={() => { setConfirmClear(true); setMenuOpen(false) }}
-                  >
-                    <Trash2 size={14} /> Delete all
-                  </button>
-                </div>
-              )}
-            </>
-          )}
-        </div>
+      <div>
+        <h1 className="text-2xl font-black text-gray-900">Overview</h1>
+        <p className="text-sm text-green-600 font-medium mt-0.5">
+          Welcome back{settings.p1_name ? <>, <span className="font-semibold">{settings.p1_name}{settings.p2_name ? ` & ${settings.p2_name}` : ''}</span></> : ''} — your journey at a glance!
+        </p>
       </div>
 
       {/* Alerts */}
@@ -399,9 +214,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {importMsg && (
-        <Alert kind={importMsg.includes('failed') ? 'danger' : 'success'}>{importMsg}</Alert>
-      )}
     </div>
   )
 }

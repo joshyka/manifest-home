@@ -16,6 +16,7 @@ import Checklist from './pages/Checklist'
 import BrfChecker from './pages/BrfChecker'
 import Privacy from './pages/Privacy'
 import Terms from './pages/Terms'
+import SettingsPage from './pages/Settings'
 
 function App() {
   const [session, setSession]       = useState<Session | null | undefined>(undefined)
@@ -96,6 +97,7 @@ function App() {
         <Route path="/brf-checker" element={<BrfChecker />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/privacy" element={<Privacy />} />
+        <Route path="/settings" element={<SettingsPage />} />
       </Routes>
     </Layout>
   )

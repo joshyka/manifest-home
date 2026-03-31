@@ -11,7 +11,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from fastapi import FastAPI, HTTPException, Depends, Header
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, Union
 import datetime
 
 from utils.data import (
@@ -178,6 +178,7 @@ class ViewingBody(BaseModel):
     final_price: str = ""
     my_bid: str = ""
     notes: str = ""
+    asking_price: str = ""
 
 
 @app.post("/api/viewings")
@@ -195,6 +196,7 @@ def add_viewing(body: ViewingBody, payload: dict = Depends(require_auth)):
         "my_bid": body.my_bid,
         "notes": body.notes,
         "hemnet_url": body.hemnet_url,
+        "asking_price": body.asking_price,
     }, user_id)
     return {"ok": True, "id": vid}
 
@@ -205,6 +207,7 @@ class ViewingUpdateBody(BaseModel):
     final_price: str = ""
     my_bid: str = ""
     notes: str = ""
+    asking_price: str = ""
 
 
 @app.put("/api/viewings/{vid}")
@@ -224,6 +227,7 @@ def update_viewing(vid: str, body: ViewingUpdateBody, payload: dict = Depends(re
         "final_price": final,
         "my_bid": body.my_bid,
         "notes": body.notes + archived_tag,
+        "asking_price": body.asking_price,
     }, user_id)
     return {"ok": True}
 
@@ -298,7 +302,7 @@ _ALLOWED_BLOB_KEYS = {'checklist', 'comparison_items', 'saved_comparisons', 'cal
 
 
 class BlobBody(BaseModel):
-    data: Optional[list] = None
+    data: Optional[Union[list, str]] = None
 
 
 @app.get("/api/blob/{key}")
@@ -373,9 +377,13 @@ def clear_data(payload: dict = Depends(require_auth)):
     return {"ok": True}
 
 
-# ── Data retention cleanup (manual, triggered from Overview) ─────────────────
+# ── Data retention cleanup (called by Vercel cron) ───────────────────────────
+_CRON_SECRET = os.environ.get("CRON_SECRET", "")
+
 @app.post("/api/cleanup")
-def run_cleanup(payload: dict = Depends(require_auth)):
+def run_cleanup(authorization: Optional[str] = Header(None)):
+    if not _CRON_SECRET or authorization != f"Bearer {_CRON_SECRET}":
+        raise HTTPException(status_code=401, detail="Unauthorized")
     result = cleanup_old_data()
     print(f"[cleanup] {result}", flush=True)
     return {"ok": True, **result}

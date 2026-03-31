@@ -91,6 +91,7 @@ export interface Viewing {
   my_bid: string
   notes: string
   hemnet_url: string
+  asking_price: string
 }
 
 // ── Dashboard ──────────────────────────────────────────────────────────────────
@@ -120,12 +121,13 @@ export const viewings = {
     final_price?: string
     my_bid?: string
     notes?: string
+    asking_price?: string
   }) =>
     request<{ ok: boolean; id: string }>('/viewings', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
-  update: (id: string, data: { outcome: string; num_bid_rounds: number; final_price: string; my_bid: string; notes: string }) =>
+  update: (id: string, data: { outcome: string; num_bid_rounds: number; final_price: string; my_bid: string; notes: string; asking_price: string }) =>
     request<{ ok: boolean }>(`/viewings/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),

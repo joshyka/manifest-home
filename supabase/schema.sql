@@ -59,6 +59,7 @@ CREATE TABLE viewings (
   my_bid TEXT DEFAULT '',
   notes TEXT DEFAULT '',
   hemnet_url TEXT DEFAULT '',
+  asking_price TEXT DEFAULT '',
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

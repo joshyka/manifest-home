@@ -23,11 +23,12 @@ Your personal home-buying command centre — track savings progress, log viewing
 | Overview | KPIs, savings progress, loan status, upcoming viewings |
 | Savings | Monthly contributions, loan promise status, savings target tracker |
 | Checklist | Drag-to-reorder kanban board with custom categories |
-| Viewings | Log viewed apartments, track bids, and set viewing reminders |
+| Viewings | Log viewed apartments (with asking price), track bids, and view bid escalation trends |
 | Comparison | Compare up to 4 listings side by side with adjustable interest rate |
 | Calculator | Swedish mortgage calculator with stress test and net household cash flow |
 | BRF Checker | Evaluate a BRF's financial health — debt/sqm, fee/sqm, land ownership |
 | Maps | Side-by-side map and target areas — explore neighbourhoods, filter nearby amenities, manage priority areas |
+| Settings | Export/import data as Excel, client-side encryption, delete all data |
 
 ---
 
@@ -38,6 +39,7 @@ Your personal home-buying command centre — track savings progress, log viewing
 - Live Riksbank mortgage bond rate (SE MB 5Y) auto-fills Calculator and Comparison
 - Swedish mortgage rules: amortisation tiers, 7% stress test, ränteavdrag
 - Self-hosted fonts — no external tracking
+- Optional client-side AES-256-GCM encryption — blob data encrypted in-browser before storage, passphrase never leaves the device
 
 ---
 
@@ -51,7 +53,7 @@ manifest-home/
 │   └── src/
 │       ├── pages/    # One file per page
 │       ├── components/
-│       └── lib/      # API client, Supabase client
+│       └── lib/      # API client, Supabase client, crypto
 ├── supabase/         # schema.sql
 ├── utils/            # Shared Python utilities
 ├── requirements.txt  # Python dependencies
@@ -116,6 +118,8 @@ VITE_APP_EMAIL=home@yourapp.app            # dummy email for PIN login
 ```
 
 Add the same keys in **Vercel → Settings → Environment Variables**.
+
+> **TODO:** Add `CRON_SECRET=<random-string>` to Vercel environment variables — this authenticates the daily cleanup cron job (`/api/cleanup`). Generate any long random string and set it in Vercel before deploying.
 
 ---
 

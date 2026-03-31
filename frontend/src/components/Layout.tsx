@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, PiggyBank, Calendar, Map, Calculator, GitCompare, CheckSquare, LogOut, Menu, X, Building2 } from 'lucide-react'
+import { LayoutDashboard, PiggyBank, Calendar, Map, Calculator, GitCompare, CheckSquare, LogOut, Menu, X, Building2, Settings } from 'lucide-react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { dashboard } from '../lib/api'
 import { supabase } from '../lib/supabase'
@@ -15,6 +15,7 @@ const NAV = [
   { to: '/calculator',  label: 'Calculator',  icon: Calculator },
   { to: '/brf-checker', label: 'BRF Checker', icon: Building2 },
   { to: '/maps',        label: 'Maps',        icon: Map },
+  { to: '/settings',   label: 'Settings',    icon: Settings },
 ]
 
 interface Props {
@@ -94,12 +95,16 @@ function SidebarContents({ pct, current, target, p1, p2, onNav, onSignOut }: {
         ))}
       </nav>
 
-      {/* Footer links */}
-      <div className="px-4 py-4 border-t border-gray-100 space-y-2">
+      {/* Sign out */}
+      <div className="px-4 pb-2">
         <button onClick={onSignOut} className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-gray-500 hover:text-red-500 hover:bg-red-50 transition-all">
           <LogOut size={15} /> Sign out
         </button>
-        <div className="flex gap-3 px-3">
+      </div>
+
+      {/* Footer links */}
+      <div className="py-3 border-t border-gray-100 px-7">
+        <div className="flex gap-3">
           <NavLink to="/terms" className="text-[11px] text-gray-400 hover:text-gray-600 transition-colors">Terms</NavLink>
           <NavLink to="/privacy" className="text-[11px] text-gray-400 hover:text-gray-600 transition-colors">Privacy</NavLink>
         </div>

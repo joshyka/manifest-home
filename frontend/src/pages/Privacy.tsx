@@ -12,7 +12,7 @@ export default function Privacy() {
           <p className="text-sm text-gray-500 leading-relaxed">
             KeyJourney collects only the data you enter yourself: your name, savings amounts,
             monthly contributions, apartment price targets, loan promise details, viewed apartments,
-            bid tracking, viewing reminders, checklist tasks, target areas, BRF financial details,
+            bid tracking (asking price, individual bid rounds, outcome), viewing reminders, checklist tasks, target areas, BRF financial details,
             listing comparisons, and calculator snapshots. We also store your email address to
             identify your account.
           </p>
@@ -35,6 +35,12 @@ export default function Privacy() {
             Only you can see your data. Every record is isolated by your user ID using Row Level
             Security (RLS) in Supabase — no other user or account can access your information.
           </p>
+          <p className="text-sm text-gray-500 leading-relaxed">
+            You can optionally enable client-side AES-256-GCM encryption from the Settings page.
+            When enabled, blob data (checklist, comparisons, BRF checks, calculator snapshots)
+            is encrypted in your browser before being stored — making it unreadable to anyone
+            without your passphrase, including the app owner.
+          </p>
         </section>
 
         <section className="space-y-2">
@@ -56,8 +62,7 @@ export default function Privacy() {
           <h2 className="text-sm font-bold text-gray-700">Export and deletion</h2>
           <p className="text-sm text-gray-500 leading-relaxed">
             You can export a full backup of all your data as an Excel file at any time from the
-            Overview page. You can also permanently delete all your data using the Delete option
-            in the same menu. This immediately removes all records associated with your account.
+            Settings page. You can also permanently delete all your data from the same page. This immediately removes all records associated with your account.
             To fully delete your account, contact the app owner directly.
           </p>
         </section>
