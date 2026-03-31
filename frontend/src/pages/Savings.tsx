@@ -73,7 +73,7 @@ export default function Savings() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-black text-gray-900">Savings</h1>
-        <p className="text-sm text-gray-400 mt-0.5">Monitor your savings progress.</p>
+        <p className="text-sm text-gray-500 mt-0.5">Monitor your savings progress.</p>
       </div>
 
       {/* Alerts */}
@@ -102,7 +102,7 @@ export default function Savings() {
               ['Bank', s.loan_bank && s.loan_bank !== 'nan' ? s.loan_bank : 'Not set'],
             ].map(([label, value]) => (
               <div key={label} className="flex justify-between items-baseline py-3 text-sm">
-                <span className="text-gray-500 font-medium">{label}</span>
+                <span className="text-gray-600 font-medium">{label}</span>
                 <span className="font-bold text-gray-900">{value}</span>
               </div>
             ))}
@@ -127,7 +127,7 @@ export default function Savings() {
               </div>
             </div>
             <div className="section-label">Target Apartment</div>
-            <p className="text-xs text-gray-400 -mt-2">
+            <p className="text-xs text-gray-500 -mt-2">
               Sets your down payment target. Minimum 10% required in Sweden.
             </p>
             <div className="grid grid-cols-2 gap-4">
@@ -155,7 +155,7 @@ export default function Savings() {
           {/* Savings per person */}
           <div className="card space-y-4">
             <div className="section-label">Your Savings</div>
-            <p className="text-xs text-gray-400 -mt-2">
+            <p className="text-xs text-gray-500 -mt-2">
               Enter how much each of you has saved and contributes monthly.
             </p>
             <div className="grid grid-cols-3 gap-4">
@@ -199,7 +199,7 @@ export default function Savings() {
           {/* Lånelöfte */}
           <div className="card space-y-4">
             <div className="section-label">Lånelöfte (Loan Promise)</div>
-            <p className="text-xs text-gray-400 -mt-2">
+            <p className="text-xs text-gray-500 -mt-2">
               Issued by your bank, valid for 3–6 months. Required before you can bid.
             </p>
             <div className="grid grid-cols-3 gap-4">
