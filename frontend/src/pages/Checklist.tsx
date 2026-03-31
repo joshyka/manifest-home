@@ -373,7 +373,7 @@ export default function Checklist() {
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
-        <div className="grid grid-cols-3 gap-4 items-start">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
           {COLUMNS.map(col => (
             <Column
               key={col.status}

@@ -181,7 +181,7 @@ function AddForm({ onAdd }: { onAdd: (item: Omit<CompItem, 'id'>) => void }) {
 
   return (
     <div className="card border-teal-100 space-y-4">
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="col-span-2">
           <label className="label !text-green-600">Name / Address <span className="text-red-400">*</span></label>
           <input
@@ -412,9 +412,7 @@ const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
           </div>
 
           {/* Cards grid */}
-          <div className="grid gap-4" style={{
-            gridTemplateColumns: `repeat(${Math.min(items.length, 3)}, minmax(0, 1fr))`
-          }}>
+          <div className={`grid gap-4 grid-cols-1 ${items.length >= 2 ? 'sm:grid-cols-2' : ''} ${items.length >= 3 ? 'lg:grid-cols-3' : ''}`}>
             {sorted.map((item, i) => (
               <ListingCard
                 key={item.id}

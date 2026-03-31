@@ -170,7 +170,7 @@ function ListingsTab({ autoOpen }: { autoOpen: boolean }) {
       {open && (
         <div className="card border-teal-100">
           <form onSubmit={handleAdd} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="label !text-green-600">Address</label>
                 <input className="input" placeholder="e.g. Folkungagatan 45 — 3 rooms" value={label}
@@ -182,7 +182,7 @@ function ListingsTab({ autoOpen }: { autoOpen: boolean }) {
                   onChange={e => setUrl(e.target.value)} />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="label !text-green-600">Date Added</label>
                 <input type="date" className="input" value={date} onChange={e => setDate(e.target.value)} />

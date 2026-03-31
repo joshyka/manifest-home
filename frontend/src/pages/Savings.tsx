@@ -158,7 +158,7 @@ export default function Savings() {
             <p className="text-xs text-gray-500 -mt-2">
               Enter how much each of you has saved and contributes monthly.
             </p>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
                 <label className="label !text-green-600">Your Name</label>
                 <input type="text" className="input" value={form.p1_name}
@@ -202,7 +202,7 @@ export default function Savings() {
             <p className="text-xs text-gray-500 -mt-2">
               Issued by your bank, valid for 3–6 months. Required before you can bid.
             </p>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
                 <label className="label !text-green-600">Loan Promise Amount (SEK)</label>
                 <input type="number" className="input" min={0} step={100000} placeholder="e.g. 3000000"

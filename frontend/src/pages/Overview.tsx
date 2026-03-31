@@ -173,7 +173,7 @@ export default function Dashboard() {
   if (isLoading) return (
     <div className="space-y-6 animate-pulse">
       <div className="skeleton h-24 w-full rounded-3xl" />
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[...Array(6)].map((_, i) => <div key={i} className="skeleton h-28 rounded-3xl" />)}
       </div>
       <div className="grid grid-cols-5 gap-4">
@@ -282,7 +282,7 @@ export default function Dashboard() {
       </div>
 
       {/* KPI row 1 */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <MetricCard
           label="Combined Savings"
           value={`${kpis.current_savings.toLocaleString('sv-SE')} kr`}
@@ -305,7 +305,7 @@ export default function Dashboard() {
       </div>
 
       {/* KPI row 2 */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <MetricCard
           label="Loan Promise"
           value={settings.loan_amount ? `${settings.loan_amount.toLocaleString('sv-SE')} kr` : '0 kr'}
@@ -324,15 +324,15 @@ export default function Dashboard() {
       </div>
 
       {/* Chart + Upcoming */}
-      <div className="grid grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         {/* Savings chart */}
-        <div className="col-span-3 card">
+        <div className="md:col-span-3 card">
           <h3 className="section-label">Forecast</h3>
           <SavingsChart data={projection} />
         </div>
 
         {/* Upcoming viewings */}
-        <div className="col-span-2 card">
+        <div className="md:col-span-2 card">
           <div className="flex items-center justify-between mb-4">
             <h3 className="section-label !mb-0">Upcoming Viewings</h3>
             <button

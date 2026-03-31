@@ -112,7 +112,7 @@ export default function Maps() {
         <p className="text-sm text-gray-400 mt-0.5">Explore areas and plan your search</p>
       </div>
 
-      <div className="grid grid-cols-[320px_1fr] gap-4 items-start">
+      <div className="grid grid-cols-1 md:grid-cols-[320px_1fr] gap-4 items-start">
 
         {/* Left column: controls + target areas */}
         <div className="space-y-4">
@@ -277,7 +277,7 @@ export default function Maps() {
         </div>
 
         {/* Right column: map — sticky so it stays in view while scrolling */}
-        <div className="sticky top-4 rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
+        <div className="md:sticky md:top-4 rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
           <iframe
             src={embedUrl}
             width="100%"

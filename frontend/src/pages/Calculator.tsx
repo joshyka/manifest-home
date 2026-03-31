@@ -195,9 +195,9 @@ export default function Calculator() {
         )}
       </div>
 
-      <div className="grid grid-cols-5 gap-5 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 items-start">
         {/* ── Inputs ─────────────────────────────────────────────────────── */}
-        <div className="col-span-2 space-y-4">
+        <div className="lg:col-span-2 space-y-4">
 
           {/* Apartment */}
           <div className="card space-y-4">
@@ -258,7 +258,7 @@ export default function Calculator() {
         </div>
 
         {/* ── Results ────────────────────────────────────────────────────── */}
-        <div className="col-span-3 space-y-4">
+        <div className="lg:col-span-3 space-y-4">
           {!result ? (
             <div className="card flex flex-col items-center justify-center text-center" >
               <TrendingUp size={32} className="text-gray-200 mb-3" />
