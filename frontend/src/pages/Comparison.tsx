@@ -66,14 +66,12 @@ function StarRating({ value, onChange }: { value: number; onChange: (v: number) 
 
 // ── Listing card ──────────────────────────────────────────────────────────────
 function ListingCard({
-  item, onRemove, onUpdate, isBest, confirmRemoveId, setConfirmRemoveId, rate,
+  item, onRemove, onUpdate, isBest, rate,
 }: {
   item: CompItem
   onRemove: () => void
   onUpdate: (id: string, key: keyof CompItem, val: any) => void
   isBest: boolean
-  confirmRemoveId: string | null
-  setConfirmRemoveId: (id: string | null) => void
   rate: number
 }) {
   const monthly    = monthlyMortgage(item.price, item.avgift, rate)
@@ -90,22 +88,13 @@ function ListingCard({
       )}
 
       {/* Remove */}
-      {confirmRemoveId === item.id ? (
-        <div className="absolute top-3 right-3 flex items-center gap-1">
-          <span className="text-[11px] text-red-500 font-medium">Remove?</span>
-          <button onClick={() => { onRemove(); setConfirmRemoveId(null) }}
-            className="text-[11px] font-bold text-red-500 hover:text-red-600">Yes</button>
-          <button onClick={() => setConfirmRemoveId(null)}
-            className="text-[11px] font-bold text-gray-400 hover:text-gray-600">No</button>
-        </div>
-      ) : (
-        <button
-          onClick={() => setConfirmRemoveId(item.id)}
-          className="absolute top-3 right-3 text-gray-200 hover:text-red-400 transition-colors"
-        >
-          <X size={14} />
-        </button>
-      )}
+      <button
+        onClick={onRemove}
+        className="absolute top-3 right-3 p-1 rounded-lg text-gray-200 hover:text-red-400 hover:bg-red-50 transition-all"
+        title="Remove"
+      >
+        <X size={14} />
+      </button>
 
       {/* Name */}
       <div className="font-bold text-gray-900 text-sm leading-snug pr-4">{item.name}</div>
@@ -246,8 +235,7 @@ export default function Comparison() {
   const [showSaveBox,  setShowSaveBox]  = useState(false)
   const [showHistory,  setShowHistory]  = useState(false)
   const [confirmClear,    setConfirmClear]    = useState(false)
-  const [confirmRemoveId, setConfirmRemoveId] = useState<string | null>(null)
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
 
   function saveComparison() {
     if (!saveName.trim()) return
@@ -408,8 +396,6 @@ export default function Comparison() {
                 onRemove={() => removeItem(item.id)}
                 onUpdate={updateItem}
                 isBest={item.id === bestId && items.length > 1}
-                confirmRemoveId={confirmRemoveId}
-                setConfirmRemoveId={setConfirmRemoveId}
                 rate={rate}
               />
             ))}

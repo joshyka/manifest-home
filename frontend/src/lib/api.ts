@@ -132,6 +132,10 @@ export const viewings = {
     }),
   archive: (id: string) =>
     request<{ ok: boolean }>(`/viewings/${id}/archive`, { method: 'PUT' }),
+  unarchive: (id: string) =>
+    request<{ ok: boolean }>(`/viewings/${id}/unarchive`, { method: 'PUT' }),
+  remove: (id: string) =>
+    request<{ ok: boolean }>(`/viewings/${id}`, { method: 'DELETE' }),
 }
 
 // ── Upcoming ───────────────────────────────────────────────────────────────────

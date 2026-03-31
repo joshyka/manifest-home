@@ -13,12 +13,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
 import datetime
-import re
-import requests as http_requests
 
 from utils.data import (
     load_settings, save_settings,
-    load_viewings, save_viewing, get_viewing, patch_viewing,
+    load_viewings, save_viewing, get_viewing, patch_viewing, delete_viewing,
     load_upcoming, save_upcoming, delete_upcoming,
     get_blob, set_blob,
     load_target_areas, save_target_area, patch_target_area, delete_target_area,
@@ -191,18 +189,12 @@ def add_viewing(body: ViewingBody, payload: dict = Depends(require_auth)):
         "id": vid,
         "address": body.address,
         "date": body.date,
-        "area": "",
-        "listed_price": "",
-        "size_sqm": "",
-        "avgift": "",
         "outcome": body.outcome,
         "num_bid_rounds": body.num_bid_rounds,
         "final_price": body.final_price,
         "my_bid": body.my_bid,
-        "rating": "",
         "notes": body.notes,
         "hemnet_url": body.hemnet_url,
-        "booli_url": "",
     }, user_id)
     return {"ok": True, "id": vid}
 
@@ -246,10 +238,26 @@ def archive_viewing(vid: str, payload: dict = Depends(require_auth)):
     if "[archived]" not in notes:
         notes = (notes + " [archived]").strip()
     patch_viewing(vid, {
-        "hemnet_url": "",
-        "booli_url": "",
         "notes": notes,
     }, user_id)
+    return {"ok": True}
+
+
+@app.delete("/api/viewings/{vid}")
+def remove_viewing(vid: str, payload: dict = Depends(require_auth)):
+    user_id = payload.get("sub", "dev-user")
+    delete_viewing(vid, user_id)
+    return {"ok": True}
+
+
+@app.put("/api/viewings/{vid}/unarchive")
+def unarchive_viewing(vid: str, payload: dict = Depends(require_auth)):
+    user_id = payload.get("sub", "dev-user")
+    existing = get_viewing(vid, user_id)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Viewing not found")
+    notes = (existing.get("notes") or "").replace("[archived]", "").strip()
+    patch_viewing(vid, {"notes": notes}, user_id)
     return {"ok": True}
 
 
@@ -283,142 +291,6 @@ def remove_upcoming(uid: str, payload: dict = Depends(require_auth)):
     user_id = payload.get("sub", "dev-user")
     delete_upcoming(uid, user_id)
     return {"ok": True}
-
-
-# ── Listing URL fetcher ───────────────────────────────────────────────────────
-class FetchListingBody(BaseModel):
-    url: str
-
-
-def _meta(html: str, prop: str) -> str:
-    for attr in ['property', 'name']:
-        m = re.search(rf'<meta[^>]+{attr}="{re.escape(prop)}"[^>]+content="([^"]*)"', html, re.I)
-        if m: return m.group(1).strip()
-        m = re.search(rf'<meta[^>]+content="([^"]*)"[^>]+{attr}="{re.escape(prop)}"', html, re.I)
-        if m: return m.group(1).strip()
-    return ""
-
-
-def _extract_price(text: str) -> Optional[int]:
-    m = re.search(r'([\d\s]{6,12})\s*kr', text.replace('\xa0', ' '))
-    if m:
-        try: return int(re.sub(r'\s', '', m.group(1)))
-        except: pass
-    return None
-
-
-def _extract_sqm(text: str) -> Optional[float]:
-    m = re.search(r'(\d+[\.,]?\d*)\s*m[²2]', text)
-    if m:
-        try: return float(m.group(1).replace(',', '.'))
-        except: pass
-    return None
-
-
-def _extract_rooms(text: str) -> Optional[int]:
-    m = re.search(r'(\d+)\s*r(?:um|oom)', text, re.I)
-    if m:
-        try: return int(m.group(1))
-        except: pass
-    return None
-
-
-def _parse_hemnet_slug(url: str) -> dict:
-    m = re.search(r'/bostad/([^/?#]+)', url)
-    if not m:
-        return {}
-    slug = m.group(1)
-    parts = slug.split('-')
-    rooms = None
-    for p in parts:
-        rm = re.match(r'^(\d+)rum$', p)
-        if rm:
-            rooms = int(rm.group(1))
-            break
-    skip = {'stockholms', 'kommun', 'stad', 'lagenhet', 'villa', 'radhus', 'tomt', 'fritidshus'}
-    filtered = [
-        p for p in parts
-        if not re.match(r'^\d+rum$', p)
-        and not re.match(r'^\d{6,}$', p)
-        and p.lower() not in skip
-    ]
-    name = ' '.join(p.capitalize() for p in filtered)
-    area = ''
-    for i, p in enumerate(parts):
-        if re.match(r'^\d+rum$', p):
-            if i + 1 < len(parts):
-                area = parts[i + 1].capitalize()
-            break
-    return {"name": name, "rooms": rooms, "area": area}
-
-
-_BROWSER_HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/124.0.0.0 Safari/537.36"
-    ),
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    "Accept-Language": "sv-SE,sv;q=0.9,en;q=0.8",
-    "Accept-Encoding": "gzip, deflate, br",
-    "Cache-Control": "no-cache",
-    "Sec-Fetch-Mode": "navigate",
-}
-
-
-@app.post("/api/fetch-listing")
-def fetch_listing(body: FetchListingBody, payload: dict = Depends(require_auth)):
-    url = body.url.strip()
-    slug_data = {}
-    if "hemnet.se" in url:
-        slug_data = _parse_hemnet_slug(url)
-
-    html = ""
-    fetch_ok = False
-    try:
-        resp = http_requests.get(url, headers=_BROWSER_HEADERS, timeout=10, allow_redirects=True)
-        if resp.status_code == 200:
-            html = resp.text
-            fetch_ok = True
-    except Exception:
-        pass
-
-    title       = _meta(html, "og:title") or _meta(html, "title") or ""
-    description = _meta(html, "og:description") or ""
-    image       = _meta(html, "og:image") or ""
-    site_name   = _meta(html, "og:site_name") or ""
-
-    json_ld_text = ""
-    jld = re.search(r'<script[^>]+type="application/ld\+json"[^>]*>(.*?)</script>', html, re.S | re.I)
-    if jld:
-        json_ld_text = jld.group(1)
-
-    combined = f"{title} {description} {json_ld_text}"
-    price = _extract_price(combined)
-    sqm   = _extract_sqm(combined)
-    rooms = _extract_rooms(combined) or slug_data.get("rooms")
-
-    if title:
-        name = title.split("|")[0].split(" - ")[0].strip()
-        name = re.sub(r'\s+(till salu|uthyres|för sale).*', '', name, flags=re.I).strip()
-    else:
-        name = slug_data.get("name", "")
-
-    if not site_name:
-        if "hemnet.se" in url:    site_name = "Hemnet"
-        elif "booli.se" in url:   site_name = "Booli"
-        elif "blocket.se" in url: site_name = "Blocket"
-
-    return {
-        "name":        name,
-        "price":       price,
-        "sqm":         sqm,
-        "rooms":       rooms,
-        "image":       image,
-        "site":        site_name,
-        "description": description[:200] if description else "",
-        "partial":     not fetch_ok,
-    }
 
 
 # ── User blobs ────────────────────────────────────────────────────────────────

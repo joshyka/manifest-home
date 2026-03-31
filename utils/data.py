@@ -86,6 +86,11 @@ def save_upcoming(row: dict, user_id: str):
     supa.table("upcoming_viewings").insert({**row, "user_id": user_id}).execute()
 
 
+def delete_viewing(vid: str, user_id: str):
+    supa = get_client()
+    supa.table("viewings").delete().eq("id", vid).eq("user_id", user_id).execute()
+
+
 def delete_upcoming(uv_id: str, user_id: str):
     supa = get_client()
     supa.table("upcoming_viewings").delete().eq("id", uv_id).eq("user_id", user_id).execute()

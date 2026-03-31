@@ -111,17 +111,20 @@ function BrfCard({ entry, onDelete, onEdit }: {
           <button onClick={() => onEdit(entry)} className="p-1.5 rounded-lg text-gray-300 hover:text-gray-600 hover:bg-gray-100 transition-all">
             <Pencil size={13} />
           </button>
-          {confirmDelete ? (
-            <div className="flex items-center gap-1">
-              <span className="text-[11px] text-red-500 font-medium">Delete?</span>
-              <button onClick={() => onDelete(entry.id)} className="text-[11px] font-bold text-red-500">Yes</button>
-              <button onClick={() => setConfirmDelete(false)} className="text-[11px] font-bold text-gray-400">No</button>
-            </div>
-          ) : (
-            <button onClick={() => setConfirmDelete(true)} className="p-1.5 rounded-lg text-gray-300 hover:text-red-400 hover:bg-red-50 transition-all">
-              <X size={13} />
-            </button>
-          )}
+          <button
+            onClick={() => {
+              if (confirmDelete) {
+                onDelete(entry.id)
+              } else {
+                setConfirmDelete(true)
+                setTimeout(() => setConfirmDelete(false), 2000)
+              }
+            }}
+            className={`p-1.5 rounded-lg transition-all ${confirmDelete ? 'text-red-500 bg-red-50' : 'text-gray-300 hover:text-red-400 hover:bg-red-50'}`}
+            title={confirmDelete ? 'Click again to confirm delete' : 'Delete'}
+          >
+            <X size={13} />
+          </button>
         </div>
       </div>
 

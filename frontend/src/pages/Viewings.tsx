@@ -4,7 +4,7 @@ import { useSearchParams } from 'react-router-dom'
 import { viewings as viewingsApi, upcoming as upcomingApi } from '../lib/api'
 import type { Viewing } from '../lib/api'
 import Alert from '../components/Alert'
-import { Plus, X, Trash2, ChevronDown, ChevronUp, Clock, Pencil, Check, TrendingUp, Info, BellPlus } from 'lucide-react'
+import { Plus, X, Archive, ChevronDown, ChevronUp, Clock, Pencil, Check, TrendingUp, Info, BellPlus } from 'lucide-react'
 
 // ── Listings tab ─────────────────────────────────────────────────────────────
 function ListingsTab({ autoOpen }: { autoOpen: boolean }) {
@@ -20,7 +20,7 @@ function ListingsTab({ autoOpen }: { autoOpen: boolean }) {
   const [saved, setSaved]     = useState(false)
   const [err, setErr]         = useState('')
 
-  const [confirmArchiveId, setConfirmArchiveId] = useState<string | null>(null)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
 
   // Inline edit state
   const [editId,    setEditId]    = useState<string | null>(null)
@@ -43,6 +43,22 @@ function ListingsTab({ autoOpen }: { autoOpen: boolean }) {
 
   const archiveMutation = useMutation({
     mutationFn: viewingsApi.archive,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['viewings'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
+    },
+  })
+
+  const unarchiveMutation = useMutation({
+    mutationFn: viewingsApi.unarchive,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['viewings'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
+    },
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: viewingsApi.remove,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['viewings'] })
       qc.invalidateQueries({ queryKey: ['dashboard'] })
@@ -73,6 +89,13 @@ function ListingsTab({ autoOpen }: { autoOpen: boolean }) {
     const bidArr = editWent && editBids.trim()
       ? editBids.split(',').map(b => parseInt(b.trim().replace(/\s/g, ''))).filter(n => !isNaN(n))
       : []
+    if (editMyBid.trim() && bidArr.length > 0) {
+      const myBidNum = parseInt(editMyBid.trim().replace(/\s/g, ''))
+      if (!bidArr.includes(myBidNum)) {
+        setEditErr('My Bid must be one of the bid rounds entered above.')
+        return
+      }
+    }
     const highest = bidArr.length > 0 ? String(Math.max(...bidArr)) : ''
     updateMutation.mutate({
       id: v.id,
@@ -94,6 +117,13 @@ function ListingsTab({ autoOpen }: { autoOpen: boolean }) {
     const bidArr = went && bids.trim()
       ? bids.split(',').map(b => parseInt(b.trim().replace(/\s/g, ''))).filter(n => !isNaN(n))
       : []
+    if (myBid.trim() && bidArr.length > 0) {
+      const myBidNum = parseInt(myBid.trim().replace(/\s/g, ''))
+      if (!bidArr.includes(myBidNum)) {
+        setErr('My Bid must be one of the bid rounds entered above.')
+        return
+      }
+    }
     const highest = bidArr.length > 0 ? String(Math.max(...bidArr)) : ''
     addMutation.mutate({
       address: label.trim() || url.trim(),
@@ -235,23 +265,13 @@ function ListingsTab({ autoOpen }: { autoOpen: boolean }) {
                     >
                       <Pencil size={13} />
                     </button>
-                    {confirmArchiveId === v.id ? (
-                      <div className="flex items-center gap-1">
-                        <span className="text-[11px] text-red-500 font-medium">Remove?</span>
-                        <button onClick={() => { archiveMutation.mutate(v.id); setConfirmArchiveId(null) }}
-                          className="text-[11px] font-bold text-red-500 hover:text-red-600">Yes</button>
-                        <button onClick={() => setConfirmArchiveId(null)}
-                          className="text-[11px] font-bold text-gray-400 hover:text-gray-600">No</button>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => setConfirmArchiveId(v.id)}
-                        className="text-xs text-gray-400 hover:text-red-500 transition-colors"
-                        title="Remove listing"
-                      >
-                        <Trash2 size={13} />
-                      </button>
-                    )}
+                    <button
+                      onClick={() => archiveMutation.mutate(v.id)}
+                      className="text-gray-300 hover:text-amber-400 transition-colors"
+                      title="Archive listing"
+                    >
+                      <Archive size={13} />
+                    </button>
                   </div>
                 </div>
 
@@ -326,17 +346,45 @@ function ListingsTab({ autoOpen }: { autoOpen: boolean }) {
                   : null
                 return (
                   <div key={v.id} className="bg-amber-50/60 border border-amber-100 rounded-xl px-4 py-3">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-semibold text-gray-800 text-sm">{v.address}</span>
-                      {highest && (
-                        <span className="text-xs font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
-                          Highest: {highest} kr
-                        </span>
-                      )}
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-semibold text-gray-800 text-sm">{v.address}</span>
+                          {highest && (
+                            <span className="text-xs font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+                              Highest: {highest} kr
+                            </span>
+                          )}
+                        </div>
+                        {bidsFormatted && v.outcome === 'Went to bidding' && (
+                          <div className="text-xs text-amber-700 mt-1">Rounds: {bidsFormatted} kr</div>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          onClick={() => unarchiveMutation.mutate(v.id)}
+                          className="p-1.5 rounded-lg text-gray-400 hover:text-teal-600 hover:bg-teal-50 transition-all"
+                          title="Make active"
+                        >
+                          <Archive size={13} />
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (confirmDeleteId === v.id) {
+                              deleteMutation.mutate(v.id)
+                              setConfirmDeleteId(null)
+                            } else {
+                              setConfirmDeleteId(v.id)
+                              setTimeout(() => setConfirmDeleteId(null), 2000)
+                            }
+                          }}
+                          className={`p-1.5 rounded-lg transition-all ${confirmDeleteId === v.id ? 'text-red-500 bg-red-50' : 'text-gray-300 hover:text-red-400 hover:bg-red-50'}`}
+                          title={confirmDeleteId === v.id ? 'Click again to delete' : 'Delete'}
+                        >
+                          <X size={13} />
+                        </button>
+                      </div>
                     </div>
-                    {bidsFormatted && v.outcome === 'Went to bidding' && (
-                      <div className="text-xs text-amber-700 mt-1">Rounds: {bidsFormatted} kr</div>
-                    )}
                   </div>
                 )
               })}
@@ -611,13 +659,20 @@ function BidsTab() {
         </div>
       </div>
 
-      {mostRounds > 1 && (
-        <div className="card bg-amber-50 border-amber-100">
-          <p className="text-sm text-amber-800">
-            <span className="font-bold">Longest auction:</span> {mostRounds} rounds.
-          </p>
-        </div>
-      )}
+      {mostRounds > 1 && (() => {
+        const longest = bids.find(b => b.rounds.length === mostRounds)!
+        return (
+          <div className="card bg-amber-50 border-amber-100">
+            <div className="text-xs font-bold text-amber-700 uppercase tracking-wider mb-1">Longest auction</div>
+            <div className="text-sm text-amber-900">
+              <span className="font-bold">{longest.address}</span>
+              {' · '}{mostRounds} rounds
+              {longest.highest ? ` · ${fmt(longest.highest)} kr final` : ''}
+              {longest.myBidAmt ? ` · my bid ${fmt(longest.myBidAmt)} kr` : ''}
+            </div>
+          </div>
+        )
+      })()}
       </>}
     </div>
   )
