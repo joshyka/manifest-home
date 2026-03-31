@@ -44,6 +44,12 @@ export default function Privacy() {
             If you use the map, Google's standard privacy policy applies to that interaction.
             No data you enter into KeyJourney is sent to Google. Login via Google OAuth is
             optionally supported — if used, Google's authentication policy also applies.
+            The app also loads the Manrope font from Google Fonts, which may log your IP address
+            per Google's standard font CDN policy.
+          </p>
+          <p className="text-sm text-gray-500 leading-relaxed">
+            The Calculator and Comparison pages fetch the current Swedish mortgage bond rate
+            from the Riksbank public API. This is a read-only request — no personal data is sent.
           </p>
         </section>
 
@@ -62,7 +68,6 @@ export default function Privacy() {
           <p className="text-sm text-gray-500">For any privacy-related questions, contact the app owner directly.</p>
         </section>
 
-        <a href="/login" className="inline-block text-xs text-teal-600 hover:underline">← Back to login</a>
       </div>
     </div>
   )

@@ -94,6 +94,12 @@ function SidebarContents({ pct, current, target, p1, p2, onNav }: {
         ))}
       </nav>
 
+      {/* Footer links */}
+      <div className="px-6 py-4 border-t border-gray-100 flex gap-3">
+        <NavLink to="/terms" className="text-[11px] text-gray-400 hover:text-gray-600 transition-colors">Terms</NavLink>
+        <NavLink to="/privacy" className="text-[11px] text-gray-400 hover:text-gray-600 transition-colors">Privacy</NavLink>
+      </div>
+
     </>
   )
 }

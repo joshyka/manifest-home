@@ -88,6 +88,8 @@ function App() {
         <Route path="/comparison" element={<Comparison />} />
         <Route path="/checklist" element={<Checklist />} />
         <Route path="/brf-checker" element={<BrfChecker />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/privacy" element={<Privacy />} />
       </Routes>
     </Layout>
   )

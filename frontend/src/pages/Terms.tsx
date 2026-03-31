@@ -32,9 +32,12 @@ export default function Terms() {
           <p className="text-sm text-gray-500 leading-relaxed">
             The mortgage calculator, savings projections, stress test figures, BRF health scores,
             and listing cost estimates in KeyJourney are for informational purposes only. They do
-            not constitute financial, legal, or mortgage advice. Interest rates, amortisation rules,
-            and tax relief figures are estimates based on Swedish conventions and may not reflect
-            your exact situation. Always consult a qualified adviser before making financial decisions.
+            not constitute financial, legal, or mortgage advice. Interest rates shown are fetched
+            from the Riksbank public API (Swedish 5-year mortgage bond rate) and are indicative only —
+            your actual mortgage rate will vary by lender, credit profile, and loan terms.
+            Amortisation rules and tax relief figures are estimates based on Swedish conventions
+            and may not reflect your exact situation. Always consult a qualified adviser before
+            making financial decisions.
           </p>
         </section>
 
@@ -46,7 +49,6 @@ export default function Terms() {
           </p>
         </section>
 
-        <a href="/login" className="inline-block text-xs text-teal-600 hover:underline">← Back to login</a>
       </div>
     </div>
   )

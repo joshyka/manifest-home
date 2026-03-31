@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { settings as settingsApi } from '../lib/api'
 import { useBlob } from '../lib/useBlob'
+import { useRiksbankRate } from '../lib/useRiksbankRate'
 import { TrendingUp, AlertTriangle, CheckCircle, Info, Save, Trash2 } from 'lucide-react'
 
 interface Snapshot {
@@ -135,10 +136,15 @@ function AffordabilityBadge({ status, lti }: { status: CalcResult['affordability
 
 export default function Calculator() {
   const { data: savedSettings } = useQuery({ queryKey: ['settings'], queryFn: settingsApi.get })
+  const { data: liveRate } = useRiksbankRate()
 
   const [price,       setPrice]       = useState(0)
   const [downPct,     setDownPct]     = useState(10)
-  const [rate,        setRate]        = useState(0)
+  const [rate,        setRate]        = useState(3.5)
+
+  useEffect(() => {
+    if (liveRate) setRate(liveRate)
+  }, [liveRate])
   const [avgift,      setAvgift]      = useState(0)
   const [drift,       setDrift]       = useState(0)
   const [income,      setIncome]      = useState(0)
@@ -220,7 +226,14 @@ export default function Calculator() {
 
           {/* Loan */}
           <div className="card space-y-4">
-            <div className="section-label">Mortgage</div>
+            <div className="flex items-center justify-between">
+              <div className="section-label">Mortgage</div>
+              {liveRate && (
+                <span className="text-[10px] font-bold text-teal-600 bg-teal-50 border border-teal-100 px-2 py-0.5 rounded-full">
+                  Live: {liveRate}% (SE MB 5Y)
+                </span>
+              )}
+            </div>
             <div>
               <label className="label !text-green-600">Interest Rate % (annual)</label>
               <div className="flex items-center gap-3">

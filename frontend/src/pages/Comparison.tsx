@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useBlob } from '../lib/useBlob'
+import { useRiksbankRate } from '../lib/useRiksbankRate'
 import { X, ArrowUpDown, Star, Save, Trash2, ChevronDown, ChevronUp, RotateCcw } from 'lucide-react'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -231,6 +232,11 @@ export default function Comparison() {
   const [saved, saveSaved] = useBlob<SavedComparison[]>('saved_comparisons', [])
   const [sortBy,       setSortBy]       = useState<SortKey>('price')
   const [rate,         setRate]         = useState(3.5)
+  const { data: liveRate } = useRiksbankRate()
+
+  useEffect(() => {
+    if (liveRate) setRate(liveRate)
+  }, [liveRate])
   const [saveName,     setSaveName]     = useState('')
   const [showSaveBox,  setShowSaveBox]  = useState(false)
   const [showHistory,  setShowHistory]  = useState(false)
@@ -372,6 +378,11 @@ const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
               </button>
             ))}
             <div className="ml-auto flex items-center gap-1.5 text-xs text-gray-400">
+              {liveRate && (
+                <span className="text-[10px] font-bold text-teal-600 bg-teal-50 border border-teal-100 px-2 py-0.5 rounded-full">
+                  Live: {liveRate}%
+                </span>
+              )}
               <span>Interest</span>
               <input
                 type="text"
