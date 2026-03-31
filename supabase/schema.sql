@@ -1,5 +1,12 @@
 -- KeyJourney — run this in the Supabase SQL editor
 -- Each user gets their own isolated data via Row Level Security
+--
+-- Tables:
+--   settings          — savings plan, loan promise, buyer names
+--   viewings          — viewed apartments with bid tracking (rounds, bids, outcome)
+--   upcoming_viewings — scheduled viewing reminders
+--   target_areas      — areas of interest grouped by High / Medium / Low priority
+--   user_blobs        — generic JSON storage: checklist, comparison boards, calculator snapshots, BRF checks
 
 -- Drop existing tables and policies cleanly
 DROP TABLE IF EXISTS user_blobs CASCADE;
@@ -59,9 +66,6 @@ CREATE TABLE upcoming_viewings (
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   address TEXT DEFAULT '',
   datetime TEXT DEFAULT '',
-  area TEXT DEFAULT '',
-  asking_price TEXT DEFAULT '',
-  notes TEXT DEFAULT '',
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -78,7 +82,6 @@ CREATE TABLE target_areas (
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   name TEXT DEFAULT '',
   priority TEXT DEFAULT 'Medium',
-  notes TEXT DEFAULT '',
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

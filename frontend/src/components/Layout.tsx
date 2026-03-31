@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, PiggyBank, Calendar, Map, Calculator, GitCompare, CheckSquare, Gavel, LogOut, Menu, X, Plus, MapPin, Building2 } from 'lucide-react'
+import { LayoutDashboard, PiggyBank, Calendar, Map, Calculator, GitCompare, CheckSquare, LogOut, Menu, X, Plus, Building2 } from 'lucide-react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { dashboard } from '../lib/api'
 import { supabase } from '../lib/supabase'
@@ -11,10 +11,8 @@ const NAV = [
   { to: '/savings',     label: 'Savings',     icon: PiggyBank },
   { to: '/checklist',   label: 'Checklist',   icon: CheckSquare },
   { to: '/viewings',    label: 'Viewings',    icon: Calendar },
-  { to: '/bid-tracker', label: 'Bid Tracker', icon: Gavel },
   { to: '/comparison',  label: 'Comparison',  icon: GitCompare },
   { to: '/calculator',  label: 'Calculator',  icon: Calculator },
-  { to: '/areas',       label: 'Areas',       icon: MapPin },
   { to: '/brf-checker', label: 'BRF Checker', icon: Building2 },
   { to: '/maps',        label: 'Maps',        icon: Map },
 ]

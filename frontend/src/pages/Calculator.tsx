@@ -169,8 +169,6 @@ export default function Calculator() {
     if (!savedSettings) return
     setPrice(savedSettings.apartment_price || 0)
     setDownPct(savedSettings.down_pct || 10)
-    const combined = (savedSettings.p1_monthly || 0) + (savedSettings.p2_monthly || 0)
-    setIncome(Math.round(combined * 2.5)) // rough estimate
     setUseOwn(true)
   }
 
@@ -186,7 +184,7 @@ export default function Calculator() {
         </div>
         {(savedSettings?.apartment_price ?? 0) > 0 && !useOwn && (
           <button className="btn-secondary text-xs" onClick={loadFromSettings}>
-            Load from my settings
+            Auto-fill
           </button>
         )}
       </div>
@@ -199,7 +197,7 @@ export default function Calculator() {
           <div className="card space-y-4">
             <div className="section-label">Property</div>
             <div>
-              <label className="label !text-green-600">Apartment Price (SEK)</label>
+              <label className="label !text-green-600">Target Apartment Price (SEK)</label>
               <input type="number" className="input" min={0} step={50000} placeholder="e.g. 4 500 000"
                 value={price || ''} onChange={e => setPrice(parseInt(e.target.value) || 0)} />
             </div>
@@ -209,12 +207,12 @@ export default function Calculator() {
                 value={downPct || ''} onChange={e => setDownPct(parseFloat(e.target.value) || 10)} />
             </div>
             <div>
-              <label className="label !text-green-600">Avgift (SEK/month)</label>
+              <label className="label !text-green-600">Avgift / month</label>
               <input type="number" className="input" min={0} step={100} placeholder="e.g. 4 500"
                 value={avgift || ''} onChange={e => setAvgift(parseInt(e.target.value) || 0)} />
             </div>
             <div>
-              <label className="label !text-green-600">Other monthly costs (SEK)</label>
+              <label className="label !text-green-600">Other costs / month</label>
               <input type="number" className="input" min={0} step={500} placeholder="e.g. 1 500"
                 value={drift || ''} onChange={e => setDrift(parseInt(e.target.value) || 0)} />
             </div>
@@ -232,19 +230,16 @@ export default function Calculator() {
                   className="flex-1 green-slider" />
                 <span className="text-sm text-gray-600 w-12 text-right tabular-nums">{rate.toFixed(1)}%</span>
               </div>
-              <p className="text-[11px] text-gray-300 mt-1">Current Swedish 3-month rate ~3–4%. Banks stress-test at 7%.</p>
             </div>
             <div>
-              <label className="label !text-green-600">Combined Gross Monthly Income (SEK)</label>
+              <label className="label !text-green-600">Combined Gross / Month (SEK)</label>
               <input type="number" className="input" min={0} step={5000} placeholder="e.g. 80 000"
                 value={income || ''} onChange={e => setIncome(parseInt(e.target.value) || 0)} />
-              <p className="text-[11px] text-gray-300 mt-1">Combined gross salaries. Used for the 4.5× bank rule.</p>
             </div>
             <div>
-              <label className="label !text-green-600">Combined Net Monthly Income (SEK)</label>
+              <label className="label !text-green-600">Combined Net / Month (SEK)</label>
               <input type="number" className="input" min={0} step={5000} placeholder="e.g. 55 000"
                 value={netIncome || ''} onChange={e => setNetIncome(parseInt(e.target.value) || 0)} />
-              <p className="text-[11px] text-gray-300 mt-1">After-tax take-home pay. Used to show money left over.</p>
             </div>
           </div>
         </div>
@@ -252,7 +247,7 @@ export default function Calculator() {
         {/* ── Results ────────────────────────────────────────────────────── */}
         <div className="col-span-3 space-y-4">
           {!result ? (
-            <div className="card flex flex-col items-center justify-center text-center" style={{minHeight: '748px'}}>
+            <div className="card flex flex-col items-center justify-center text-center" >
               <TrendingUp size={32} className="text-gray-200 mb-3" />
               <p className="text-sm text-gray-400">Enter a price to calculate your monthly costs.</p>
             </div>
@@ -263,7 +258,7 @@ export default function Calculator() {
 
               {/* Loan summary */}
               <div className="card">
-                <div className="section-label mb-4">Loan Summary</div>
+                <div className="section-label mb-4">Summary</div>
                 <div className="grid grid-cols-3 gap-3">
                   {[
                     { label: 'Loan Amount',   value: `${fmt(result.loanAmount)} kr` },
@@ -321,7 +316,7 @@ export default function Calculator() {
                 {/* Total */}
                 <div className="flex justify-between items-center mt-3 pt-4 border-t-2 border-gray-100">
                   <div>
-                    <div className="font-black text-gray-900 text-sm">Total monthly cost</div>
+                    <div className="text-gray-500 text-sm">Total monthly cost</div>
                     <div className="text-[11px] text-gray-400">Interest + amortisation + avgift</div>
                   </div>
                   <div className="text-base font-black text-teal-600 tabular-nums">
@@ -336,7 +331,7 @@ export default function Calculator() {
                   return (
                     <div className="flex justify-between items-center pt-3 border-t border-gray-50">
                       <div>
-                        <div className="font-black text-gray-900 text-sm">Money left over</div>
+                        <div className="text-gray-500 text-sm">Net household cash flow</div>
                       </div>
                       <div className={`text-base font-black tabular-nums ${color}`}>{fmt(leftover)} kr</div>
                     </div>
@@ -388,7 +383,7 @@ export default function Calculator() {
                   {new Date(s.savedAt).toLocaleDateString('en-SE', { day: 'numeric', month: 'short', year: 'numeric' })}
                 </div>
                 <div className="flex-1 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-gray-600">
-                  <span>{fmt(s.price)} kr · {s.downPct}% down · {s.rate}%</span>
+                  <span>{fmt(s.price)} kr · {s.downPct}% down · {s.rate}% interest</span>
                   <span className="font-bold text-teal-700">{fmt(s.totalMonthly)} kr/mo</span>
                   <span className="text-amber-600">stress: {fmt(s.stressTestMonthly)} kr</span>
                 </div>

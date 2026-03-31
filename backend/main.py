@@ -86,9 +86,7 @@ def get_dashboard(payload: dict = Depends(require_auth)):
     # Projection
     import pandas as pd
     proj = get_projection(settings)
-    now_month = datetime.date.today().month
-    proj_display = proj[proj["month_num"] >= now_month]
-    projection = proj_display.to_dict(orient="records")
+    projection = proj.to_dict(orient="records")
 
     # Upcoming (top 3 future)
     upcoming_list = []
@@ -104,7 +102,7 @@ def get_dashboard(payload: dict = Depends(require_auth)):
             key=lambda r: _dt(r["datetime"])
         )[:3]
         upcoming_list = [
-            {k: r.get(k, "") for k in ["id", "address", "datetime", "area", "asking_price", "notes"]}
+            {k: r.get(k, "") for k in ["id", "address", "datetime"]}
             for r in future
         ]
     except Exception:
@@ -265,9 +263,6 @@ def get_upcoming(payload: dict = Depends(require_auth)):
 class UpcomingBody(BaseModel):
     address: str
     datetime: str
-    area: str = ""
-    asking_price: str = ""
-    notes: str = ""
 
 
 @app.post("/api/upcoming")
@@ -279,9 +274,6 @@ def add_upcoming(body: UpcomingBody, payload: dict = Depends(require_auth)):
         "id": uid,
         "address": body.address,
         "datetime": body.datetime,
-        "area": body.area,
-        "asking_price": body.asking_price,
-        "notes": body.notes,
     }, user_id)
     return {"ok": True, "id": uid}
 
@@ -464,7 +456,6 @@ def get_target_areas(payload: dict = Depends(require_auth)):
 class TargetAreaBody(BaseModel):
     name: str
     priority: str = "Medium"
-    notes: str = ""
 
 
 @app.post("/api/target-areas")
@@ -476,7 +467,6 @@ def add_target_area(body: TargetAreaBody, payload: dict = Depends(require_auth))
         "id": area_id,
         "name": body.name,
         "priority": body.priority,
-        "notes": body.notes,
     }, user_id)
     return {"ok": True, "id": area_id}
 
@@ -484,7 +474,6 @@ def add_target_area(body: TargetAreaBody, payload: dict = Depends(require_auth))
 class TargetAreaUpdateBody(BaseModel):
     name: str
     priority: str = "Medium"
-    notes: str = ""
 
 
 @app.put("/api/target-areas/{area_id}")
@@ -493,7 +482,6 @@ def update_target_area(area_id: str, body: TargetAreaUpdateBody, payload: dict =
     patch_target_area(area_id, {
         "name": body.name,
         "priority": body.priority,
-        "notes": body.notes,
     }, user_id)
     return {"ok": True}
 

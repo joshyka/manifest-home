@@ -1,6 +1,15 @@
 import { useState } from 'react'
-import { ArrowUpDown, Car, Train, Footprints, Bike } from 'lucide-react'
+import { ArrowUpDown, Car, Train, Footprints, Bike, ChevronDown, ChevronUp, Plus, X, Pencil, Check } from 'lucide-react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { targetAreas as areasApi } from '../lib/api'
 import AddressInput from '../components/AddressInput'
+
+type Priority = 'High' | 'Medium' | 'Low'
+const PRIORITIES: { value: Priority; label: string; color: string }[] = [
+  { value: 'High',   label: 'High',   color: 'text-teal-700' },
+  { value: 'Medium', label: 'Medium', color: 'text-amber-600' },
+  { value: 'Low',    label: 'Low',    color: 'text-gray-400' },
+]
 
 const TRAVEL_MODES = [
   { label: 'Driving',  icon: Car,        dirflg: 'd', mode: 'driving' },
@@ -24,35 +33,69 @@ const AMENITIES = [
 function encodeQ(s: string) { return encodeURIComponent(s) }
 
 export default function Maps() {
+  const qc = useQueryClient()
   const [from, setFrom]       = useState('')
   const [to, setTo]           = useState('')
-  const [mode, setMode]       = useState(TRAVEL_MODES[0])
+  const [mode]                = useState(TRAVEL_MODES[0])
   const [amenity, setAmenity] = useState<string | null>(null)
   const [radius, setRadius]   = useState(5)
+
+  // Target areas state
+  const [areasOpen, setAreasOpen]   = useState(true)
+  const [activeArea, setActiveArea] = useState<string | null>(null)
+  const [addingPriority, setAddingPriority] = useState<Priority | null>(null)
+  const [newName, setNewName]       = useState('')
+  const [editId, setEditId]         = useState<string | null>(null)
+  const [editName, setEditName]     = useState('')
+  const [editPriority, setEditPriority] = useState<Priority>('Medium')
+
+  const { data: areas = [] } = useQuery({ queryKey: ['target-areas'], queryFn: areasApi.list })
+
+  const addMutation = useMutation({
+    mutationFn: (d: { name: string; priority: string }) => areasApi.add(d),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['target-areas'] }); setAddingPriority(null); setNewName('') },
+  })
+  const updateMutation = useMutation({
+    mutationFn: ({ id, ...d }: { id: string; name: string; priority: string }) => areasApi.update(id, d),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['target-areas'] }); setEditId(null) },
+  })
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => areasApi.remove(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['target-areas'] }),
+  })
+
+  function startEdit(area: { id: string; name: string; priority: string }) {
+    setEditId(area.id)
+    setEditName(area.name)
+    setEditPriority(area.priority as Priority)
+  }
+
+  function commitEdit(area: { id: string }) {
+    if (editName.trim()) {
+      updateMutation.mutate({ id: area.id, name: editName.trim(), priority: editPriority })
+    } else {
+      setEditId(null)
+    }
+  }
 
   function swap() { setFrom(to); setTo(from); setAmenity(null) }
   function toggleAmenity(query: string) { setAmenity(a => a === query ? null : query) }
 
   // Build map URLs
   let embedUrl: string
-  let openUrl: string
   const dest   = to.trim()
   const origin = from.trim()
 
   if (amenity && dest) {
     const q = encodeQ(`${amenity} within ${radius}km near ${dest}`)
     embedUrl = `https://maps.google.com/maps?q=${q}&output=embed&z=${radius <= 5 ? 14 : radius <= 10 ? 13 : 12}`
-    openUrl  = `https://www.google.com/maps/search/${q}`
   } else if (origin && dest) {
     const o = encodeQ(origin), d = encodeQ(dest)
     embedUrl = `https://maps.google.com/maps?saddr=${o}&daddr=${d}&dirflg=${mode.dirflg}&output=embed`
-    openUrl  = `https://www.google.com/maps/dir/?api=1&origin=${o}&destination=${d}&travelmode=${mode.mode}`
   } else if (dest) {
     embedUrl = `https://maps.google.com/maps?q=${encodeQ(dest)}&output=embed`
-    openUrl  = `https://www.google.com/maps/search/${encodeQ(dest)}`
   } else {
     embedUrl = 'https://maps.google.com/maps?q=Stockholm,Sweden&output=embed&z=12'
-    openUrl  = 'https://www.google.com/maps/place/Stockholm,Sweden'
   }
 
   return (
@@ -77,47 +120,12 @@ export default function Maps() {
             </button>
             <AddressInput label="To" value={to} onChange={v => { setTo(v); setAmenity(null) }} placeholder="e.g. Kungsgatan 10, Stockholm" />
           </div>
-          <a
-            href={openUrl}
-            target="_blank"
-            rel="noreferrer"
-            title="Open in Google Maps"
-            className="mb-0.5 w-9 h-9 rounded-lg border border-gray-200 bg-white hover:bg-gray-50
-                       flex items-center justify-center text-gray-400 hover:text-teal-600 transition-colors shrink-0"
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-              <polyline points="15 3 21 3 21 9"/>
-              <line x1="10" y1="14" x2="21" y2="3"/>
-            </svg>
-          </a>
-        </div>
-
-        {/* Travel mode */}
-        <div className="flex gap-2 flex-wrap justify-center">
-          {TRAVEL_MODES.map(m => {
-            const Icon = m.icon
-            return (
-              <button
-                key={m.label}
-                onClick={() => { setMode(m); setAmenity(null) }}
-                title={m.label}
-                className={`px-3 py-1.5 rounded-full border transition-all ${
-                  mode.label === m.label && !amenity
-                    ? 'bg-teal-600 border-teal-600 text-white'
-                    : 'bg-white border-gray-200 hover:border-gray-300 text-gray-500'
-                }`}
-              >
-                <Icon size={16} />
-              </button>
-            )
-          })}
         </div>
 
         {/* Amenity filters */}
         <div>
           <div className="text-xs font-semibold text-green-600 uppercase tracking-wider mb-2">
-            Nearby amenities{to.trim() ? <span className="normal-case font-normal ml-1">near <span className="font-semibold text-gray-600">{to.trim()}</span></span> : ''}
+            Nearby
           </div>
           <div className="flex gap-2 flex-wrap">
             {AMENITIES.map(a => (
@@ -152,10 +160,111 @@ export default function Maps() {
               ))}
             </div>
           )}
-          {amenity && !dest && <p className="text-xs text-gray-400 mt-2">Enter a "To" address to search nearby.</p>}
           {amenity && dest && <p className="text-xs text-gray-400 mt-2">Tap the highlighted filter again to go back to directions.</p>}
         </div>
 
+        {/* Target Areas — collapsible */}
+        <div className="border-t border-gray-100 pt-3">
+          <button
+            onClick={() => setAreasOpen(o => !o)}
+            className="flex items-center justify-between w-full text-xs font-bold text-green-600 uppercase tracking-wider"
+          >
+            <span>Target Areas {areas.length > 0 && <span className="ml-1 text-gray-400 normal-case font-normal">({areas.length})</span>}</span>
+            {areasOpen ? <ChevronUp size={14} className="text-gray-400" /> : <ChevronDown size={14} className="text-gray-400" />}
+          </button>
+
+          {areasOpen && (
+            <div className="mt-3 space-y-4">
+              {PRIORITIES.map(p => {
+                const group = areas.filter(a => a.priority === p.value)
+                return (
+                  <div key={p.value}>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className={`text-[11px] font-black uppercase tracking-widest ${p.color}`}>{p.label}</span>
+                      <button
+                        onClick={() => { setAddingPriority(p.value); setNewName('') }}
+                        className="p-1 rounded-lg text-gray-300 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                        title={`Add ${p.label} area`}
+                      >
+                        <Plus size={12} />
+                      </button>
+                    </div>
+
+                    <div className="space-y-1">
+                      {group.map(area => (
+                        <div key={area.id} className="group flex items-center gap-1.5 rounded-xl px-2 py-1.5 hover:bg-gray-50 transition-colors">
+                          {editId === area.id ? (
+                            <>
+                              <input
+                                className="flex-1 text-sm bg-transparent border-b border-teal-400 outline-none text-gray-800 pb-0.5"
+                                value={editName}
+                                onChange={e => setEditName(e.target.value)}
+                                onKeyDown={e => { if (e.key === 'Enter') commitEdit(area); if (e.key === 'Escape') setEditId(null) }}
+                                onBlur={() => commitEdit(area)}
+                                autoFocus
+                              />
+                              <select
+                                className="text-xs border border-gray-200 rounded-lg px-1 py-0.5 text-gray-600 bg-white"
+                                value={editPriority}
+                                onChange={e => setEditPriority(e.target.value as Priority)}
+                              >
+                                {PRIORITIES.map(pr => <option key={pr.value} value={pr.value}>{pr.label}</option>)}
+                              </select>
+                              <button onClick={() => commitEdit(area)} className="p-1 text-teal-500 hover:bg-teal-50 rounded-lg transition-colors">
+                                <Check size={12} />
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                className={`flex-1 text-sm font-medium truncate text-left transition-colors ${activeArea === area.id ? 'text-teal-600' : 'text-gray-800 hover:text-teal-700'}`}
+                                title={`Search ${area.name} on map`}
+                                onClick={() => { setTo(area.name); setAmenity(null); setActiveArea(area.id) }}
+                              >
+                                {area.name}
+                              </button>
+                              <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                                <button onClick={() => startEdit(area)} className="p-1 rounded-lg text-gray-300 hover:text-gray-600 hover:bg-gray-100 transition-all">
+                                  <Pencil size={11} />
+                                </button>
+                                <button onClick={() => deleteMutation.mutate(area.id)} className="p-1 rounded-lg text-gray-300 hover:text-red-400 hover:bg-red-50 transition-all">
+                                  <X size={11} />
+                                </button>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      ))}
+
+                    </div>
+
+                    {addingPriority === p.value && (
+                      <div className="mt-2 space-y-2">
+                        <AddressInput
+                          value={newName}
+                          onChange={setNewName}
+                          placeholder="Search area or address…"
+                        />
+                        <div className="flex gap-1.5">
+                          <button
+                            onClick={() => addMutation.mutate({ name: newName.trim(), priority: p.value })}
+                            disabled={!newName.trim() || addMutation.isPending}
+                            className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold text-white bg-teal-600 hover:bg-teal-700 disabled:opacity-40 transition-all active:scale-95"
+                          >
+                            <Check size={11} /> {addMutation.isPending ? 'Saving…' : 'Save'}
+                          </button>
+                          <button onClick={() => { setAddingPriority(null); setNewName('') }} className="px-3 py-1.5 rounded-full text-xs font-semibold text-gray-400 hover:text-gray-600 transition-colors">
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Embedded map */}

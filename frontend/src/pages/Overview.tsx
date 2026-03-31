@@ -5,7 +5,7 @@ import { dashboard, data as dataApi, viewings as viewingsApi, upcoming as upcomi
 import MetricCard from '../components/MetricCard'
 import Alert from '../components/Alert'
 import SavingsChart from '../components/SavingsChart'
-import { Clock, Trash2, Download, Upload } from 'lucide-react'
+import { Clock, Trash2, Download, Upload, MoreHorizontal } from 'lucide-react'
 
 function formatDaysAway(dt: string): string {
   const d = new Date(dt)
@@ -23,6 +23,7 @@ export default function Dashboard() {
   const [confirmClear, setConfirmClear] = useState(false)
   const [importing, setImporting] = useState(false)
   const [importMsg, setImportMsg] = useState('')
+  const [menuOpen, setMenuOpen] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
   async function handleClear() {
@@ -107,11 +108,8 @@ export default function Dashboard() {
         const rows = XLSX.utils.sheet_to_json<any>(upcomingSheet)
         for (const r of rows) {
           await upcomingApi.add({
-            address:      r.address      || '',
-            datetime:     r.datetime     || '',
-            area:         r.area         || '',
-            asking_price: r.asking_price || '',
-            notes:        r.notes        || '',
+            address:  r.address  || '',
+            datetime: r.datetime || '',
           })
         }
       }
@@ -139,7 +137,6 @@ export default function Dashboard() {
           await targetAreasApi.add({
             name:     r.name     || '',
             priority: r.priority || 'Medium',
-            notes:    r.notes    || '',
           })
         }
       }
@@ -193,23 +190,43 @@ export default function Dashboard() {
             Welcome back{settings.p1_name ? <>, <span className="font-semibold">{settings.p1_name}{settings.p2_name ? ` & ${settings.p2_name}` : ''}</span></> : ''} — your journey at a glance!
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <button className="btn-secondary !px-3" onClick={handleExport} title="Export data">
-            <Download size={14} />
-          </button>
-          <button className="btn-secondary !px-3" onClick={() => fileRef.current?.click()} disabled={importing} title={importing ? 'Importing…' : 'Import data'}>
-            {importing ? <span className="text-xs">…</span> : <Upload size={14} />}
-          </button>
-          {!confirmClear ? (
-            <button className="btn-danger !px-3" onClick={() => setConfirmClear(true)} title="Delete all data">
-              <Trash2 size={14} />
-            </button>
-          ) : (
+        <div className="relative">
+          {confirmClear ? (
             <div className="flex items-center gap-2">
               <span className="text-xs text-red-600 font-medium">Delete all data?</span>
               <button className="btn-danger" onClick={handleClear}>Yes</button>
               <button className="btn-secondary" onClick={() => setConfirmClear(false)}>No</button>
             </div>
+          ) : (
+            <>
+              <button className="btn-secondary !px-3" onClick={() => setMenuOpen(o => !o)} title="Options">
+                <MoreHorizontal size={14} />
+              </button>
+              {menuOpen && (
+                <div className="absolute right-0 top-10 z-20 bg-white border border-gray-100 shadow-card rounded-2xl py-1 w-44">
+                  <button
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    onClick={() => { handleExport(); setMenuOpen(false) }}
+                  >
+                    <Download size={14} className="text-gray-400" /> Export
+                  </button>
+                  <button
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    onClick={() => { fileRef.current?.click(); setMenuOpen(false) }}
+                    disabled={importing}
+                  >
+                    <Upload size={14} className="text-gray-400" /> {importing ? 'Importing…' : 'Import'}
+                  </button>
+                  <div className="border-t border-gray-50 my-1" />
+                  <button
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                    onClick={() => { setConfirmClear(true); setMenuOpen(false) }}
+                  >
+                    <Trash2 size={14} /> Delete
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

@@ -65,9 +65,6 @@ export interface UpcomingViewing {
   id: string
   address: string
   datetime: string
-  area: string
-  asking_price: string
-  notes: string
 }
 
 export interface DashboardData {
@@ -140,7 +137,7 @@ export const viewings = {
 // ── Upcoming ───────────────────────────────────────────────────────────────────
 export const upcoming = {
   list: () => request<UpcomingViewing[]>('/upcoming'),
-  add: (data: { address: string; datetime: string; area?: string; asking_price?: string; notes?: string }) =>
+  add: (data: { address: string; datetime: string }) =>
     request<{ ok: boolean; id: string }>('/upcoming', {
       method: 'POST',
       body: JSON.stringify(data),
@@ -149,25 +146,6 @@ export const upcoming = {
     request<{ ok: boolean }>(`/upcoming/${id}`, { method: 'DELETE' }),
 }
 
-// ── Listing fetcher ────────────────────────────────────────────────────────────
-export interface FetchedListing {
-  name: string
-  price: number | null
-  sqm: number | null
-  rooms: number | null
-  image: string
-  site: string
-  description: string
-  partial?: boolean
-}
-
-export const listings = {
-  fetch: (url: string) =>
-    request<FetchedListing>('/fetch-listing', {
-      method: 'POST',
-      body: JSON.stringify({ url }),
-    }),
-}
 
 // ── Blobs (checklist, comparison, calc snapshots) ──────────────────────────────
 export const blobs = {
@@ -184,17 +162,16 @@ export interface TargetArea {
   id: string
   name: string
   priority: string
-  notes: string
 }
 
 export const targetAreas = {
   list: () => request<TargetArea[]>('/target-areas'),
-  add: (data: { name: string; priority: string; notes: string }) =>
+  add: (data: { name: string; priority: string }) =>
     request<{ ok: boolean; id: string }>('/target-areas', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
-  update: (id: string, data: { name: string; priority: string; notes: string }) =>
+  update: (id: string, data: { name: string; priority: string }) =>
     request<{ ok: boolean }>(`/target-areas/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),

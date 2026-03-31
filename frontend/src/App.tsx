@@ -10,11 +10,9 @@ import Dashboard from './pages/Overview'
 import Savings from './pages/Savings'
 import Viewings from './pages/Viewings'
 import Maps from './pages/Maps'
-import Areas from './pages/Areas'
 import Calculator from './pages/Calculator'
 import Comparison from './pages/Comparison'
 import Checklist from './pages/Checklist'
-import BidTracker from './pages/BidTracker'
 import BrfChecker from './pages/BrfChecker'
 import Privacy from './pages/Privacy'
 import Terms from './pages/Terms'
@@ -86,11 +84,9 @@ function App() {
         <Route path="/savings" element={<Savings />} />
         <Route path="/viewings" element={<Viewings />} />
         <Route path="/maps" element={<Maps />} />
-        <Route path="/areas" element={<Areas />} />
         <Route path="/calculator" element={<Calculator />} />
         <Route path="/comparison" element={<Comparison />} />
         <Route path="/checklist" element={<Checklist />} />
-        <Route path="/bid-tracker" element={<BidTracker />} />
         <Route path="/brf-checker" element={<BrfChecker />} />
       </Routes>
     </Layout>

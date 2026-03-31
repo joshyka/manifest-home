@@ -21,30 +21,27 @@ Your personal home-buying command centre — track savings progress, log viewing
 | Page | Purpose |
 | --- | --- |
 | Overview | KPIs, savings progress, loan status, upcoming viewings |
-| Savings | Monthly contributions, loan promise status, projection table |
+| Savings | Monthly contributions, loan promise status, savings target tracker |
 | Checklist | Drag-to-reorder kanban board with custom categories |
-| Viewings | Log viewed apartments and upcoming reminders |
-| Bid Tracker | Bidding history — rounds, highest bid, your bid |
-| Comparison | Compare up to 4 listings side by side |
-| Calculator | Swedish mortgage calculator with stress test and net income buffer |
-| Areas | Target areas grouped by priority |
+| Viewings | Log viewed apartments, track bids, and set viewing reminders |
+| Comparison | Compare up to 4 listings side by side with adjustable interest rate |
+| Calculator | Swedish mortgage calculator with stress test and net household cash flow |
 | BRF Checker | Evaluate a BRF's financial health — debt/sqm, fee/sqm, land ownership |
-| Maps | Directions and nearby amenities via Google Maps |
+| Maps | Explore areas, nearby amenities, and manage target areas via Google Maps |
 
 ---
 
 ## Features
 
-- Onboarding wizard on first login — collects buyer names, savings, and target
-- Per-user data isolation via Supabase RLS
 - PIN login or Google OAuth with email allowlist
-- All data stored in Supabase — synced across devices, nothing in localStorage
-- Export / import full backup as Excel (settings, viewings, checklist, comparisons, snapshots, target areas, BRF checks)
-- Drag-to-reorder kanban checklist with cross-column support
-- Swedish mortgage rules: 10% minimum down payment, amortisation tiers, stress test at 7%
-- Net income field in calculator to show monthly buffer after all housing costs
-- Previous calculation snapshots saved per user
-- Delete confirmations on all destructive actions
+- Per-user data isolation via Supabase RLS — nothing in localStorage
+- Export / import full backup as Excel, or delete all data from the Overview menu
+- Swedish mortgage rules: 10% down, amortisation tiers, 7% stress test, ränteavdrag
+- Drag-to-reorder checklist with category autocomplete
+- Bid tracking and viewing reminders inside Viewings
+- BRF and Comparison forms always visible — no toggling
+- Target areas grouped by priority, click to search on map
+- Calculator snapshots saved per session with interest rate label
 
 ---
 

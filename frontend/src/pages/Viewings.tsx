@@ -4,7 +4,7 @@ import { useSearchParams } from 'react-router-dom'
 import { viewings as viewingsApi, upcoming as upcomingApi } from '../lib/api'
 import type { Viewing } from '../lib/api'
 import Alert from '../components/Alert'
-import { Plus, X, Trash2, ChevronDown, ChevronUp, Clock, Pencil, Check } from 'lucide-react'
+import { Plus, X, Trash2, ChevronDown, ChevronUp, Clock, Pencil, Check, TrendingUp, Info, BellPlus } from 'lucide-react'
 
 // ── Listings tab ─────────────────────────────────────────────────────────────
 function ListingsTab({ autoOpen }: { autoOpen: boolean }) {
@@ -410,8 +410,12 @@ function UpcomingTab() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-end">
-        <button className="btn-primary" onClick={() => setOpen(o => !o)}>
-          {open ? <><X size={14} /> Cancel</> : <><Plus size={14} /> Add</>}
+        <button
+          className={open ? 'btn-secondary !px-3' : 'btn-primary !px-3'}
+          onClick={() => setOpen(o => !o)}
+          title={open ? 'Cancel' : 'Add reminder'}
+        >
+          {open ? <X size={16} /> : <BellPlus size={16} />}
         </button>
       </div>
 
@@ -525,9 +529,103 @@ function UpcomingTab() {
   )
 }
 
+// ── Bids tab ──────────────────────────────────────────────────────────────────
+function fmt(n: number) { return Math.round(n).toLocaleString('sv-SE') }
+
+function parseBids(notes: string): number[] {
+  return notes.replace('[archived]', '').split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n) && n > 0)
+}
+
+function parsePrice(s: string): number | null {
+  const n = parseInt(String(s).replace(/\s/g, ''))
+  return isNaN(n) || n === 0 ? null : n
+}
+
+function BidsTab() {
+  const { data: list = [] } = useQuery({ queryKey: ['viewings'], queryFn: viewingsApi.list })
+
+  const bids = list
+    .filter(v => v.outcome === 'Went to bidding')
+    .map(v => ({
+      ...v,
+      rounds:   parseBids(v.notes || ''),
+      highest:  parsePrice(v.final_price),
+      myBidAmt: parsePrice(v.my_bid),
+    }))
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+
+  const mostRounds = bids.length ? Math.max(...bids.map(b => b.rounds.length)) : 0
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2 px-3 py-2 bg-teal-50 border border-teal-100 rounded-xl">
+        <Info size={13} className="text-teal-500 shrink-0" />
+        <p className="text-xs text-teal-700">Mark a listing as "Bidding" in the Listings tab to track it here.</p>
+      </div>
+      {bids.length > 0 && <>
+      <div className="flex justify-between items-center">
+        <span className="text-xs font-bold text-green-600 uppercase tracking-widest">Bids Placed</span>
+        <div className="text-3xl font-black text-teal-600">{bids.length}</div>
+      </div>
+
+      <div className="card overflow-x-auto p-0">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-gray-100">
+              {['Address', 'Date', 'Bid Rounds', 'Highest Bid', 'My Bid'].map(h => (
+                <th key={h} className="text-left py-3 px-5 text-[11px] font-bold text-green-600 uppercase tracking-wider">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {bids.map(b => (
+              <tr key={b.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                <td className="py-3.5 px-5 font-semibold text-gray-900">{b.address}</td>
+                <td className="py-3.5 px-5 text-gray-500 whitespace-nowrap">{b.date}</td>
+                <td className="py-3.5 px-5">
+                  {b.rounds.length > 0 ? (
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {b.rounds.map((r, i) => (
+                        <span key={i} className="flex items-center gap-1">
+                          <span className={`text-xs tabular-nums px-2 py-0.5 rounded-lg font-semibold ${
+                            i === b.rounds.length - 1 ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500'
+                          }`}>{fmt(r)}</span>
+                          {i < b.rounds.length - 1 && <TrendingUp size={10} className="text-gray-300" />}
+                        </span>
+                      ))}
+                    </div>
+                  ) : <span className="text-gray-300">—</span>}
+                </td>
+                <td className="py-3.5 px-5 font-bold text-gray-900 tabular-nums">
+                  {b.highest ? `${fmt(b.highest)} kr` : '—'}
+                </td>
+                <td className="py-3.5 px-5 tabular-nums">
+                  {b.myBidAmt ? <span className="font-bold text-teal-700">{fmt(b.myBidAmt)} kr</span> : <span className="text-gray-300">—</span>}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <div className="px-5 py-3 border-t border-gray-50 text-xs text-gray-400">
+          Bid rounds shown oldest → newest. My Bid is your personal bid amount.
+        </div>
+      </div>
+
+      {mostRounds > 1 && (
+        <div className="card bg-amber-50 border-amber-100">
+          <p className="text-sm text-amber-800">
+            <span className="font-bold">Longest auction:</span> {mostRounds} rounds.
+          </p>
+        </div>
+      )}
+      </>}
+    </div>
+  )
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 export default function Viewings() {
-  const [tab, setTab] = useState<'listings' | 'upcoming'>('listings')
+  const [tab, setTab] = useState<'listings' | 'upcoming' | 'bids'>('listings')
   const [searchParams, setSearchParams] = useSearchParams()
   const [autoOpen, setAutoOpen] = useState(false)
 
@@ -548,22 +646,22 @@ export default function Viewings() {
 
       {/* Tabs */}
       <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit">
-        {(['listings', 'upcoming'] as const).map(t => (
+        {(['listings', 'bids', 'upcoming'] as const).map(t => (
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all capitalize ${
+            className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all ${
               tab === t
                 ? 'bg-white text-teal-700 shadow-sm'
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >
-            {t === 'listings' ? 'Listings' : 'Reminders'}
+            {t === 'listings' ? 'Listings' : t === 'upcoming' ? 'Reminders' : 'Bids'}
           </button>
         ))}
       </div>
 
-      {tab === 'listings' ? <ListingsTab autoOpen={autoOpen} /> : <UpcomingTab />}
+      {tab === 'listings' ? <ListingsTab autoOpen={autoOpen} /> : tab === 'bids' ? <BidsTab /> : <UpcomingTab />}
     </div>
   )
 }

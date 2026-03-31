@@ -1,50 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { settings as settingsApi, dashboard as dashboardApi } from '../lib/api'
-import type { Settings, ProjectionRow } from '../lib/api'
+import type { Settings } from '../lib/api'
 import Alert from '../components/Alert'
-import { Pencil, X, Check } from 'lucide-react'
+import { Pencil, X, Check, TrendingUp } from 'lucide-react'
 
 function fmt(n: number) { return n.toLocaleString('sv-SE') }
-
-function ProjectionTable({ rows }: { rows: ProjectionRow[] }) {
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-gray-100">
-            <th className="text-left py-2.5 px-3 text-xs font-semibold text-green-600 uppercase tracking-wider">Month</th>
-            <th className="text-right py-2.5 px-3 text-xs font-semibold text-green-600 uppercase tracking-wider">Savings</th>
-            <th className="text-right py-2.5 px-3 text-xs font-semibold text-green-600 uppercase tracking-wider">Target</th>
-            <th className="text-right py-2.5 px-3 text-xs font-semibold text-green-600 uppercase tracking-wider">Gap</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map(r => (
-            <tr
-              key={r.month}
-              className={`border-b border-gray-50 ${r.is_current ? 'bg-teal-50' : ''}`}
-            >
-              <td className="py-2.5 px-3 font-medium text-gray-800">
-                {r.month}
-                {r.is_current && (
-                  <span className="ml-2 text-[10px] font-bold bg-teal-500 text-white px-1.5 py-0.5 rounded-full">
-                    Now
-                  </span>
-                )}
-              </td>
-              <td className="py-2.5 px-3 text-right font-semibold text-gray-800">{fmt(r.cumulative)} kr</td>
-              <td className="py-2.5 px-3 text-right text-gray-500">{fmt(r.target)} kr</td>
-              <td className={`py-2.5 px-3 text-right font-semibold ${r.gap <= 0 ? 'text-green-600' : 'text-amber-600'}`}>
-                {r.gap <= 0 ? '✓ Met' : `${fmt(r.gap)} kr`}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  )
-}
 
 export default function Savings() {
   const qc = useQueryClient()
@@ -79,8 +40,7 @@ export default function Savings() {
     if (form) mutation.mutate(form)
   }
 
-  const currentMonth = new Date().getMonth() + 1
-  const projDisplay = (dashData?.projection ?? []).filter(r => r.month_num >= currentMonth)
+  const projDisplay = (dashData?.projection ?? [])
 
   if (isLoading || !s) return (
     <div className="flex items-center justify-center h-64">
@@ -111,27 +71,9 @@ export default function Savings() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="space-y-3">
-        <div>
-          <h1 className="text-2xl font-black text-gray-900">Savings</h1>
-          <p className="text-sm text-gray-400 mt-0.5">Monitor your savings progress.</p>
-        </div>
-        <div className="flex justify-end gap-2">
-          {editing ? (
-            <>
-              <button className="btn-primary" onClick={() => form && mutation.mutate(form)} disabled={mutation.isPending}>
-                <Check size={14} /> {mutation.isPending ? 'Saving…' : 'Save'}
-              </button>
-              <button className="btn-secondary" onClick={() => setEditing(false)}>
-                <X size={14} /> Cancel
-              </button>
-            </>
-          ) : (
-            <button className="btn-primary" onClick={startEdit}>
-              <Pencil size={14} /> Edit
-            </button>
-          )}
-        </div>
+      <div>
+        <h1 className="text-2xl font-black text-gray-900">Savings</h1>
+        <p className="text-sm text-gray-400 mt-0.5">Monitor your savings progress.</p>
       </div>
 
       {/* Alerts */}
@@ -141,7 +83,12 @@ export default function Savings() {
       {/* View mode */}
       {!editing && (
         <div className="card">
-          <div className="section-label mb-4">Savings Plan</div>
+          <div className="flex items-center justify-between mb-4">
+            <div className="section-label !mb-0">Savings Plan</div>
+            <button className="p-2 rounded-xl text-teal-600 hover:bg-teal-50 transition-colors" onClick={startEdit} title="Edit">
+              <Pencil size={18} />
+            </button>
+          </div>
           <div className="divide-y divide-gray-50">
             {[
               ['Target Price', `${fmt(s.apartment_price)} kr`],
@@ -155,7 +102,7 @@ export default function Savings() {
               ['Bank', s.loan_bank && s.loan_bank !== 'nan' ? s.loan_bank : 'Not set'],
             ].map(([label, value]) => (
               <div key={label} className="flex justify-between items-baseline py-3 text-sm">
-                <span className="text-gray-400 font-medium">{label}</span>
+                <span className="text-gray-500 font-medium">{label}</span>
                 <span className="font-bold text-gray-900">{value}</span>
               </div>
             ))}
@@ -168,6 +115,17 @@ export default function Savings() {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Target Apartment */}
           <div className="card space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="section-label !mb-0">Savings Plan</div>
+              <div className="flex items-center gap-1">
+                <button type="submit" disabled={mutation.isPending} className="p-2 rounded-xl text-teal-600 hover:bg-teal-50 transition-colors" title="Save">
+                  <Check size={18} />
+                </button>
+                <button type="button" onClick={() => setEditing(false)} className="p-2 rounded-xl text-red-400 hover:bg-red-50 transition-colors" title="Cancel">
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
             <div className="section-label">Target Apartment</div>
             <p className="text-xs text-gray-400 -mt-2">
               Sets your down payment target. Minimum 10% required in Sweden.
@@ -270,15 +228,24 @@ export default function Savings() {
         </form>
       )}
 
-      {/* Projection table */}
-      <div className="card">
-        <h2 className="section-label">Monthly Breakdown</h2>
-        {projDisplay.length > 0 ? (
-          <ProjectionTable rows={projDisplay} />
-        ) : (
-          <p className="text-sm text-gray-400">Set your savings to see the projection.</p>
-        )}
-      </div>
+      {/* Target month */}
+      {(() => {
+        const hit = projDisplay.find(r => r.gap <= 0)
+        if (!hit || !s.apartment_price) return null
+        const currentMonth = new Date().getMonth() + 1
+        const isPast = hit.month_num < currentMonth
+        return (
+          <div className="card flex items-center gap-3">
+            <div className="w-9 h-9 rounded-2xl bg-teal-50 flex items-center justify-center shrink-0">
+              <TrendingUp size={18} className="text-teal-600" />
+            </div>
+            {isPast
+              ? <p className="text-sm font-semibold text-teal-700">Target already met!</p>
+              : <p className="text-sm font-semibold text-gray-900">On track to hit your target in <span className="text-teal-700">{hit.month}</span> <span className="text-gray-400 font-normal">(Q{Math.ceil(hit.month_num / 3)})</span></p>
+            }
+          </div>
+        )
+      })()}
     </div>
   )
 }

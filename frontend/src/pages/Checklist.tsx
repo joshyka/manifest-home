@@ -279,11 +279,12 @@ export default function Checklist() {
   function addTask() {
     const label = newLabel.trim()
     if (!label) return
-    const catName  = newCat.trim() || 'General'
-    const existing = localTasks.find(t => t.category === catName)
-    const color    = existing
+    const raw     = newCat.trim() || 'General'
+    const catName = raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase()
+    const existing = localTasks.find(t => t.category.toLowerCase() === catName.toLowerCase())
+    const color = existing
       ? existing.categoryColor
-      : CUSTOM_COLORS[new Set(localTasks.map(t => t.categoryColor)).size % CUSTOM_COLORS.length]
+      : CUSTOM_COLORS[new Set(localTasks.filter(t => t.category.toLowerCase() !== catName.toLowerCase()).map(t => t.categoryColor)).size % CUSTOM_COLORS.length]
     const updated = [...localTasks, {
       id: Math.random().toString(36).slice(2, 10),
       label,
@@ -316,16 +317,22 @@ export default function Checklist() {
       </div>
 
       {showAdd && (
-        <div className="card border-teal-100">
+        <div className="card border-teal-100 space-y-3">
           <div className="flex gap-2 flex-wrap">
             <input
               className="input w-36 shrink-0"
               placeholder="Category…"
+              list="cat-suggestions"
               value={newCat}
               onChange={e => setNewCat(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && addTask()}
               autoFocus
             />
+            <datalist id="cat-suggestions">
+              {[...new Set(localTasks.map(t => t.category))].map(c => (
+                <option key={c} value={c} />
+              ))}
+            </datalist>
             <input
               className="input flex-1 min-w-0"
               placeholder="Task description…"
@@ -333,18 +340,25 @@ export default function Checklist() {
               onChange={e => setNewLabel(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && addTask()}
             />
-            <button className="btn-primary shrink-0" onClick={() => { addTask(); setShowAdd(false) }} disabled={!newLabel.trim()}>
+          </div>
+          <div className="flex gap-2">
+            <button className="btn-primary" onClick={() => { addTask(); setShowAdd(false) }} disabled={!newLabel.trim()}>
               Save
+            </button>
+            <button className="btn-secondary" onClick={() => setShowAdd(false)}>
+              Cancel
             </button>
           </div>
         </div>
       )}
 
-      <div className="flex justify-end">
-        <button className="btn-primary" onClick={() => setShowAdd(o => !o)}>
-          {showAdd ? <><X size={14} /> Cancel</> : <><Plus size={14} /> Add</>}
-        </button>
-      </div>
+      {!showAdd && (
+        <div className="flex justify-end">
+          <button className="btn-primary" onClick={() => setShowAdd(true)}>
+            <Plus size={14} /> Add
+          </button>
+        </div>
+      )}
 
       <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
         <div

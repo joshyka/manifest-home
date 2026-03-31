@@ -20,18 +20,21 @@ export default function Terms() {
           <h2 className="text-sm font-bold text-gray-700">Your data</h2>
           <p className="text-sm text-gray-500 leading-relaxed">
             All data you enter belongs to you. It is used solely to power your experience within the
-            app — savings tracking, viewings, bid history, checklists, comparisons, and mortgage
-            snapshots. We do not sell, share, or monetise your data.
+            app — savings tracking, viewings, bid tracking, checklists, BRF health checks,
+            listing comparisons, mortgage snapshots, and target areas. We do not sell, share,
+            or monetise your data. You can export a full backup at any time from the Overview page,
+            or permanently delete all your data.
           </p>
         </section>
 
         <section className="space-y-2">
           <h2 className="text-sm font-bold text-gray-700">No financial advice</h2>
           <p className="text-sm text-gray-500 leading-relaxed">
-            The mortgage calculator, savings projections, stress test figures, and BRF health scores
-            in KeyJourney are for informational purposes only. They do not constitute financial,
-            legal, or mortgage advice. Always consult a qualified adviser before making financial
-            decisions.
+            The mortgage calculator, savings projections, stress test figures, BRF health scores,
+            and listing cost estimates in KeyJourney are for informational purposes only. They do
+            not constitute financial, legal, or mortgage advice. Interest rates, amortisation rules,
+            and tax relief figures are estimates based on Swedish conventions and may not reflect
+            your exact situation. Always consult a qualified adviser before making financial decisions.
           </p>
         </section>
 

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, X, Pencil, ChevronDown, ChevronUp } from 'lucide-react'
+import { X, Pencil, ChevronDown, ChevronUp } from 'lucide-react'
 import { useBlob } from '../lib/useBlob'
 
 interface BrfEntry {
@@ -159,7 +159,7 @@ function BrfCard({ entry, onDelete, onEdit }: {
 function BrfForm({ initial, onSave, onCancel }: {
   initial?: BrfEntry
   onSave: (data: Omit<BrfEntry, 'id' | 'date'>) => void
-  onCancel: () => void
+  onCancel?: () => void
 }) {
   const [name,       setName]       = useState(initial?.name || '')
   const [address,    setAddress]    = useState(initial?.address || '')
@@ -167,13 +167,25 @@ function BrfForm({ initial, onSave, onCancel }: {
   const [debt,       setDebt]       = useState(initial?.andel_skuld?.toString() || '')
   const [fee,        setFee]        = useState(initial?.monthly_fee?.toString() || '')
   const [aptSqm,     setAptSqm]     = useState(initial?.apartment_sqm?.toString() || '')
+  const [touched,    setTouched]    = useState(false)
+  const [checked,    setChecked]    = useState(false)
 
   return (
     <div className="card border-teal-100 space-y-4">
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="label !text-green-600">BRF Name</label>
-          <input className="input" placeholder="e.g. BRF Solsidan" value={name} onChange={e => setName(e.target.value)} autoFocus />
+          <label className="label !text-green-600">BRF Name <span className="text-red-400">*</span></label>
+          <input
+            className={`input ${touched && !name.trim() ? 'border-red-300 focus:border-red-400' : ''}`}
+            placeholder="e.g. BRF Solsidan"
+            value={name}
+            onChange={e => setName(e.target.value)}
+            onBlur={() => setTouched(true)}
+            autoFocus
+          />
+          {touched && !name.trim() && (
+            <p className="text-xs text-red-400 mt-1">Name is required</p>
+          )}
         </div>
         <div>
           <label className="label !text-green-600">Address</label>
@@ -184,7 +196,7 @@ function BrfForm({ initial, onSave, onCancel }: {
           <input type="number" className="input" placeholder="e.g. 350000" min={0} value={debt} onChange={e => setDebt(e.target.value)} />
         </div>
         <div>
-          <label className="label !text-green-600">Månadsavgift (kr/month)</label>
+          <label className="label !text-green-600">Avgift / month</label>
           <input type="number" className="input" placeholder="e.g. 3500" min={0} value={fee} onChange={e => setFee(e.target.value)} />
         </div>
         <div>
@@ -206,22 +218,29 @@ function BrfForm({ initial, onSave, onCancel }: {
           </div>
         </div>
       </div>
-      <div className="flex gap-2">
+      <div className="flex gap-2 justify-end">
         <button
-          className="btn-primary"
-          onClick={() => onSave({
-            name: name.trim(),
-            address: address.trim(),
-            owns_land: ownsLand,
-            andel_skuld: parseFloat(debt) || 0,
-            monthly_fee: parseFloat(fee) || 0,
-            apartment_sqm: parseFloat(aptSqm) || 0,
-          })}
-          disabled={!name.trim()}
+          className={`btn-primary transition-all ${checked ? '!bg-teal-50 !text-teal-600 !border-teal-200 !border' : ''}`}
+          onClick={() => {
+            if (!name.trim()) { setTouched(true); return }
+            onSave({
+              name: name.trim(),
+              address: address.trim(),
+              owns_land: ownsLand,
+              andel_skuld: parseFloat(debt) || 0,
+              monthly_fee: parseFloat(fee) || 0,
+              apartment_sqm: parseFloat(aptSqm) || 0,
+            })
+            if (!onCancel) {
+              setName(''); setAddress(''); setOwnsLand('no'); setDebt(''); setFee(''); setAptSqm(''); setTouched(false)
+              setChecked(true)
+              setTimeout(() => setChecked(false), 2000)
+            }
+          }}
         >
-          Save
+          {checked ? '✓ Checked' : 'Check'}
         </button>
-        <button className="btn-secondary" onClick={onCancel}>Cancel</button>
+        {onCancel && <button className="btn-secondary" onClick={onCancel}>Cancel</button>}
       </div>
     </div>
   )
@@ -230,12 +249,10 @@ function BrfForm({ initial, onSave, onCancel }: {
 // ── Main ──────────────────────────────────────────────────────────────────────
 export default function BrfChecker() {
   const [entries, saveEntries] = useBlob<BrfEntry[]>('brf_checks', [])
-  const [showAdd, setShowAdd]  = useState(false)
   const [editing, setEditing]  = useState<BrfEntry | null>(null)
 
   function addEntry(data: Omit<BrfEntry, 'id' | 'date'>) {
     saveEntries([...entries, { ...data, id: crypto.randomUUID().slice(0, 8), date: new Date().toLocaleDateString('sv-SE') }])
-    setShowAdd(false)
   }
 
   function saveEdit(data: Omit<BrfEntry, 'id' | 'date'>) {
@@ -251,16 +268,10 @@ export default function BrfChecker() {
         <p className="text-sm text-gray-400 mt-0.5">Evaluate a BRF's financial health before bidding</p>
       </div>
 
-      {!showAdd && !editing && (
-        <div className="flex justify-end">
-          <button onClick={() => setShowAdd(true)} className="btn-primary">
-            <Plus size={14} /> Add
-          </button>
-        </div>
-      )}
-
-      {showAdd && <BrfForm onSave={addEntry} onCancel={() => setShowAdd(false)} />}
-      {editing && <BrfForm initial={editing} onSave={saveEdit} onCancel={() => setEditing(null)} />}
+      {editing
+        ? <BrfForm initial={editing} onSave={saveEdit} onCancel={() => setEditing(null)} />
+        : <BrfForm onSave={addEntry} />
+      }
 
       <div className="space-y-4">
         {entries.map(e => (
