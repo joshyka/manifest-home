@@ -13,6 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, Union
 import datetime
+import httpx
 
 from utils.supabase_client import get_client
 from utils.data import (
@@ -516,3 +517,24 @@ def run_cleanup(authorization: Optional[str] = Header(None)):
     result = cleanup_old_data()
     print(f"[cleanup] {result}", flush=True)
     return {"ok": True, **result}
+
+
+# ── Riksbank rate proxy (avoids browser CORS restriction) ─────────────────────
+@app.get("/api/riksbank-rate")
+def riksbank_rate():
+    # API requires explicit date range: /observations/{series}/{from}/{to}
+    today = datetime.date.today()
+    date_from = (today - datetime.timedelta(days=14)).isoformat()
+    date_to = today.isoformat()
+    url = f"https://api.riksbank.se/swea/v1/observations/SEMB5YCACOMB/{date_from}/{date_to}"
+    try:
+        r = httpx.get(url, headers={"Accept": "application/json"}, timeout=10)
+        r.raise_for_status()
+        data = r.json()
+        if not data:
+            raise ValueError("empty response")
+        raw = data[-1]["value"]  # most recent entry
+        value = round(float(raw) * 10) / 10
+        return {"value": value}
+    except Exception:
+        raise HTTPException(status_code=502, detail="Could not fetch Riksbank rate")
