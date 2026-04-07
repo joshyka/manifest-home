@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
+import { useQueryClient, useQuery } from '@tanstack/react-query'
 import * as XLSX from 'xlsx'
-import { Trash2, Users, Copy, Check } from 'lucide-react'
-import { dashboard, data as dataApi, viewings as viewingsApi, upcoming as upcomingApi, settings as settingsApi, targetAreas as targetAreasApi, blobs, household as householdApi } from '../lib/api'
+import { Trash2, Users, Copy, Check, Pencil } from 'lucide-react'
+import { data as dataApi, viewings as viewingsApi, upcoming as upcomingApi, settings as settingsApi, targetAreas as targetAreasApi, blobs, household as householdApi } from '../lib/api'
 import type { HouseholdStatus } from '../lib/api'
 import Alert from '../components/Alert'
 
@@ -15,17 +15,21 @@ export default function Settings() {
   const [confirmClear, setConfirmClear] = useState(false)
 
   // Household state
-  const [hh, setHh] = useState<HouseholdStatus | null>(null)
   const [hhBusy, setHhBusy] = useState(false)
   const [hhErr, setHhErr] = useState('')
   const [joinCode, setJoinCode] = useState('')
   const [codeCopied, setCodeCopied] = useState(false)
   const [timeLeft, setTimeLeft] = useState('')
   const [hhMode, setHhMode] = useState<'none' | 'share' | 'join'>('none')
+  const [hhName, setHhName] = useState('')
+  const [editingName, setEditingName] = useState(false)
 
-  useEffect(() => {
-    householdApi.status().then(setHh).catch((e: any) => setHhErr(e.message ?? 'Failed to load household status'))
-  }, [])
+  const { data: hh } = useQuery<HouseholdStatus>({
+    queryKey: ['household-status'],
+    queryFn: householdApi.status,
+    staleTime: 30_000,
+  })
+  const setHh = (val: HouseholdStatus) => { qc.setQueryData(['household-status'], val) }
 
   useEffect(() => {
     if (!hh?.invite_expires_at) return
@@ -157,27 +161,56 @@ export default function Settings() {
         <div className="p-5 space-y-3">
           <div className="flex items-center gap-2">
             <Users size={15} className="text-gray-400" />
-            <p className="text-sm font-bold text-gray-700">Household</p>
+            {hh?.role === 'owner' && editingName ? (
+              <>
+                <input
+                  autoFocus
+                  className="text-sm font-bold text-gray-700 bg-transparent border-b border-gray-300 focus:outline-none focus:border-teal-500 w-40"
+                  placeholder="e.g. Our First Home"
+                  value={hhName}
+                  onChange={e => setHhName(e.target.value)}
+                  onBlur={async () => {
+                    setEditingName(false)
+                    const updated = await householdApi.updateName(hhName)
+                    setHh(updated)
+                  }}
+                  onKeyDown={async e => {
+                    if (e.key === 'Enter') {
+                      setEditingName(false)
+                      const updated = await householdApi.updateName(hhName)
+                      setHh(updated)
+                    } else if (e.key === 'Escape') {
+                      setEditingName(false)
+                      setHhName(hh.name ?? '')
+                    }
+                  }}
+                />
+                <span className="text-xs text-gray-400">Enter to save · Esc to cancel</span>
+              </>
+            ) : hh?.role === 'owner' ? (
+              <div className="flex items-center gap-2">
+                <button
+                  className="flex items-center gap-1 group"
+                  onClick={() => { setHhName(hh.name ?? ''); setEditingName(true) }}
+                >
+                  <span className="text-sm font-bold text-gray-700 group-hover:text-teal-600 transition-colors">
+                    {hh.name || 'Household'}
+                  </span>
+                  <Pencil size={11} className="text-gray-300 group-hover:text-teal-500 transition-colors" />
+                </button>
+                <span className="text-xs text-gray-400">Click to rename</span>
+              </div>
+            ) : (
+              <p className="text-sm font-bold text-gray-700">Household</p>
+            )}
           </div>
           {hhErr && <p className="text-xs text-red-500">{hhErr}</p>}
-          {hh === null && !hhErr && <p className="text-xs text-gray-400">Loading…</p>}
+          {hh === undefined && !hhErr && <p className="text-xs text-gray-400">Loading…</p>}
 
           {hh?.role === 'none' && hhMode === 'none' && (
             <div className="flex gap-2">
-              <button className="btn-primary" onClick={() => setHhMode('share')}>Share House</button>
+              <button className="btn-primary" onClick={handleCreateHousehold} disabled={hhBusy}>{hhBusy ? 'Creating…' : 'Share House'}</button>
               <button className="btn-secondary" onClick={() => setHhMode('join')}>Join House</button>
-            </div>
-          )}
-
-          {hh?.role === 'none' && hhMode === 'share' && (
-            <div className="space-y-3">
-              <p className="text-xs text-gray-400">Create a household and share the invite code with your partner.</p>
-              <div className="flex gap-2">
-                <button className="btn-primary" onClick={async () => { await handleCreateHousehold(); setHhMode('none') }} disabled={hhBusy}>
-                  {hhBusy ? 'Creating…' : 'Create & get code'}
-                </button>
-                <button className="btn-secondary" onClick={() => setHhMode('none')}>Cancel</button>
-              </div>
             </div>
           )}
 
@@ -195,6 +228,15 @@ export default function Settings() {
             </div>
           )}
 
+          {hh?.role === 'owner' && !hh.partner_id && !hh.invite_code && (
+            <div className="space-y-2">
+              <p className="text-xs text-gray-400">Your household has no partner. Generate a new invite code to share.</p>
+              <button className="btn-primary" onClick={handleRegenerate} disabled={hhBusy}>
+                {hhBusy ? 'Generating…' : 'Generate invite code'}
+              </button>
+            </div>
+          )}
+
           {hh?.role === 'owner' && !hh.partner_id && hh.invite_code && (
             <div className="space-y-2">
               <p className="text-xs text-gray-400">Share this code with your partner. Expires in <span className="font-semibold text-gray-600">{timeLeft}</span>.</p>
@@ -209,14 +251,14 @@ export default function Settings() {
                   Generate new code
                 </button>
                 <span className="text-gray-200">·</span>
-                <button className="text-xs text-teal-600 hover:text-teal-700 font-semibold" disabled={hhBusy}
+                <button className="text-xs text-gray-400 hover:text-gray-600" disabled={hhBusy}
                   onClick={async () => {
                     setHhBusy(true); setHhErr('')
-                    try { await householdApi.delete(); setHh({ role: 'none' }); setHhMode('join') }
+                    try { await householdApi.delete(); setHh({ role: 'none' }); setHhMode('none') }
                     catch (e: any) { setHhErr(e.message) }
                     setHhBusy(false)
                   }}>
-                  Join House instead
+                  Cancel
                 </button>
               </div>
             </div>
@@ -238,7 +280,7 @@ export default function Settings() {
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-xs bg-teal-50 border border-teal-100 rounded-xl px-3 py-2">
                 <Users size={13} className="text-teal-500" />
-                <span className="text-teal-700 font-semibold">You're sharing a household</span>
+                <span className="text-teal-700 font-semibold">{hh.name ? hh.name : 'You\'re sharing a household'}</span>
               </div>
               <button className="text-xs text-red-400 hover:text-red-600" onClick={handleLeave} disabled={hhBusy}>
                 Leave household

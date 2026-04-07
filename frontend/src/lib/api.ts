@@ -194,6 +194,7 @@ export interface HouseholdStatus {
   partner_id?: string
   invite_code?: string
   invite_expires_at?: string
+  name?: string
 }
 
 export const household = {
@@ -204,6 +205,7 @@ export const household = {
   removePartner:   () => request<{ ok: boolean }>('/household/remove-partner', { method: 'POST' }),
   regenerate:      () => request<HouseholdStatus>('/household/regenerate', { method: 'POST' }),
   delete:          () => request<{ ok: boolean }>('/household', { method: 'DELETE' }),
+  updateName: (name: string) => request<HouseholdStatus>('/household/name', { method: 'PUT', body: JSON.stringify({ name }) }),
 }
 
 // ── Data management ────────────────────────────────────────────────────────────

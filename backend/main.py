@@ -421,20 +421,17 @@ def create_household(payload: dict = Depends(require_auth)):
             "invite_code": code, "invite_expires_at": expires,
         }).execute()
     row = supa.table("households").select("*").eq("id", hid).single().execute()
-    return row.data
+    return {"role": "owner", **row.data}
 
 @app.get("/api/household/status")
 def household_status(payload: dict = Depends(require_auth)):
     user_id = payload.get("sub", "dev-user")
     supa = get_client()
-    # Owner?
-    own = supa.table("households").select("*").eq("owner_id", user_id).execute()
-    if own.data:
-        return {"role": "owner", **own.data[0]}
-    # Partner?
-    part = supa.table("households").select("*").eq("partner_id", user_id).execute()
-    if part.data:
-        return {"role": "partner", **part.data[0]}
+    rows = supa.table("households").select("*").or_(f"owner_id.eq.{user_id},partner_id.eq.{user_id}").execute()
+    if rows.data:
+        row = rows.data[0]
+        role = "owner" if row.get("owner_id") == user_id else "partner"
+        return {"role": role, **row}
     return {"role": "none"}
 
 class JoinBody(BaseModel):
@@ -444,6 +441,9 @@ class JoinBody(BaseModel):
 def join_household(body: JoinBody, payload: dict = Depends(require_auth)):
     user_id = payload.get("sub", "dev-user")
     supa = get_client()
+    existing = supa.table("households").select("id").or_(f"owner_id.eq.{user_id},partner_id.eq.{user_id}").execute()
+    if existing.data:
+        raise HTTPException(status_code=400, detail="You are already in a household")
     code = body.code.upper().replace(" ", "")
     row = supa.table("households").select("*").eq("invite_code", code).execute()
     if not row.data:
@@ -486,6 +486,17 @@ def remove_partner(payload: dict = Depends(require_auth)):
     }).eq("owner_id", user_id).execute()
     return {"ok": True}
 
+class HouseholdNameBody(BaseModel):
+    name: str
+
+@app.put("/api/household/name")
+def update_household_name(body: HouseholdNameBody, payload: dict = Depends(require_auth)):
+    user_id = payload.get("sub", "dev-user")
+    supa = get_client()
+    supa.table("households").update({"name": body.name.strip() or None}).eq("owner_id", user_id).execute()
+    row = supa.table("households").select("*").eq("owner_id", user_id).single().execute()
+    return {"role": "owner", **row.data}
+
 @app.post("/api/household/regenerate")
 def regenerate_code(payload: dict = Depends(require_auth)):
     user_id = payload.get("sub", "dev-user")
@@ -496,7 +507,7 @@ def regenerate_code(payload: dict = Depends(require_auth)):
         "invite_code": code, "invite_expires_at": expires,
     }).eq("owner_id", user_id).execute()
     row = supa.table("households").select("*").eq("owner_id", user_id).single().execute()
-    return row.data
+    return {"role": "owner", **row.data}
 
 
 # ── Data management ───────────────────────────────────────────────────────────

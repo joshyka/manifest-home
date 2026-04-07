@@ -9,7 +9,6 @@ frontend/.env
 .venv/
 venv/
 backend/venv/
-frontend/venv/
 
 # Python cache
 __pycache__/
@@ -30,7 +29,6 @@ build/
 
 # Logs
 *.log
-npm-debug.log*
 
 # Editor
 .vscode/

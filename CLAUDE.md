@@ -49,7 +49,19 @@ Generic JSON blobs stored in `user_blobs` table, keyed by string (`checklist`, `
 ### Household sharing
 Partners access the owner's data. Backend resolves this in `require_auth()` — no special handling needed in route logic.
 
+The Settings UI has three household states for a user with `role: 'none'`:
+
+- Initial (`hhMode === 'none'`): shows "Share House" and "Join House" buttons
+- Clicking "Share House" immediately calls `handleCreateHousehold()` — no intermediate confirmation screen
+- Clicking "Join House" sets `hhMode === 'join'` and shows a code input
+
+Once a household is created (owner with invite code), a "Cancel" button deletes the household and returns to `hhMode === 'none'`. There is no `hhMode === 'share'` state.
+
+### Household name
+Owners can set the household name at any time — including before a partner has joined. The name is edited inline in the "Household" section heading (`Settings.tsx`); clicking it activates an inline input. Saved on Enter or blur, cancelled on Esc. The backend (`PUT /api/household/name`) has no partner-presence restriction. Partners see the name in the teal badge in their household view.
+
 ### Viewings archive
+
 Archived viewings are flagged by prepending `[archived]` to the notes field — not a separate column.
 
 ### Calculations (backend)

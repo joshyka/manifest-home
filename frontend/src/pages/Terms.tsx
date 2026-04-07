@@ -4,7 +4,7 @@ export default function Terms() {
       <div className="bg-white rounded-3xl shadow-card w-full max-w-2xl p-8 space-y-6">
         <div>
           <h1 className="text-2xl font-black text-gray-900">Terms of Service</h1>
-          <p className="text-xs text-gray-400 mt-1">Last updated: March 2026</p>
+          <p className="text-xs text-gray-400 mt-1">Last updated: April 2026</p>
         </div>
 
         <section className="space-y-2">
@@ -25,7 +25,8 @@ export default function Terms() {
             listing comparisons, mortgage snapshots, and target areas. We do not sell, share,
             or monetise your data. You can export a full backup at any time from the Overview page,
             or permanently delete all your data from the Settings page. If you are part of a
-            household, both members access the same data — leaving or removing a partner immediately
+            household, both members access the same data. The owner may set a household name at
+            any time — it is visible to both members. Leaving or removing a partner immediately
             revokes shared access.
           </p>
         </section>

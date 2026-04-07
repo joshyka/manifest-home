@@ -25,7 +25,7 @@ python -m pip install -q -r "$ROOT/requirements.txt"
 
 # Load .env from project root if it exists
 if [ -f "$ROOT/.env" ]; then
-  export $(grep -v '^#' "$ROOT/.env" | xargs)
+  set -a; source "$ROOT/.env"; set +a
 else
   echo "  WARNING: .env not found — app will not connect to Supabase"
 fi

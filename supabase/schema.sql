@@ -19,6 +19,7 @@
 
 -- Drop existing tables and policies cleanly
 DROP TABLE IF EXISTS user_blobs CASCADE;
+DROP TABLE IF EXISTS households CASCADE;
 DROP TABLE IF EXISTS target_areas CASCADE;
 DROP TABLE IF EXISTS upcoming_viewings CASCADE;
 DROP TABLE IF EXISTS viewings CASCADE;
@@ -109,6 +110,7 @@ CREATE TABLE households (
   partner_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
   invite_code TEXT UNIQUE,
   invite_expires_at TIMESTAMPTZ,
+  name TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

@@ -39,7 +39,7 @@ Your personal home-buying command centre — track savings progress, log viewing
 - Live Riksbank mortgage bond rate (SE MB 5Y) auto-fills Calculator and Comparison
 - Swedish mortgage rules: amortisation tiers, 7% stress test, ränteavdrag
 - Self-hosted fonts — no external tracking
-- Household sharing — owner generates a single-use invite code (48h expiry), partner joins via their own Google login and transparently accesses shared data
+- Household sharing — clicking "Share House" immediately creates a household and generates a single-use invite code (48h expiry); partner joins via their own Google login and transparently accesses shared data. Owner can cancel (deletes the household) or generate a new code at any time. Owner can set a household name at any time (before or after partner joins); name is visible to both members
 
 ---
 

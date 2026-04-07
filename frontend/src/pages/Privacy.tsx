@@ -4,7 +4,7 @@ export default function Privacy() {
       <div className="bg-white rounded-3xl shadow-card w-full max-w-2xl p-8 space-y-6">
         <div>
           <h1 className="text-2xl font-black text-gray-900">Privacy Policy</h1>
-          <p className="text-xs text-gray-400 mt-1">Last updated: March 2026</p>
+          <p className="text-xs text-gray-400 mt-1">Last updated: April 2026</p>
         </div>
 
         <section className="space-y-2">
@@ -37,8 +37,10 @@ export default function Privacy() {
           </p>
           <p className="text-sm text-gray-500 leading-relaxed">
             If you enable the Household feature, one partner you explicitly invite gains access to
-            your data via a single-use invite code that expires after 48 hours. Removing the partner
-            or leaving the household immediately revokes their access. No data is duplicated.
+            your data via a single-use invite code that expires after 48 hours. The owner can also
+            set a household name at any time — before or after the partner joins — and it is visible
+            to both members. Removing the partner or leaving the household immediately revokes their
+            access. No data is duplicated.
           </p>
         </section>
 
