@@ -11,21 +11,6 @@ Swedish home-buying app. Track savings, log apartment viewings, calculate mortga
 | Database / Auth | Supabase (Postgres + Auth) |
 | Deployment | Vercel (frontend static + Python serverless) |
 
-## Dev Setup
-
-```bash
-# Backend (port 8000)
-uvicorn backend.main:app --reload --port 8000
-
-# Frontend (port 5173, proxies /api → 8000)
-cd frontend && npm run dev
-
-# Or both at once
-./start.sh
-```
-
-Build: `cd frontend && npm run build` → `frontend/dist/`
-
 ## Project Structure
 
 ```
@@ -54,11 +39,11 @@ supabase/
 All go through `frontend/src/lib/api.ts`. The `request()` helper auto-injects the Supabase JWT, handles 401 (signs out) and 403 (blocks). Add new endpoints here, typed.
 
 ### Blob storage
-Generic JSON blobs stored in `user_blobs` table, keyed by string (`checklist`, `comparison_items`, `saved_comparisons`, `calc_snapshots`, `brf_checks`). Use the `useBlob<T>(key, fallback)` hook in components — it handles React Query caching + local localStorage cache.
+Generic JSON blobs stored in `user_blobs` table, keyed by string (`checklist`, `comparison_items`, `saved_comparisons`, `calc_snapshots`, `brf_checks`). Use the `useBlob<T>(key, fallback)` hook — handles React Query caching + localStorage cache.
 
 ### Auth flow
 - Frontend: Supabase Auth (anon key, browser) → JWT passed as `Authorization: Bearer` on every API call
-- Backend: `require_auth()` dependency validates JWT, resolves household partnerships (partner → owner's data transparently)
+- Backend: `require_auth()` validates JWT, resolves household partnerships (partner → owner's data transparently)
 - Optional email allowlist via `ALLOWED_EMAILS` env var
 
 ### Household sharing
@@ -83,22 +68,8 @@ All projection and loan logic lives in `utils/savings.py`. Uses pandas for 12-mo
 
 ## Environment Variables
 
-See `.env.example`. Required:
-- `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` — backend
-- `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` — frontend
-- `FRONTEND_URL` — CORS allowlist
-- `ALLOWED_EMAILS` — optional comma-separated allowlist
-- `CRON_SECRET` — protects `/api/cleanup` Vercel cron
-
-## Deployment
-
-Vercel. Config in `vercel.json` — builds frontend, rewrites `/api/*` to Python serverless. Daily cleanup cron at 3am UTC hits `/api/cleanup` (prunes viewings/upcoming older than 1 year).
+See `.env.example`. Backend: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `FRONTEND_URL`, `ALLOWED_EMAILS`, `CRON_SECRET`. Frontend: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`.
 
 ## UI Conventions
 
-- **Colours:** teal (primary), gold (accent) — defined in `tailwind.config.js`
-- **Cards:** `shadow-card` / `shadow-card-hover`, `rounded-3xl`
-- **Locale:** Swedish (`sv-SE`) for number/currency formatting
-- **Icons:** lucide-react only
-- **Animations:** `count-up`, `fade-in`, `slide-up` (defined in Tailwind config)
-- Blobs are stored as plain JSON.
+Tailwind: teal primary, gold accent, `shadow-card`/`shadow-card-hover`, `rounded-3xl`. Locale: `sv-SE`. Icons: lucide-react only. Animations: `count-up`, `fade-in`, `slide-up`. Blobs are plain JSON.
