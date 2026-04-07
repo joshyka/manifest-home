@@ -41,6 +41,10 @@ All go through `frontend/src/lib/api.ts`. The `request()` helper auto-injects th
 ### Blob storage
 Generic JSON blobs stored in `user_blobs` table, keyed by string (`checklist`, `comparison_items`, `saved_comparisons`, `calc_snapshots`, `brf_checks`). Use the `useBlob<T>(key, fallback)` hook — handles React Query caching + localStorage cache.
 
+`comparison_items` shape: `{ id, name, price, sqm, rooms, avgift, notes, rating }[]` — all fields editable in-place on the card. `image` and `site` fields were removed; do not re-add them.
+
+`saved_comparisons` shape: `{ id, name, date, items: CompItem[] }[]`
+
 ### Auth flow
 - Frontend: Supabase Auth (anon key, browser) → JWT passed as `Authorization: Bearer` on every API call
 - Backend: `require_auth()` validates JWT, resolves household partnerships (partner → owner's data transparently)
@@ -59,6 +63,12 @@ Once a household is created (owner with invite code), a "Cancel" button deletes 
 
 ### Household name
 Owners can set the household name at any time — including before a partner has joined. The name is edited inline in the "Household" section heading (`Settings.tsx`); clicking it activates an inline input. Saved on Enter or blur, cancelled on Esc. The backend (`PUT /api/household/name`) has no partner-presence restriction. Partners see the name in the teal badge in their household view.
+
+### Comparison page
+
+- Best value badge is computed as the item with the lowest `price / sqm` across all items — independent of the current sort order. Only shown when ≥2 items have both values set.
+- Loading a saved snapshot when active items exist shows a "Replace active?" confirmation — do not skip it.
+- Sort option labelled "Monthly" sorts by full estimated monthly cost (mortgage + avgift + 3 000 kr drift), not avgift alone.
 
 ### Viewings archive
 

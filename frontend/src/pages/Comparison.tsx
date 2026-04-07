@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useBlob } from '../lib/useBlob'
 import { useRiksbankRate } from '../lib/useRiksbankRate'
-import { X, ArrowUpDown, Star, Save, Trash2, ChevronDown, ChevronUp, RotateCcw, Plus, Check } from 'lucide-react'
+import { X, ArrowUpDown, Star, Save, Trash2, ChevronDown, ChevronUp, RotateCcw, Check } from 'lucide-react'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface CompItem {
@@ -11,8 +11,6 @@ interface CompItem {
   sqm: number
   rooms: number
   avgift: number
-  image: string
-  site: string
   notes: string
   rating: number   // 1–5
 }
@@ -123,12 +121,18 @@ function ListingCard({
             value={item.price || ''}
             onChange={e => onUpdate(item.id, 'price', parseInt(e.target.value) || 0)} />
         </div>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           <div>
             <label className="label !text-green-600">Size (m²)</label>
             <input type="number" className="input" step={1} min={0}
               value={item.sqm || ''}
               onChange={e => onUpdate(item.id, 'sqm', parseFloat(e.target.value) || 0)} />
+          </div>
+          <div>
+            <label className="label !text-green-600">Rooms</label>
+            <input type="number" className="input" step={1} min={0}
+              value={item.rooms || ''}
+              onChange={e => onUpdate(item.id, 'rooms', parseInt(e.target.value) || 0)} />
           </div>
           <div>
             <label className="label !text-green-600">Avgift (kr/mo)</label>
@@ -173,7 +177,7 @@ function AddForm({ onAdd }: { onAdd: (item: Omit<CompItem, 'id'>) => void }) {
 
   function handleAdd() {
     if (!name.trim()) { setTouched(true); return }
-    onAdd({ name: name.trim(), price, sqm, rooms, avgift, image: '', site: '', notes: '', rating: 0 })
+    onAdd({ name: name.trim(), price, sqm, rooms, avgift, notes: '', rating: 0 })
     setName(''); setPrice(0); setSqm(0); setRooms(0); setAvgift(0); setTouched(false)
     setAdded(true)
     setTimeout(() => setAdded(false), 2000)
@@ -235,16 +239,18 @@ export default function Comparison() {
   const [saved, saveSaved] = useBlob<SavedComparison[]>('saved_comparisons', [])
   const [sortBy,       setSortBy]       = useState<SortKey>('price')
   const [rate,         setRate]         = useState(3.5)
+  const [rateInput,    setRateInput]    = useState('3.5')
   const { data: liveRate } = useRiksbankRate()
 
   useEffect(() => {
-    if (liveRate) setRate(liveRate)
+    if (liveRate) { setRate(liveRate); setRateInput(String(liveRate)) }
   }, [liveRate])
   const [saveName,     setSaveName]     = useState('')
   const [showSaveBox,  setShowSaveBox]  = useState(false)
   const [showHistory,  setShowHistory]  = useState(false)
   const [confirmClear,    setConfirmClear]    = useState(false)
-const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [confirmLoadId,   setConfirmLoadId]   = useState<string | null>(null)
 
   function saveComparison() {
     if (!saveName.trim()) return
@@ -292,13 +298,16 @@ const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
     return 0
   })
 
-  // Best value = lowest price per sqm (with both values set)
-  const bestId = sorted.find(i => i.price > 0 && i.sqm > 0)?.id
+  // Best value = lowest price per sqm (independent of current sort order)
+  const eligible = items.filter(i => i.price > 0 && i.sqm > 0)
+  const bestId = eligible.length > 1
+    ? eligible.reduce((a, b) => a.price / a.sqm < b.price / b.sqm ? a : b).id
+    : undefined
 
   const SORT_OPTIONS: { key: SortKey; label: string }[] = [
     { key: 'price',       label: 'Price' },
     { key: 'sqm',         label: 'Size' },
-    { key: 'monthly',     label: 'Avgift' },
+    { key: 'monthly',     label: 'Monthly' },
     { key: 'rating',      label: 'My rating' },
   ]
 
@@ -404,16 +413,17 @@ const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
                 type="text"
                 inputMode="decimal"
                 className="w-12 text-center border border-gray-200 rounded-lg px-1.5 py-0.5 tabular-nums text-gray-700 [appearance:textfield]"
-                value={rate}
-                onChange={e => setRate(parseFloat(e.target.value) || 0)}
+                value={rateInput}
+                onChange={e => { setRateInput(e.target.value); const v = parseFloat(e.target.value); if (!isNaN(v)) setRate(v) }}
+                onBlur={() => setRateInput(String(rate))}
               />
               <span>%</span>
             </div>
           </div>
 
           {/* Cards grid */}
-          <div className={`grid gap-4 grid-cols-1 ${items.length >= 2 ? 'sm:grid-cols-2' : ''} ${items.length >= 3 ? 'lg:grid-cols-3' : ''}`}>
-            {sorted.map((item, i) => (
+          <div className={`grid gap-4 grid-cols-1 ${items.length >= 2 ? 'sm:grid-cols-2' : ''} ${items.length >= 3 ? 'lg:grid-cols-3' : ''} ${items.length >= 4 ? 'xl:grid-cols-4' : ''}`}>
+            {sorted.map((item) => (
               <ListingCard
                 key={item.id}
                 item={item}
@@ -482,12 +492,22 @@ const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
                     <div className="font-semibold text-gray-900 text-sm truncate">{snap.name}</div>
                     <div className="text-[11px] text-gray-400 mt-0.5">{snap.date} · {snap.items.length} listing{snap.items.length !== 1 ? 's' : ''}</div>
                   </div>
-                  <button
-                    onClick={() => loadComparison(snap)}
-                    className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-teal-600 text-white hover:bg-teal-700 transition-colors"
-                  >
-                    <RotateCcw size={11} /> Load
-                  </button>
+                  {confirmLoadId === snap.id ? (
+                    <div className="flex items-center gap-1 shrink-0">
+                      <span className="text-[11px] text-teal-600 font-medium">Replace active?</span>
+                      <button onClick={() => { loadComparison(snap); setConfirmLoadId(null) }}
+                        className="text-[11px] font-bold text-teal-600 hover:text-teal-700">Yes</button>
+                      <button onClick={() => setConfirmLoadId(null)}
+                        className="text-[11px] font-bold text-gray-400 hover:text-gray-600">No</button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => items.length > 0 ? setConfirmLoadId(snap.id) : loadComparison(snap)}
+                      className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-teal-600 text-white hover:bg-teal-700 transition-colors"
+                    >
+                      <RotateCcw size={11} /> Load
+                    </button>
+                  )}
                   {confirmDeleteId === snap.id ? (
                     <div className="flex items-center gap-1 shrink-0">
                       <span className="text-[11px] text-red-500 font-medium">Delete?</span>

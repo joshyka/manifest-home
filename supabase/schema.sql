@@ -12,8 +12,8 @@
 --
 -- Blob keys used by the app:
 --   checklist         — kanban tasks array
---   comparison_items  — active comparison board listings
---   saved_comparisons — named saved comparison snapshots
+--   comparison_items  — active comparison board listings { id, name, price, sqm, rooms, avgift, notes, rating }
+--   saved_comparisons — named saved comparison snapshots { id, name, date, items[] }
 --   calc_snapshots    — calculator result snapshots
 --   brf_checks        — BRF financial health checks
 
