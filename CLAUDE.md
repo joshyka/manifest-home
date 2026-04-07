@@ -43,6 +43,19 @@ Generic JSON blobs stored in `user_blobs` table, keyed by string (`checklist`, `
 
 `comparison_items` shape: `{ id, name, price, sqm, rooms, avgift, notes, rating }[]` — all fields editable in-place on the card. `image` and `site` fields were removed; do not re-add them.
 
+### Checklist
+
+Tasks shape: `{ id, label, status, category, categoryColor, custom, dueDate? }[]` stored in the `checklist` blob. `dueDate` is an optional ISO date string (`YYYY-MM-DD`).
+
+Due date badge colours (computed client-side, no backend involvement):
+
+- Overdue → red (`text-red-500 bg-red-50`)
+- Today → amber (`text-amber-600 bg-amber-50`)
+- ≤3 days → amber (`text-amber-500 bg-amber-50`)
+- Future → muted gray
+
+Edit mode uses a wrapper `<div onBlur>` that checks `relatedTarget` so clicking the date input doesn't close the edit — do not move `onBlur` back onto the label input.
+
 `saved_comparisons` shape: `{ id, name, date, items: CompItem[] }[]`
 
 ### Auth flow

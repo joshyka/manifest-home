@@ -31,6 +31,7 @@ interface Task {
   category: string
   categoryColor: string
   custom: boolean
+  dueDate?: string // ISO date string YYYY-MM-DD
 }
 
 const DEFAULT_TASKS: Task[] = [
@@ -45,18 +46,34 @@ const COLUMNS: { status: Status; label: string; bg: string; badge: string; dot: 
   { status: 'done',     label: 'Done',        bg: 'bg-teal-50/60',  badge: 'bg-teal-100 text-teal-700',   dot: '#2E7D52' },
 ]
 
+// ── Due date helper ────────────────────────────────────────────────────────────
+function dueDateBadge(dueDate?: string) {
+  if (!dueDate) return null
+  const today = new Date(); today.setHours(0, 0, 0, 0)
+  const due   = new Date(dueDate); due.setHours(0, 0, 0, 0)
+  const diff  = Math.round((due.getTime() - today.getTime()) / 86_400_000)
+  const label = diff === 0
+    ? 'Today'
+    : due.toLocaleDateString('sv-SE', { month: 'short', day: 'numeric' })
+  if (diff < 0)  return { label: `${Math.abs(diff)}d overdue`, cls: 'text-red-500 bg-red-50' }
+  if (diff === 0) return { label, cls: 'text-amber-600 bg-amber-50' }
+  if (diff <= 3)  return { label, cls: 'text-amber-500 bg-amber-50' }
+  return { label, cls: 'text-gray-400 bg-gray-100' }
+}
+
 // ── Sortable task card ─────────────────────────────────────────────────────────
 function TaskCard({
   task, onRemove, onEdit, isDragging = false,
 }: {
   task: Task
   onRemove: (id: string) => void
-  onEdit: (id: string, label: string) => void
+  onEdit: (id: string, label: string, dueDate?: string | null) => void
   isDragging?: boolean
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: task.id })
-  const [editing, setEditing] = useState(false)
-  const [draft, setDraft]     = useState(task.label)
+  const [editing, setEditing]   = useState(false)
+  const [draft, setDraft]       = useState(task.label)
+  const [draftDue, setDraftDue] = useState(task.dueDate ?? '')
   const inputRef = useRef<HTMLInputElement>(null)
 
   const style = {
@@ -67,13 +84,14 @@ function TaskCard({
 
   function startEdit() {
     setDraft(task.label)
+    setDraftDue(task.dueDate ?? '')
     setEditing(true)
     setTimeout(() => inputRef.current?.focus(), 0)
   }
 
   function commitEdit() {
     const trimmed = draft.trim()
-    if (trimmed) onEdit(task.id, trimmed)
+    if (trimmed) onEdit(task.id, trimmed, draftDue || null)
     setEditing(false)
   }
 
@@ -89,25 +107,50 @@ function TaskCard({
 
       <div className="flex-1 min-w-0">
         {editing ? (
-          <input
-            ref={inputRef}
-            className="w-full text-sm border-b border-teal-400 outline-none bg-transparent text-gray-800 pb-0.5"
-            value={draft}
-            onChange={e => setDraft(e.target.value)}
-            onKeyDown={e => {
-              if (e.key === 'Enter') commitEdit()
-              if (e.key === 'Escape') setEditing(false)
+          <div
+            onBlur={e => {
+              if (!e.currentTarget.contains(e.relatedTarget as Node)) commitEdit()
             }}
-            onBlur={commitEdit}
-          />
+          >
+            <input
+              ref={inputRef}
+              className="w-full text-sm border-b border-teal-400 outline-none bg-transparent text-gray-800 pb-0.5"
+              value={draft}
+              onChange={e => setDraft(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') commitEdit()
+                if (e.key === 'Escape') setEditing(false)
+              }}
+            />
+            <input
+              type="date"
+              className="mt-1.5 text-xs border-b border-teal-200 outline-none bg-transparent text-gray-500 w-full"
+              value={draftDue}
+              onChange={e => setDraftDue(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') commitEdit()
+                if (e.key === 'Escape') setEditing(false)
+              }}
+            />
+          </div>
         ) : (
           <p className={`text-sm leading-snug ${task.status === 'done' ? 'line-through text-gray-300' : 'text-gray-800'}`}>
             {task.label}
           </p>
         )}
-        <span className="text-[10px] font-semibold mt-1 inline-block" style={{ color: task.categoryColor }}>
-          {task.category}
-        </span>
+        <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+          <span className="text-[10px] font-semibold" style={{ color: task.categoryColor }}>
+            {task.category}
+          </span>
+          {!editing && (() => {
+            const badge = dueDateBadge(task.dueDate)
+            return badge ? (
+              <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${badge.cls}`}>
+                {badge.label}
+              </span>
+            ) : null
+          })()}
+        </div>
       </div>
 
       <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -130,12 +173,18 @@ function TaskCard({
 
 // Overlay card shown while dragging
 function DragCard({ task }: { task: Task }) {
+  const badge = dueDateBadge(task.dueDate)
   return (
     <div className="bg-white rounded-2xl border border-teal-300 shadow-lg px-3 py-2.5 flex items-start gap-2 rotate-1 opacity-95">
       <div className="w-0.5 self-stretch rounded-full shrink-0 mt-0.5" style={{ background: task.categoryColor }} />
       <div className="flex-1 min-w-0">
         <p className="text-sm leading-snug text-gray-800">{task.label}</p>
-        <span className="text-[10px] font-semibold mt-1 inline-block" style={{ color: task.categoryColor }}>{task.category}</span>
+        <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+          <span className="text-[10px] font-semibold" style={{ color: task.categoryColor }}>{task.category}</span>
+          {badge && (
+            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${badge.cls}`}>{badge.label}</span>
+          )}
+        </div>
       </div>
     </div>
   )
@@ -148,7 +197,7 @@ function Column({
   col: typeof COLUMNS[number]
   tasks: Task[]
   onRemove: (id: string) => void
-  onEdit: (id: string, label: string) => void
+  onEdit: (id: string, label: string, dueDate?: string | null) => void
   activeId: string | null
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: col.status })
@@ -196,6 +245,7 @@ export default function Checklist() {
   const [activeId, setActiveId]     = useState<string | null>(null)
   const [newLabel, setNewLabel]     = useState('')
   const [newCat, setNewCat]         = useState('')
+  const [newDue, setNewDue]         = useState('')
   const [showAdd, setShowAdd]       = useState(false)
 
   // Keep local in sync with blob when not dragging
@@ -263,8 +313,14 @@ export default function Checklist() {
     saveTasks(updated)
   }
 
-  function editTask(id: string, label: string) {
-    const updated = localTasks.map(t => t.id === id ? { ...t, label } : t)
+  function editTask(id: string, label: string, dueDate?: string | null) {
+    const updated = localTasks.map(t => {
+      if (t.id !== id) return t
+      const next = { ...t, label }
+      if (dueDate === null) delete next.dueDate
+      else if (dueDate) next.dueDate = dueDate
+      return next
+    })
     setLocalTasks(updated)
     saveTasks(updated)
   }
@@ -285,11 +341,13 @@ export default function Checklist() {
       category: catName,
       categoryColor: color,
       custom: true,
+      ...(newDue ? { dueDate: newDue } : {}),
     }]
     setLocalTasks(updated)
     saveTasks(updated)
     setNewLabel('')
     setNewCat('')
+    setNewDue('')
   }
 
   const done  = localTasks.filter(t => t.status === 'done').length
@@ -342,6 +400,13 @@ export default function Checklist() {
               value={newLabel}
               onChange={e => setNewLabel(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && addTask()}
+            />
+            <input
+              type="date"
+              className="input w-36 shrink-0"
+              title="Due date (optional)"
+              value={newDue}
+              onChange={e => setNewDue(e.target.value)}
             />
           </div>
           <div className="flex gap-2">
