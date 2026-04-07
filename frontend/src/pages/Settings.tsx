@@ -1,17 +1,10 @@
 import { useState, useRef, useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import * as XLSX from 'xlsx'
-import { Trash2, Lock, LockOpen, Eye, EyeOff, X, KeyRound, Users, Copy, Check } from 'lucide-react'
+import { Trash2, Users, Copy, Check } from 'lucide-react'
 import { dashboard, data as dataApi, viewings as viewingsApi, upcoming as upcomingApi, settings as settingsApi, targetAreas as targetAreasApi, blobs, household as householdApi } from '../lib/api'
 import type { HouseholdStatus } from '../lib/api'
 import Alert from '../components/Alert'
-import {
-  isEncryptionEnabled, enableEncryption, disableEncryption,
-  setSessionPassphrase, getSessionPassphrase, clearSessionPassphrase,
-  encryptData, decryptData, isEncryptedBlob,
-} from '../lib/crypto'
-
-const BLOB_KEYS = ['checklist', 'comparison_items', 'saved_comparisons', 'calc_snapshots', 'brf_checks']
 
 export default function Settings() {
   const qc = useQueryClient()
@@ -20,23 +13,6 @@ export default function Settings() {
   const [msgKind, setMsgKind] = useState<'success' | 'danger'>('success')
   const [importing, setImporting] = useState(false)
   const [confirmClear, setConfirmClear] = useState(false)
-
-  // Encryption state
-  const [encOn, setEncOn] = useState(isEncryptionEnabled)
-  const [passphrase, setPassphrase] = useState('')
-  const [encErr, setEncErr] = useState('')
-  const [encBusy, setEncBusy] = useState(false)
-  const [showEncForm, setShowEncForm] = useState(false)
-  const [savedPassphrase, setSavedPassphrase] = useState('')
-  const [showSaved, setShowSaved] = useState(false)
-  const needsUnlock = encOn && !getSessionPassphrase()
-
-  // Change passphrase state
-  const [showChangeForm, setShowChangeForm] = useState(false)
-  const [oldPassphrase, setOldPassphrase] = useState('')
-  const [newPassphrase, setNewPassphrase] = useState('')
-  const [changeErr, setChangeErr] = useState('')
-  const [changeBusy, setChangeBusy] = useState(false)
 
   // Household state
   const [hh, setHh] = useState<HouseholdStatus | null>(null)
@@ -165,80 +141,6 @@ export default function Settings() {
     setConfirmClear(false); notify('All data deleted.')
   }
 
-  // ── Encryption ────────────────────────────────────────────────────────────
-  async function withRetry<T>(fn: () => Promise<T>, retries = 2): Promise<T> {
-    for (let i = 0; i <= retries; i++) {
-      try { return await fn() }
-      catch (e) { if (i === retries) throw e }
-    }
-    throw new Error('unreachable')
-  }
-
-  async function handleEnable() {
-    if (passphrase.length < 8) { setEncErr('Min 8 characters'); return }
-    setEncBusy(true)
-    try {
-      for (const key of BLOB_KEYS) {
-        const raw = await withRetry(() => blobs.get<any>(key))
-        if (raw && !isEncryptedBlob(raw)) {
-          const enc = await encryptData(raw, passphrase)
-          await withRetry(() => blobs.set(key, enc as any))
-        }
-      }
-      enableEncryption(); setSessionPassphrase(passphrase)
-      setEncOn(true); setShowEncForm(false); setSavedPassphrase(passphrase); setShowSaved(false); setPassphrase('')
-      qc.invalidateQueries(); notify('Encryption enabled.')
-    } catch { setEncErr('Encryption failed — check your connection and try again') }
-    setEncBusy(false)
-  }
-
-  async function handleDisable() {
-    if (!passphrase) { setEncErr('Enter passphrase'); return }
-    setEncBusy(true)
-    try {
-      for (const key of BLOB_KEYS) {
-        const raw = await withRetry(() => blobs.get<any>(key))
-        if (raw && isEncryptedBlob(raw)) {
-          const dec = await decryptData(raw as string, passphrase)
-          await withRetry(() => blobs.set(key, dec))
-        }
-      }
-      disableEncryption(); clearSessionPassphrase()
-      setEncOn(false); setShowEncForm(false); setPassphrase('')
-      qc.invalidateQueries(); notify('Encryption disabled.')
-    } catch { setEncErr('Wrong passphrase or connection error') }
-    setEncBusy(false)
-  }
-
-  async function handleUnlock() {
-    if (passphrase.length < 8) { setEncErr('Min 8 characters'); return }
-    setSessionPassphrase(passphrase)
-    setShowEncForm(false); setPassphrase('')
-    qc.invalidateQueries(); notify('Data unlocked.')
-  }
-
-  async function handleChangePassphrase() {
-    if (oldPassphrase.length < 8) { setChangeErr('Old passphrase too short'); return }
-    if (newPassphrase.length < 8) { setChangeErr('New passphrase min 8 characters'); return }
-    if (oldPassphrase === newPassphrase) { setChangeErr('New passphrase must be different'); return }
-    setChangeBusy(true)
-    try {
-      // Verify old passphrase by attempting a decrypt, then re-encrypt with new one
-      for (const key of BLOB_KEYS) {
-        const raw = await withRetry(() => blobs.get<any>(key))
-        if (raw && isEncryptedBlob(raw)) {
-          const decrypted = await decryptData(raw as string, oldPassphrase)
-          const reenc = await encryptData(decrypted, newPassphrase)
-          await withRetry(() => blobs.set(key, reenc as any))
-        }
-      }
-      setSessionPassphrase(newPassphrase)
-      setShowChangeForm(false); setOldPassphrase(''); setNewPassphrase(''); setSavedPassphrase(newPassphrase); setShowSaved(false)
-      qc.invalidateQueries(); notify('Passphrase updated.')
-    } catch { setChangeErr('Old passphrase is incorrect') }
-    setChangeBusy(false)
-  }
-
   return (
     <div className="space-y-6 max-w-lg">
       <div>
@@ -250,129 +152,6 @@ export default function Settings() {
       <input ref={fileRef} type="file" accept=".xlsx" className="hidden" onChange={handleImport} />
 
       <div className="card divide-y divide-gray-100 !p-0 overflow-hidden">
-
-        {/* Encryption */}
-        <div className="p-5 space-y-3">
-          <div className="flex items-center gap-3">
-            {encOn ? <Lock size={15} className="text-teal-600" /> : <LockOpen size={15} className="text-gray-400" />}
-            <div className="flex-1">
-              <p className="text-sm font-bold text-gray-700">Data Encryption</p>
-              <p className="text-xs text-gray-400 mt-0.5">
-                {encOn
-                  ? needsUnlock
-                    ? 'Data is encrypted — enter passphrase to unlock this session.'
-                    : 'AES-256 active. Only you can read your data.'
-                  : 'Encrypt your data so it is unreadable in the database.'}
-              </p>
-            </div>
-            {encOn && (
-              <div className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full border ${needsUnlock ? 'text-amber-600 bg-amber-50 border-amber-100' : 'text-teal-600 bg-teal-50 border-teal-100'}`}>
-                <Lock size={9} />
-                {needsUnlock ? 'Locked' : 'Active'}
-              </div>
-            )}
-            <button
-              onClick={() => { if (!encBusy) { setShowEncForm(true); setEncErr('') } }}
-              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${encOn ? 'bg-teal-600' : 'bg-gray-200'}`}
-              role="switch"
-              aria-checked={encOn}
-              disabled={encBusy}
-            >
-              <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ${encOn ? 'translate-x-5' : 'translate-x-0'}`} />
-            </button>
-          </div>
-          {/* Show passphrase once after enabling */}
-          {savedPassphrase && (
-            <div className="relative space-y-2 p-3 bg-amber-50 rounded-2xl border border-amber-100">
-              <button className="absolute top-2 right-2 text-amber-400 hover:text-amber-600" onClick={() => setSavedPassphrase('')}>
-                <X size={14} />
-              </button>
-              <p className="text-xs font-semibold text-amber-700">Save your passphrase — it won't be shown again</p>
-              <div className="flex items-center gap-2">
-                <div className="relative flex-1">
-                  <code className="block w-full text-xs font-mono bg-white border border-amber-200 rounded-lg px-3 py-2 pr-8 text-gray-800 select-all break-all">
-                    {showSaved ? savedPassphrase : '•'.repeat(savedPassphrase.length)}
-                  </code>
-                  <button
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                    onClick={() => setShowSaved(v => !v)}
-                  >
-                    {showSaved ? <EyeOff size={13} /> : <Eye size={13} />}
-                  </button>
-                </div>
-                <button className="btn-secondary !text-xs !py-1.5 shrink-0" onClick={() => navigator.clipboard.writeText(savedPassphrase)}>
-                  Copy
-                </button>
-              </div>
-            </div>
-          )}
-
-          {showEncForm && (
-            <div className="space-y-2 p-3 bg-gray-50 rounded-2xl border border-gray-100">
-              <p className="text-xs font-medium text-gray-600">
-                {encOn ? (needsUnlock ? 'Enter passphrase to unlock' : 'Enter passphrase to disable encryption') : 'Choose a passphrase to encrypt your data'}
-              </p>
-              <input
-                autoFocus
-                type="password"
-                className="input"
-                placeholder="Passphrase (min 8 characters)"
-                value={passphrase}
-                onChange={e => { setPassphrase(e.target.value); setEncErr('') }}
-                onKeyDown={e => e.key === 'Enter' && (encOn ? (needsUnlock ? handleUnlock() : handleDisable()) : handleEnable())}
-              />
-              {encErr && <p className="text-xs text-red-400">{encErr}</p>}
-              {!encOn && <p className="text-xs text-gray-400">Remember this — if forgotten, encrypted data cannot be recovered.</p>}
-              <div className="flex gap-2">
-                <button className="btn-primary" onClick={encOn ? (needsUnlock ? handleUnlock : handleDisable) : handleEnable} disabled={encBusy}>
-                  {encBusy ? 'Working…' : encOn ? (needsUnlock ? 'Unlock' : 'Disable') : 'Enable'}
-                </button>
-                <button className="btn-secondary" onClick={() => { setShowEncForm(false); setPassphrase(''); setEncErr('') }}>Cancel</button>
-              </div>
-            </div>
-          )}
-
-          {/* Change passphrase — only when active and unlocked */}
-          {encOn && !needsUnlock && !showEncForm && (
-            <>
-              {!showChangeForm ? (
-                <button
-                  className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-teal-600 transition-colors"
-                  onClick={() => { setShowChangeForm(true); setChangeErr('') }}
-                >
-                  <KeyRound size={12} /> Change passphrase
-                </button>
-              ) : (
-                <div className="space-y-2 p-3 bg-gray-50 rounded-2xl border border-gray-100">
-                  <p className="text-xs font-medium text-gray-600">Change passphrase</p>
-                  <input
-                    autoFocus
-                    type="password"
-                    className="input"
-                    placeholder="Current passphrase"
-                    value={oldPassphrase}
-                    onChange={e => { setOldPassphrase(e.target.value); setChangeErr('') }}
-                  />
-                  <input
-                    type="password"
-                    className="input"
-                    placeholder="New passphrase (min 8 characters)"
-                    value={newPassphrase}
-                    onChange={e => { setNewPassphrase(e.target.value); setChangeErr('') }}
-                    onKeyDown={e => e.key === 'Enter' && handleChangePassphrase()}
-                  />
-                  {changeErr && <p className="text-xs text-red-400">{changeErr}</p>}
-                  <div className="flex gap-2">
-                    <button className="btn-primary" onClick={handleChangePassphrase} disabled={changeBusy}>
-                      {changeBusy ? 'Updating…' : 'Update'}
-                    </button>
-                    <button className="btn-secondary" onClick={() => { setShowChangeForm(false); setOldPassphrase(''); setNewPassphrase(''); setChangeErr('') }}>Cancel</button>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-        </div>
 
         {/* Household */}
         <div className="p-5 space-y-3">

@@ -40,12 +40,6 @@ export default function Privacy() {
             your data via a single-use invite code that expires after 48 hours. Removing the partner
             or leaving the household immediately revokes their access. No data is duplicated.
           </p>
-          <p className="text-sm text-gray-500 leading-relaxed">
-            You can optionally enable client-side AES-256-GCM encryption from the Settings page.
-            When enabled, blob data (checklist, comparisons, BRF checks, calculator snapshots)
-            is encrypted in your browser before being stored — making it unreadable to anyone
-            without your passphrase, including the app owner.
-          </p>
         </section>
 
         <section className="space-y-2">

@@ -28,7 +28,7 @@ Your personal home-buying command centre — track savings progress, log viewing
 | Calculator | Swedish mortgage calculator with stress test and net household cash flow |
 | BRF Checker | Evaluate a BRF's financial health — debt/sqm, fee/sqm, land ownership |
 | Maps | Side-by-side map and target areas — explore neighbourhoods, filter nearby amenities, manage priority areas |
-| Settings | Export/import data as Excel, client-side encryption, household sharing, delete all data |
+| Settings | Export/import data as Excel, household sharing, delete all data |
 
 ---
 
@@ -39,7 +39,6 @@ Your personal home-buying command centre — track savings progress, log viewing
 - Live Riksbank mortgage bond rate (SE MB 5Y) auto-fills Calculator and Comparison
 - Swedish mortgage rules: amortisation tiers, 7% stress test, ränteavdrag
 - Self-hosted fonts — no external tracking
-- Optional client-side AES-256-GCM encryption — blob data encrypted in-browser before storage, passphrase never leaves the device
 - Household sharing — owner generates a single-use invite code (48h expiry), partner joins via their own Google login and transparently accesses shared data
 
 ---
@@ -54,7 +53,7 @@ manifest-home/
 │   └── src/
 │       ├── pages/    # One file per page
 │       ├── components/
-│       └── lib/      # API client, Supabase client, crypto
+│       └── lib/      # API client, Supabase client
 ├── supabase/         # schema.sql
 ├── utils/            # Shared Python utilities
 ├── requirements.txt  # Python dependencies
@@ -105,20 +104,7 @@ Then open [http://localhost:5173](http://localhost:5173)
 
 ### Environment Variables
 
-Create a `.env` file locally (never commit it):
-
-```env
-SUPABASE_URL=https://xxxx.supabase.co
-SUPABASE_SERVICE_KEY=sb_secret_...        # service_role key — backend only
-FRONTEND_URL=https://yourapp.vercel.app
-ALLOWED_EMAILS=you@gmail.com,home@yourapp.app  # leave blank to allow all
-
-VITE_SUPABASE_URL=https://xxxx.supabase.co
-VITE_SUPABASE_ANON_KEY=sb_publishable_...  # anon key — frontend safe
-VITE_APP_EMAIL=home@yourapp.app            # dummy email for PIN login
-```
-
-Add the same keys in **Vercel → Settings → Environment Variables**.
+Create an .env file with the keys and add t it to **Vercel → Settings → Environment Variables**.
 
 > **TODO:** Add `CRON_SECRET=<random-string>` to Vercel environment variables — this authenticates the daily cleanup cron job (`/api/cleanup`). Generate any long random string and set it in Vercel before deploying.
 

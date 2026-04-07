@@ -1,6 +1,6 @@
 -- KeyJourney — run this in the Supabase SQL editor to set up or reset the database
 -- Each user gets their own isolated data via Row Level Security (RLS)
--- Last updated: March 2026
+-- Last updated: April 2026
 --
 -- Tables:
 --   settings          — savings plan, loan promise, buyer names

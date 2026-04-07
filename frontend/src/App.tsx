@@ -20,10 +20,9 @@ import SettingsPage from './pages/Settings'
 
 function App() {
   const [session, setSession]       = useState<Session | null | undefined>(undefined)
-  const [onboarded, setOnboarded] = useState(() => localStorage.getItem('kj_onboarded') === '1')
+  const [onboarded, setOnboarded]   = useState(() => localStorage.getItem('kj_onboarded') === '1')
   const [authorized, setAuthorized] = useState(false)
   const [denied, setDenied]         = useState(false)
-
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session))
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => setSession(s))
