@@ -45,6 +45,7 @@ export interface Settings {
   loan_bank: string
   apartment_price: number
   down_pct: number
+  onboarded: boolean
 }
 
 export interface LoanStatus {
@@ -107,6 +108,11 @@ export const settings = {
       method: 'PUT',
       body: JSON.stringify(data),
     }),
+}
+
+// ── Onboarding ─────────────────────────────────────────────────────────────────
+export const onboarding = {
+  complete: () => request<{ ok: boolean }>('/onboarding/complete', { method: 'POST' }),
 }
 
 // ── Viewings ───────────────────────────────────────────────────────────────────

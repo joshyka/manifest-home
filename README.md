@@ -11,7 +11,7 @@ Your personal home-buying command centre — track savings progress, log viewing
 | Frontend | React + TypeScript + Vite + Tailwind CSS |
 | Backend | FastAPI (Python) — serverless via Vercel |
 | Database | Supabase (PostgreSQL) |
-| Auth | Supabase — PIN login or Google OAuth |
+| Auth | Supabase — Google OAuth or PIN login |
 | Hosting | Vercel (frontend + API) |
 
 ---
@@ -35,8 +35,9 @@ Your personal home-buying command centre — track savings progress, log viewing
 
 ## Technical Highlights
 
-- Per-user data isolation via Supabase RLS — nothing in localStorage
-- GDPR consent on first use, email allowlist, PIN or Google OAuth
+- Per-user data isolation via Supabase RLS — no app state in localStorage
+- Onboarding shown once per account (flag stored in `settings.onboarded`), not per device
+- Google OAuth for regular login; PIN login (email + numeric password) for quick local access
 - Live Riksbank mortgage bond rate (SE MB 5Y) auto-fills Calculator and Comparison
 - Swedish mortgage rules: amortisation tiers, 7% stress test, ränteavdrag
 - Self-hosted fonts — no external tracking
@@ -81,7 +82,7 @@ Then open [http://localhost:5173](http://localhost:5173)
 1. Go to [supabase.com](https://supabase.com) → New project (free tier)
 2. In the SQL editor, paste and run `supabase/schema.sql`
 3. Under **Authentication → Providers → Email** — ensure email/password is enabled
-4. Under **Authentication → Users → Add user** → enter a dummy email (e.g. `home@yourapp.app`) and your PIN as password
+4. Under **Authentication → Users → Add user** → enter a dummy email (e.g. `home@yourapp.app`) and a numeric PIN as password
 5. Under **Project Settings → API**, copy your keys into `.env`
 
 ### Google Auth (optional)
@@ -115,7 +116,7 @@ All data is stored in **Supabase PostgreSQL**, isolated per user via Row Level S
 
 | Table | Data |
 | --- | --- |
-| `settings` | Savings targets, loan details, buyer names |
+| `settings` | Savings targets, loan details, buyer names, onboarding status |
 | `viewings` | Viewed apartments, asking price, bid rounds, highest bid, my bid, listing URL |
 | `upcoming_viewings` | Scheduled viewings |
 | `target_areas` | Areas of interest with priority |

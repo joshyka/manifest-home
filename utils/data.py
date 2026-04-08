@@ -24,7 +24,7 @@ def load_settings(user_id: str) -> dict:
     result = supa.table("settings").select("*").eq("user_id", user_id).execute()
     if not result.data:
         supa.table("settings").insert({"user_id": user_id, **DEFAULT_SETTINGS}).execute()
-        return dict(DEFAULT_SETTINGS)
+        return {**DEFAULT_SETTINGS, "onboarded": False}
     row = result.data[0]
     settings = dict(DEFAULT_SETTINGS)
     for k in DEFAULT_SETTINGS:
@@ -39,7 +39,16 @@ def load_settings(user_id: str) -> dict:
         settings["down_pct"] = float(settings["down_pct"])
     except (ValueError, TypeError):
         settings["down_pct"] = 10.0
+    # NULL means the row pre-dates the onboarded column → existing account → skip onboarding
+    # False means a new account created after the column was added → show onboarding
+    raw = row.get("onboarded")
+    settings["onboarded"] = True if raw is None else bool(raw)
     return settings
+
+
+def set_onboarded(user_id: str):
+    supa = get_client()
+    supa.table("settings").upsert({"user_id": user_id, "onboarded": True}).execute()
 
 
 def save_settings(data: dict, user_id: str):

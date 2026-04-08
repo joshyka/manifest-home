@@ -49,8 +49,8 @@ export default function Privacy() {
           <p className="text-sm text-gray-500 leading-relaxed">
             The Maps page embeds Google Maps via an iframe for area exploration and directions.
             If you use the map, Google's standard privacy policy applies to that interaction.
-            No data you enter into KeyJourney is sent to Google. Login via Google OAuth is
-            optionally supported — if used, Google's authentication policy also applies.
+            No data you enter into KeyJourney is sent to Google. Signing in with Google OAuth is
+            supported — if used, Google's authentication policy also applies.
             All fonts are self-hosted and bundled with the app — no external font requests are made.
           </p>
           <p className="text-sm text-gray-500 leading-relaxed">

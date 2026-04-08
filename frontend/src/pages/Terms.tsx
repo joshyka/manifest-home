@@ -10,10 +10,11 @@ export default function Terms() {
         <section className="space-y-2">
           <h2 className="text-sm font-bold text-gray-700">Use of the service</h2>
           <p className="text-sm text-gray-500 leading-relaxed">
-            KeyJourney is a private home-buying tracker for personal use. Access is restricted to
-            authorised users only. You may not share your login credentials or attempt to access
-            another user's data. You may optionally share data access with one partner via the
-            Household feature in Settings — both members are responsible for how that shared access is used.
+            KeyJourney is a private home-buying tracker for personal use. You can sign in with
+            Google or with an email and PIN. You may not share your login credentials or attempt
+            to access another user's data. You may optionally share data access with one partner
+            via the Household feature in Settings — both members are responsible for how that
+            shared access is used.
           </p>
         </section>
 
@@ -23,7 +24,7 @@ export default function Terms() {
             All data you enter belongs to you. It is used solely to power your experience within the
             app — savings tracking, viewings, bid tracking (asking price, bid rounds, trend analysis), checklists (including per-person task assignment and due dates), BRF health checks,
             listing comparisons, mortgage snapshots, target areas, and calculator snapshots. We do not sell, share,
-            or monetise your data. You can export a full backup at any time from the Overview page,
+            or monetise your data. You can export a full backup at any time from the Settings page,
             or permanently delete all your data from the Settings page. If you are part of a
             household, both members access the same data. The owner may set a household name at
             any time — it is visible to both members. Leaving or removing a partner immediately

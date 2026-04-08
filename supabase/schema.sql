@@ -38,7 +38,8 @@ CREATE TABLE settings (
   loan_expiry TEXT DEFAULT '',
   loan_bank TEXT DEFAULT '',
   apartment_price INTEGER DEFAULT 0,
-  down_pct FLOAT DEFAULT 10.0
+  down_pct FLOAT DEFAULT 10.0,
+  onboarded BOOLEAN DEFAULT false
 );
 
 ALTER TABLE settings ENABLE ROW LEVEL SECURITY;

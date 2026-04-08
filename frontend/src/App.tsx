@@ -2,7 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { Session } from '@supabase/supabase-js'
 import { supabase } from './lib/supabase'
-import { settings as settingsApi } from './lib/api'
+import { settings as settingsApi, onboarding as onboardingApi } from './lib/api'
 import Layout from './components/Layout'
 import Onboarding from './components/Onboarding'
 import Login from './pages/Login'
@@ -20,10 +20,10 @@ import SettingsPage from './pages/Settings'
 import Help from './pages/Help'
 
 function App() {
-  const [session, setSession]       = useState<Session | null | undefined>(undefined)
-  const [onboarded, setOnboarded]   = useState(() => localStorage.getItem('kj_onboarded') === '1')
+  const [session, setSession]     = useState<Session | null | undefined>(undefined)
+  const [onboarded, setOnboarded] = useState(false)
   const [authorized, setAuthorized] = useState(false)
-  const [denied, setDenied]         = useState(false)
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session))
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => setSession(s))
@@ -31,38 +31,11 @@ function App() {
   }, [])
 
   useEffect(() => {
-    if (!session) { setAuthorized(false); setDenied(false); return }
+    if (!session) { setAuthorized(false); return }
     settingsApi.get()
-      .then(() => setAuthorized(true))
-      .catch(() => setDenied(true))
+      .then((s) => { setAuthorized(true); setOnboarded(s.onboarded ?? false) })
+      .catch(() => supabase.auth.signOut())
   }, [session])
-
-  useEffect(() => {
-    if (!denied) return
-    const t = setTimeout(async () => {
-      await supabase.auth.signOut()
-      setDenied(false)
-    }, 3000)
-    return () => clearTimeout(t)
-  }, [denied])
-
-  if (denied) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-surface">
-        <div className="bg-white rounded-3xl shadow-card p-8 w-full max-w-xs text-center space-y-3">
-          <div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-50 mx-auto">
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <circle cx="12" cy="12" r="9" />
-              <path strokeLinecap="round" d="M15 9l-6 6M9 9l6 6" />
-            </svg>
-          </div>
-          <h2 className="text-lg font-black text-gray-900">Access Denied</h2>
-          <p className="text-xs text-gray-400">Your account is not on the allowed list.</p>
-          <p className="text-xs text-gray-300">Redirecting to login…</p>
-        </div>
-      </div>
-    )
-  }
 
   // Loading
   if (session === undefined || (session && !authorized)) {
@@ -81,7 +54,7 @@ function App() {
     </Routes>
   )
 
-  if (!onboarded) return <Onboarding onComplete={() => { localStorage.setItem('kj_onboarded', '1'); setOnboarded(true) }} />
+  if (!onboarded) return <Onboarding onComplete={() => { onboardingApi.complete(); setOnboarded(true) }} />
 
   return (
     <Layout>

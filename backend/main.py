@@ -17,7 +17,7 @@ import httpx
 
 from utils.supabase_client import get_client
 from utils.data import (
-    load_settings, save_settings,
+    load_settings, save_settings, set_onboarded,
     load_viewings, save_viewing, get_viewing, patch_viewing, delete_viewing,
     load_upcoming, save_upcoming, delete_upcoming,
     get_blob, set_blob,
@@ -42,9 +42,6 @@ app.add_middleware(
 )
 
 # ── Auth ──────────────────────────────────────────────────────────────────────
-_ALLOWED_EMAILS = [e.strip() for e in os.environ.get("ALLOWED_EMAILS", "").split(",") if e.strip()]
-
-
 def require_auth(authorization: Optional[str] = Header(None)) -> dict:
     """Validate token via Supabase auth.get_user() and return user payload."""
     if not authorization or not authorization.startswith("Bearer "):
@@ -57,8 +54,6 @@ def require_auth(authorization: Optional[str] = Header(None)) -> dict:
         user = response.user
         if not user:
             raise HTTPException(status_code=401, detail="Invalid token")
-        if _ALLOWED_EMAILS and user.email not in _ALLOWED_EMAILS:
-            raise HTTPException(status_code=403, detail="Email not authorised")
         return {"sub": user.id, "email": user.email}
     except HTTPException:
         raise
@@ -176,6 +171,13 @@ def get_projection_data(payload: dict = Depends(require_auth)):
     settings = load_settings(user_id)
     proj = get_projection(settings)
     return proj.to_dict(orient="records")
+
+
+@app.post("/api/onboarding/complete")
+def complete_onboarding(payload: dict = Depends(require_auth)):
+    user_id = resolve_user_id(payload.get("sub", "dev-user"))
+    set_onboarded(user_id)
+    return {"ok": True}
 
 
 # ── Viewings ──────────────────────────────────────────────────────────────────

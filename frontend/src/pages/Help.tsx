@@ -14,6 +14,10 @@ const SECTIONS: Section[] = [
         q: 'Where do I begin?',
         a: 'Start on the Savings page — enter your names, current savings, and monthly contributions, then add your loan promise details.\nThe Overview page will then show your full progress at a glance.\nUse Viewings to log apartments you visit, Comparison to compare listings side by side, and Checklist to track every step of the buying process.\nMaps lets you explore neighbourhoods and manage your target areas.',
       },
+      {
+        q: 'How do I sign in?',
+        a: 'Sign in with Google — this is the primary login method.\nAlternatively you can sign in with an email and PIN (used for quick local access).',
+      },
     ],
   },
   {
@@ -96,7 +100,7 @@ const SECTIONS: Section[] = [
       },
       {
         q: 'Is my data private?',
-        a: 'Yes. All data is isolated to your user account — no other user can access your information. Data is stored in the EU and is never sold or shared.',
+        a: 'Yes. All data is isolated to your user account via Row Level Security — no other user can access your information. Data is stored in the EU and is never sold or shared.',
       },
     ],
   },
