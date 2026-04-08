@@ -330,10 +330,9 @@ function BidsTab({ autoOpen }: { autoOpen: boolean }) {
                           {b.rounds.length > 0 && (
                             <button
                               onClick={e => { e.stopPropagation(); setTrendSelected(s => s === b.id ? null : b.id) }}
-                              className={`transition-colors ${trendSelected === b.id ? 'text-teal-500' : 'text-gray-300 hover:text-teal-500'}`}
-                              title="Toggle chart"
+                              className={`text-[11px] font-semibold px-2 py-0.5 rounded-full transition-colors ${trendSelected === b.id ? 'bg-teal-100 text-teal-600' : 'bg-gray-100 text-gray-400 hover:bg-teal-50 hover:text-teal-500'}`}
                             >
-                              <TrendingUp size={13} />
+                              {trendSelected === b.id ? 'Hide chart' : 'Chart'}
                             </button>
                           )}
                           <button onClick={e => { e.stopPropagation(); editId === b.id ? setEditId(null) : openEdit(b) }}
