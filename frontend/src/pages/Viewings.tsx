@@ -314,12 +314,7 @@ function BidsTab({ autoOpen }: { autoOpen: boolean }) {
                         ) : <span className="text-gray-300">—</span>}
                       </td>
                       <td className="py-3.5 px-3 sm:px-5 font-bold text-gray-900 tabular-nums">
-                        <div className="flex items-center gap-1.5">
-                          {b.highest ? `${fmt(b.highest)} kr` : '—'}
-                          {b.rounds.length > 0 && (
-                            <TrendingUp size={11} className={`transition-colors ${trendSelected === b.id ? 'text-teal-500' : 'text-gray-300'}`} />
-                          )}
-                        </div>
+                        {b.highest ? `${fmt(b.highest)} kr` : '—'}
                       </td>
                       <td className="py-3.5 px-3 sm:px-5 tabular-nums hidden sm:table-cell">
                         {b.myBidAmt ? <span className="font-bold text-teal-700">{fmt(b.myBidAmt)} kr</span> : <span className="text-gray-300">—</span>}
@@ -332,6 +327,15 @@ function BidsTab({ autoOpen }: { autoOpen: boolean }) {
                           >
                             {mobileExpanded === b.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                           </button>
+                          {b.rounds.length > 0 && (
+                            <button
+                              onClick={e => { e.stopPropagation(); setTrendSelected(s => s === b.id ? null : b.id) }}
+                              className={`transition-colors ${trendSelected === b.id ? 'text-teal-500' : 'text-gray-300 hover:text-teal-500'}`}
+                              title="Toggle chart"
+                            >
+                              <TrendingUp size={13} />
+                            </button>
+                          )}
                           <button onClick={e => { e.stopPropagation(); editId === b.id ? setEditId(null) : openEdit(b) }}
                             className="text-gray-400 hover:text-teal-600 transition-colors" title="Edit">
                             <Pencil size={13} />
