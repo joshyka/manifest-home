@@ -166,13 +166,13 @@ export default function Savings() {
               </div>
               <div>
                 <label className="label !text-green-600">{form.p1_name || 'You'} — Total Savings</label>
-                <input type="number" className="input" min={0} step={10000} placeholder="e.g. 150000"
+                <input type="number" className="input" placeholder="e.g. 150000"
                   value={form.p1_current || ''}
                   onChange={e => set('p1_current', parseInt(e.target.value) || 0)} />
               </div>
               <div>
                 <label className="label !text-green-600">{form.p1_name || 'You'} — Monthly Savings</label>
-                <input type="number" className="input" min={0} step={1000} placeholder="e.g. 10000"
+                <input type="number" className="input" placeholder="e.g. 10000"
                   value={form.p1_monthly || ''}
                   onChange={e => set('p1_monthly', parseInt(e.target.value) || 0)} />
               </div>
@@ -183,13 +183,13 @@ export default function Savings() {
               </div>
               <div>
                 <label className="label !text-green-600">{form.p2_name || 'Partner'} — Total Savings</label>
-                <input type="number" className="input" min={0} step={10000} placeholder="e.g. 150000"
+                <input type="number" className="input" placeholder="e.g. 150000"
                   value={form.p2_current || ''}
                   onChange={e => set('p2_current', parseInt(e.target.value) || 0)} />
               </div>
               <div>
                 <label className="label !text-green-600">{form.p2_name || 'Partner'} — Monthly Savings</label>
-                <input type="number" className="input" min={0} step={1000} placeholder="e.g. 10000"
+                <input type="number" className="input" placeholder="e.g. 10000"
                   value={form.p2_monthly || ''}
                   onChange={e => set('p2_monthly', parseInt(e.target.value) || 0)} />
               </div>

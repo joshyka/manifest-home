@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, PiggyBank, Calendar, Map, Calculator, GitCompare, CheckSquare, LogOut, Menu, X, Building2, Settings } from 'lucide-react'
+import { LayoutDashboard, PiggyBank, Calendar, Map, Calculator, GitCompare, CheckSquare, LogOut, Menu, X, Building2, Settings, HelpCircle } from 'lucide-react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { dashboard } from '../lib/api'
 import { supabase } from '../lib/supabase'
@@ -16,6 +16,7 @@ const NAV = [
   { to: '/brf-checker', label: 'BRF Checker', icon: Building2 },
   { to: '/maps',        label: 'Maps',        icon: Map },
   { to: '/settings',   label: 'Settings',    icon: Settings },
+  { to: '/help',       label: 'Help',        icon: HelpCircle },
 ]
 
 interface Props {

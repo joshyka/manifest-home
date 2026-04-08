@@ -33,6 +33,23 @@ supabase/
   schema.sql    # Full DB schema
 ```
 
+## Pages
+
+| Page | Purpose |
+|-------|---------|
+| Overview | KPIs, savings progress, loan status, upcoming viewings, target areas |
+| Savings | Monthly contributions, loan promise status, savings target tracker |
+| Checklist | Drag-to-reorder kanban board — custom categories, due dates, per-person task assignment (p1/p2/both) |
+| Viewings | Log viewings with asking price, track bid auctions, bid escalation chart (Chart button per row, auto-opens on first load) |
+| Comparison | Compare listings side by side — edit fields in place, best value badge, save/load named snapshots |
+| Calculator | Swedish mortgage calculator with stress test, ränteavdrag, live Riksbank rate, saveable snapshots |
+| BRF Checker | Evaluate BRF financial health — debt/sqm, fee/sqm, land ownership |
+| Maps | Google Maps embed + target areas management |
+| Settings | Export/import Excel, household sharing, delete all data |
+| Help | Accordion FAQ covering all pages — `/help` route, linked from sidebar |
+| Terms | Terms of service — `/terms`, accessible pre-login |
+| Privacy | Privacy policy — `/privacy`, accessible pre-login |
+
 ## Key Conventions
 
 ### Frontend API calls

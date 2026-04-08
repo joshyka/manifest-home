@@ -20,15 +20,16 @@ Your personal home-buying command centre — track savings progress, log viewing
 
 | Page | Purpose |
 | --- | --- |
-| Overview | KPIs, savings progress, loan status, upcoming viewings |
+| Overview | KPIs, savings progress, loan status, upcoming viewings, target areas |
 | Savings | Monthly contributions, loan promise status, savings target tracker |
-| Checklist | Drag-to-reorder kanban board with custom categories, due dates, and per-person task assignment (p1/p2/both) |
-| Viewings | Log viewings with asking price, track bid auctions, edit address/date/URL inline, tap row to expand bid escalation chart |
-| Comparison | Compare up to 4 listings side by side — edit all fields in place (price, size, rooms, avgift, notes, rating), live Riksbank rate auto-fill, best value badge by lowest price/m², save/load named snapshots with overwrite confirmation |
-| Calculator | Swedish mortgage calculator with stress test and net household cash flow |
+| Checklist | Drag-to-reorder kanban board — custom categories, due dates, per-person task assignment (p1/p2/both) |
+| Viewings | Log viewings with asking price, track bid auctions, bid escalation chart per row |
+| Comparison | Compare listings side by side — edit all fields in place, best value badge by lowest price/m², save/load named snapshots |
+| Calculator | Swedish mortgage calculator with stress test, ränteavdrag, live Riksbank rate, saveable snapshots |
 | BRF Checker | Evaluate a BRF's financial health — debt/sqm, fee/sqm, land ownership |
-| Maps | Side-by-side map and target areas — explore neighbourhoods, filter nearby amenities, manage priority areas |
+| Maps | Google Maps embed + target areas — explore neighbourhoods, manage priority areas |
 | Settings | Export/import data as Excel, household sharing, delete all data |
+| Help | Accordion FAQ covering all pages and features |
 
 ---
 
