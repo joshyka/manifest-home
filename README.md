@@ -107,8 +107,6 @@ Then open [http://localhost:5173](http://localhost:5173)
 
 Create an .env file with the keys and add t it to **Vercel → Settings → Environment Variables**.
 
-> **TODO:** Add `CRON_SECRET=<random-string>` to Vercel environment variables — this authenticates the daily cleanup cron job (`/api/cleanup`). Generate any long random string and set it in Vercel before deploying.
-
 ---
 
 ## Data Storage
