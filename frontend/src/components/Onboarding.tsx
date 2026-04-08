@@ -47,6 +47,7 @@ export default function Onboarding({ onComplete }: Props) {
         loan_amount:     parseInt(loanAmount) || 0,
         loan_bank:       loanBank.trim(),
         loan_expiry:     loanExpiry,
+        onboarded:       true,
       })
       qc.invalidateQueries()
     } catch {}
