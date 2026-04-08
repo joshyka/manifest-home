@@ -45,7 +45,7 @@ Generic JSON blobs stored in `user_blobs` table, keyed by string (`checklist`, `
 
 ### Checklist
 
-Tasks shape: `{ id, label, status, category, categoryColor, custom, dueDate? }[]` stored in the `checklist` blob. `dueDate` is an optional ISO date string (`YYYY-MM-DD`).
+Tasks shape: `{ id, label, status, category, categoryColor, custom, dueDate?, assignee? }[]` stored in the `checklist` blob. `dueDate` is an optional ISO date string (`YYYY-MM-DD`). `assignee` is an optional `'p1' | 'p2' | 'both'` — reads `p1_name`/`p2_name` from settings for display, falls back to "You"/"Partner" if unset.
 
 Due date badge colours (computed client-side, no backend involvement):
 

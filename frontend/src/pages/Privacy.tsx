@@ -12,7 +12,7 @@ export default function Privacy() {
           <p className="text-sm text-gray-500 leading-relaxed">
             KeyJourney collects only the data you enter yourself: your name, savings amounts,
             monthly contributions, apartment price targets, loan promise details, viewed apartments,
-            bid tracking (asking price, individual bid rounds, outcome), viewing reminders, checklist tasks, target areas, BRF financial details,
+            bid tracking (asking price, individual bid rounds, outcome), viewing reminders, checklist tasks (including optional assignee — p1, p2, or both — and due dates), target areas, BRF financial details,
             listing comparisons, and calculator snapshots. We also store your email address to
             identify your account.
           </p>

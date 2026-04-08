@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
 import { Plus, X, Pencil, Check } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
 import { useBlob } from '../lib/useBlob'
+import { settings as settingsApi } from '../lib/api'
 import {
   DndContext,
   DragOverlay,
@@ -23,6 +25,7 @@ import { CSS } from '@dnd-kit/utilities'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 type Status = 'todo' | 'progress' | 'done'
+type Assignee = 'p1' | 'p2' | 'both'
 
 interface Task {
   id: string
@@ -31,7 +34,8 @@ interface Task {
   category: string
   categoryColor: string
   custom: boolean
-  dueDate?: string // ISO date string YYYY-MM-DD
+  dueDate?: string   // ISO date string YYYY-MM-DD
+  assignee?: Assignee
 }
 
 const DEFAULT_TASKS: Task[] = [
@@ -61,19 +65,77 @@ function dueDateBadge(dueDate?: string) {
   return { label, cls: 'text-gray-400 bg-gray-100' }
 }
 
+// ── Assignee pill ──────────────────────────────────────────────────────────────
+function AssigneePill({ assignee, p1, p2 }: { assignee?: Assignee; p1: string; p2: string }) {
+  if (!assignee) return null
+  if (assignee === 'both') return (
+    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-indigo-50 text-indigo-500">
+      {p1 || 'P1'} & {p2 || 'P2'}
+    </span>
+  )
+  if (assignee === 'p1') return (
+    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-teal-50 text-teal-600">
+      {p1 || 'You'}
+    </span>
+  )
+  return (
+    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-600">
+      {p2 || 'Partner'}
+    </span>
+  )
+}
+
+// ── Assignee toggle buttons (used in edit mode + add form) ────────────────────
+function AssigneePicker({
+  value, onChange, p1, p2,
+}: {
+  value: Assignee | ''
+  onChange: (v: Assignee | '') => void
+  p1: string
+  p2: string
+}) {
+  const opts: { v: Assignee | ''; label: string }[] = [
+    { v: '', label: '—' },
+    { v: 'p1', label: p1 || 'You' },
+    { v: 'both', label: 'Both' },
+    { v: 'p2', label: p2 || 'Partner' },
+  ]
+  return (
+    <div className="flex gap-1 flex-wrap mt-1.5">
+      {opts.map(o => (
+        <button
+          key={o.v}
+          type="button"
+          onClick={() => onChange(o.v)}
+          className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border transition-colors ${
+            value === o.v
+              ? 'bg-teal-600 text-white border-teal-600'
+              : 'text-gray-400 border-gray-200 hover:border-teal-400 hover:text-teal-600'
+          }`}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 // ── Sortable task card ─────────────────────────────────────────────────────────
 function TaskCard({
-  task, onRemove, onEdit, isDragging = false,
+  task, onRemove, onEdit, isDragging = false, p1, p2,
 }: {
   task: Task
   onRemove: (id: string) => void
-  onEdit: (id: string, label: string, dueDate?: string | null) => void
+  onEdit: (id: string, label: string, dueDate?: string | null, assignee?: Assignee | '') => void
   isDragging?: boolean
+  p1: string
+  p2: string
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: task.id })
-  const [editing, setEditing]   = useState(false)
-  const [draft, setDraft]       = useState(task.label)
-  const [draftDue, setDraftDue] = useState(task.dueDate ?? '')
+  const [editing, setEditing]         = useState(false)
+  const [draft, setDraft]             = useState(task.label)
+  const [draftDue, setDraftDue]       = useState(task.dueDate ?? '')
+  const [draftAssignee, setDraftAssignee] = useState<Assignee | ''>(task.assignee ?? '')
   const inputRef = useRef<HTMLInputElement>(null)
 
   const style = {
@@ -85,13 +147,14 @@ function TaskCard({
   function startEdit() {
     setDraft(task.label)
     setDraftDue(task.dueDate ?? '')
+    setDraftAssignee(task.assignee ?? '')
     setEditing(true)
     setTimeout(() => inputRef.current?.focus(), 0)
   }
 
   function commitEdit() {
     const trimmed = draft.trim()
-    if (trimmed) onEdit(task.id, trimmed, draftDue || null)
+    if (trimmed) onEdit(task.id, trimmed, draftDue || null, draftAssignee)
     setEditing(false)
   }
 
@@ -132,6 +195,7 @@ function TaskCard({
                 if (e.key === 'Escape') setEditing(false)
               }}
             />
+            <AssigneePicker value={draftAssignee} onChange={setDraftAssignee} p1={p1} p2={p2} />
           </div>
         ) : (
           <p className={`text-sm leading-snug ${task.status === 'done' ? 'line-through text-gray-300' : 'text-gray-800'}`}>
@@ -150,6 +214,7 @@ function TaskCard({
               </span>
             ) : null
           })()}
+          {!editing && <AssigneePill assignee={task.assignee} p1={p1} p2={p2} />}
         </div>
       </div>
 
@@ -192,13 +257,15 @@ function DragCard({ task }: { task: Task }) {
 
 // ── Droppable column ───────────────────────────────────────────────────────────
 function Column({
-  col, tasks, onRemove, onEdit, activeId,
+  col, tasks, onRemove, onEdit, activeId, p1, p2,
 }: {
   col: typeof COLUMNS[number]
   tasks: Task[]
   onRemove: (id: string) => void
-  onEdit: (id: string, label: string, dueDate?: string | null) => void
+  onEdit: (id: string, label: string, dueDate?: string | null, assignee?: Assignee | '') => void
   activeId: string | null
+  p1: string
+  p2: string
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: col.status })
 
@@ -227,6 +294,8 @@ function Column({
               onRemove={onRemove}
               onEdit={onEdit}
               isDragging={task.id === activeId}
+              p1={p1}
+              p2={p2}
             />
           ))}
         </div>
@@ -240,13 +309,18 @@ const CUSTOM_COLORS = ['#3DAA6E', '#E08C2C', '#D4A853', '#6366F1', '#EC4899', '#
 
 export default function Checklist() {
   const [blobTasks, saveTasks] = useBlob<Task[]>('checklist', DEFAULT_TASKS)
+  const { data: settingsData } = useQuery({ queryKey: ['settings'], queryFn: settingsApi.get })
+  const p1 = settingsData?.p1_name || ''
+  const p2 = settingsData?.p2_name || ''
+
   // Local copy used during drag — avoids API calls on every DragOver event
-  const [localTasks, setLocalTasks] = useState<Task[]>(blobTasks)
-  const [activeId, setActiveId]     = useState<string | null>(null)
-  const [newLabel, setNewLabel]     = useState('')
-  const [newCat, setNewCat]         = useState('')
-  const [newDue, setNewDue]         = useState('')
-  const [showAdd, setShowAdd]       = useState(false)
+  const [localTasks, setLocalTasks]   = useState<Task[]>(blobTasks)
+  const [activeId, setActiveId]       = useState<string | null>(null)
+  const [newLabel, setNewLabel]       = useState('')
+  const [newCat, setNewCat]           = useState('')
+  const [newDue, setNewDue]           = useState('')
+  const [newAssignee, setNewAssignee] = useState<Assignee | ''>('')
+  const [showAdd, setShowAdd]         = useState(false)
 
   // Keep local in sync with blob when not dragging
   useEffect(() => {
@@ -313,12 +387,14 @@ export default function Checklist() {
     saveTasks(updated)
   }
 
-  function editTask(id: string, label: string, dueDate?: string | null) {
+  function editTask(id: string, label: string, dueDate?: string | null, assignee?: Assignee | '') {
     const updated = localTasks.map(t => {
       if (t.id !== id) return t
       const next = { ...t, label }
       if (dueDate === null) delete next.dueDate
       else if (dueDate) next.dueDate = dueDate
+      if (!assignee) delete next.assignee
+      else next.assignee = assignee as Assignee
       return next
     })
     setLocalTasks(updated)
@@ -342,12 +418,14 @@ export default function Checklist() {
       categoryColor: color,
       custom: true,
       ...(newDue ? { dueDate: newDue } : {}),
+      ...(newAssignee ? { assignee: newAssignee as Assignee } : {}),
     }]
     setLocalTasks(updated)
     saveTasks(updated)
     setNewLabel('')
     setNewCat('')
     setNewDue('')
+    setNewAssignee('')
   }
 
   const done  = localTasks.filter(t => t.status === 'done').length
@@ -409,6 +487,7 @@ export default function Checklist() {
               onChange={e => setNewDue(e.target.value)}
             />
           </div>
+          <AssigneePicker value={newAssignee} onChange={setNewAssignee} p1={p1} p2={p2} />
           <div className="flex gap-2">
             <button className="btn-primary" onClick={() => { addTask(); setShowAdd(false) }} disabled={!newLabel.trim()}>
               Save
@@ -448,6 +527,8 @@ export default function Checklist() {
               onRemove={removeTask}
               onEdit={editTask}
               activeId={activeId}
+              p1={p1}
+              p2={p2}
             />
           ))}
         </div>

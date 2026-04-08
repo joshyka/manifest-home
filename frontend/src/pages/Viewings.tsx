@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Fragment } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { viewings as viewingsApi } from '../lib/api'
 import type { Viewing } from '../lib/api'
@@ -175,6 +175,12 @@ function BidsTab({ autoOpen }: { autoOpen: boolean }) {
     }))
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
+  // Auto-open chart for the first bidding row with rounds so new users discover the feature
+  useEffect(() => {
+    const first = biddingRows.find(b => b.rounds.length > 0)
+    if (first) setTrendSelected(s => s ?? first.id)
+  }, [biddingRows.length])
+
   const viewedOnly = active
     .filter(v => v.outcome !== 'Went to bidding')
     .reverse()
@@ -279,8 +285,8 @@ function BidsTab({ autoOpen }: { autoOpen: boolean }) {
               </thead>
               <tbody>
                 {biddingRows.map(b => (
-                  <>
-                    <tr key={b.id} onClick={() => b.rounds.length > 0 && setTrendSelected(s => s === b.id ? null : b.id)}
+                  <Fragment key={b.id}>
+                    <tr onClick={() => b.rounds.length > 0 && setTrendSelected(s => s === b.id ? null : b.id)}
                       className={`border-b border-gray-50 transition-colors ${b.rounds.length > 0 ? 'cursor-pointer hover:bg-teal-50/40' : ''} ${trendSelected === b.id ? 'bg-teal-50' : ''}`}>
                       <td className="py-3.5 px-3 sm:px-5 font-semibold text-gray-900 max-w-[120px] sm:max-w-none">
                         <div className="truncate">
@@ -308,7 +314,12 @@ function BidsTab({ autoOpen }: { autoOpen: boolean }) {
                         ) : <span className="text-gray-300">—</span>}
                       </td>
                       <td className="py-3.5 px-3 sm:px-5 font-bold text-gray-900 tabular-nums">
-                        {b.highest ? `${fmt(b.highest)} kr` : '—'}
+                        <div className="flex items-center gap-1.5">
+                          {b.highest ? `${fmt(b.highest)} kr` : '—'}
+                          {b.rounds.length > 0 && (
+                            <TrendingUp size={11} className={`transition-colors ${trendSelected === b.id ? 'text-teal-500' : 'text-gray-300'}`} />
+                          )}
+                        </div>
                       </td>
                       <td className="py-3.5 px-3 sm:px-5 tabular-nums hidden sm:table-cell">
                         {b.myBidAmt ? <span className="font-bold text-teal-700">{fmt(b.myBidAmt)} kr</span> : <span className="text-gray-300">—</span>}
@@ -440,7 +451,7 @@ function BidsTab({ autoOpen }: { autoOpen: boolean }) {
                         </tr>
                       )
                     })()}
-                  </>
+                  </Fragment>
                 ))}
               </tbody>
             </table>

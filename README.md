@@ -22,7 +22,7 @@ Your personal home-buying command centre — track savings progress, log viewing
 | --- | --- |
 | Overview | KPIs, savings progress, loan status, upcoming viewings |
 | Savings | Monthly contributions, loan promise status, savings target tracker |
-| Checklist | Drag-to-reorder kanban board with custom categories |
+| Checklist | Drag-to-reorder kanban board with custom categories, due dates, and per-person task assignment (p1/p2/both) |
 | Viewings | Log viewings with asking price, track bid auctions, edit address/date/URL inline, tap row to expand bid escalation chart |
 | Comparison | Compare up to 4 listings side by side — edit all fields in place (price, size, rooms, avgift, notes, rating), live Riksbank rate auto-fill, best value badge by lowest price/m², save/load named snapshots with overwrite confirmation |
 | Calculator | Swedish mortgage calculator with stress test and net household cash flow |
